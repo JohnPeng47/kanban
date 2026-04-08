@@ -76,6 +76,8 @@ export function DiagramViewer({ workspaceId }: { workspaceId: string | null }): 
 				isLoading={viewer.isContentLoading}
 				error={viewer.contentError}
 				selectedPath={viewer.selectedPath}
+				workspaceId={workspaceId}
+				workspacePath={viewer.workspacePath}
 			/>
 		</div>
 	);

@@ -12,6 +12,7 @@ export interface UseDiagramViewerResult {
 	content: string | null;
 	isContentLoading: boolean;
 	contentError: string | null;
+	workspacePath: string | null;
 	onSelectPath: (path: string) => void;
 	onToggleFolder: (path: string) => void;
 }
@@ -25,6 +26,7 @@ export function useDiagramViewer(workspaceId: string | null): UseDiagramViewerRe
 	const [content, setContent] = useState<string | null>(null);
 	const [isContentLoading, setIsContentLoading] = useState(false);
 	const [contentError, setContentError] = useState<string | null>(null);
+	const [workspacePath, setWorkspacePath] = useState<string | null>(null);
 
 	// Fetch tree on mount / workspace change
 	useEffect(() => {
@@ -44,6 +46,16 @@ export function useDiagramViewer(workspaceId: string | null): UseDiagramViewerRe
 				setTree(result.tree);
 				setDiagramsRootExists(result.diagramsRootExists);
 				setIsTreeLoading(false);
+
+				// Store the workspace path for navigate calls
+				if (result.diagramsRootExists) {
+					// diagramsRoot is "{workspacePath}/diagrams", extract workspace path
+					const diagramsRoot = result.diagramsRoot;
+					const wsPath = diagramsRoot.endsWith("/diagrams")
+						? diagramsRoot.slice(0, -"/diagrams".length)
+						: diagramsRoot;
+					setWorkspacePath(wsPath);
+				}
 
 				// Auto-expand top-level directories
 				const topLevelDirs = result.tree.filter((n) => n.type === "directory").map((n) => n.path);
@@ -121,6 +133,7 @@ export function useDiagramViewer(workspaceId: string | null): UseDiagramViewerRe
 			content,
 			isContentLoading,
 			contentError,
+			workspacePath,
 			onSelectPath,
 			onToggleFolder,
 		}),
@@ -133,6 +146,7 @@ export function useDiagramViewer(workspaceId: string | null): UseDiagramViewerRe
 			content,
 			isContentLoading,
 			contentError,
+			workspacePath,
 			onSelectPath,
 			onToggleFolder,
 		],

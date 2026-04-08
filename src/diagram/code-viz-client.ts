@@ -72,7 +72,7 @@ async function navigate(input: CodeVizNavigateRequest): Promise<CodeVizNavigateR
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(input),
-			signal: AbortSignal.timeout(2_500),
+			signal: AbortSignal.timeout(2_500),	
 		});
 		if (!response.ok) {
 			return { ok: false, error: `Code Viz returned ${response.status}` };

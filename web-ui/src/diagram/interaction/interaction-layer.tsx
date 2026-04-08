@@ -47,6 +47,7 @@ export function InteractionLayer({
 
 	const handleSceneClick = useCallback(
 		(event: ViewportSceneEvent) => {
+			// hitTest takes screen-space point (uses elementFromPoint)
 			const hitId = scene.hitTest(event.screenPoint);
 
 			if (!hitId) {
@@ -63,7 +64,6 @@ export function InteractionLayer({
 				return;
 			}
 
-			const element = scene.getElement(hitId);
 			const interactive = interactiveRegistry.get(hitId);
 
 			// Update selection
@@ -112,9 +112,17 @@ export function InteractionLayer({
 				onNavigate(interactive, event.domEvent);
 			}
 
-			// Fire expand for expandable elements
-			if (element && isExpandable(element) && onExpand) {
-				onExpand(hitId);
+			// Fire expand — walk up ancestors to find the expandable element
+			if (onExpand) {
+				let expandId: string | null = hitId;
+				while (expandId) {
+					const el = scene.getElement(expandId);
+					if (el && isExpandable(el)) {
+						onExpand(expandId);
+						break;
+					}
+					expandId = el?.parentId ?? null;
+				}
 			}
 		},
 		[

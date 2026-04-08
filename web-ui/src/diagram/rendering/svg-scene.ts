@@ -71,7 +71,28 @@ export class SvgScene implements Scene {
 		svg.style.overflow = "visible";
 		svg.style.display = "block";
 
+		// Inject framework interaction styles
+		this.injectInteractionStyles(svg);
+
 		this.buildElementTree();
+	}
+
+	private injectInteractionStyles(svg: SVGSVGElement): void {
+		const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+		style.textContent = `
+			[data-interactive] { cursor: pointer; transition: filter 0.15s ease; }
+			[data-interactive]:hover { filter: brightness(1.5) drop-shadow(0 0 6px currentColor); }
+			[data-expandable] .collapsed-content { cursor: pointer; }
+			[data-expandable] .collapsed-content:hover > rect:first-child {
+				filter: brightness(1.3) drop-shadow(0 0 8px rgba(210, 153, 34, 0.4));
+			}
+			.selected > rect:first-of-type {
+				stroke: #4C9AFF;
+				stroke-width: 2;
+				filter: drop-shadow(0 0 4px rgba(76, 154, 255, 0.4));
+			}
+		`;
+		svg.insertBefore(style, svg.firstChild);
 	}
 
 	private buildElementTree(): void {

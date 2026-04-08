@@ -107,7 +107,7 @@ export function Viewport({ scene, onSceneClick, children }: ViewportProps): Reac
 			transform: { ...transformRef.current },
 		};
 		didDragRef.current = false;
-		containerRef.current?.setPointerCapture(event.pointerId);
+		// Don't capture yet — only capture when drag threshold is exceeded
 	}, []);
 
 	const onPointerMove = useCallback(
@@ -121,6 +121,7 @@ export function Viewport({ scene, onSceneClick, children }: ViewportProps): Reac
 
 			if (!didDragRef.current && distance > DRAG_THRESHOLD) {
 				didDragRef.current = true;
+				containerRef.current?.setPointerCapture(event.pointerId);
 			}
 
 			if (didDragRef.current) {
@@ -138,7 +139,9 @@ export function Viewport({ scene, onSceneClick, children }: ViewportProps): Reac
 
 	const onPointerUp = useCallback(
 		(event: React.PointerEvent<HTMLDivElement>) => {
-			containerRef.current?.releasePointerCapture(event.pointerId);
+			if (didDragRef.current) {
+				containerRef.current?.releasePointerCapture(event.pointerId);
+			}
 
 			if (!didDragRef.current && pointerDownRef.current && onSceneClick) {
 				const screenPoint = { x: event.clientX, y: event.clientY };

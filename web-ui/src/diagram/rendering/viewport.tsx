@@ -143,15 +143,22 @@ export function Viewport({ scene, onSceneClick, children }: ViewportProps): Reac
 		const onWindowPointerUp = (event: PointerEvent) => {
 			if (!pointerDownRef.current) return;
 
-			if (didDragRef.current) {
+			const wasDrag = didDragRef.current;
+
+			// Clear state FIRST — ensures cleanup even if click handler throws
+			pointerDownRef.current = null;
+			didDragRef.current = false;
+
+			if (wasDrag) {
 				try {
 					containerRef.current?.releasePointerCapture(event.pointerId);
 				} catch {
 					// Pointer capture may not be held
 				}
+				return;
 			}
 
-			if (!didDragRef.current && onSceneClick) {
+			if (onSceneClick) {
 				const screenPoint = { x: event.clientX, y: event.clientY };
 				const scenePoint = screenToScene(screenPoint);
 				onSceneClick({
@@ -160,9 +167,6 @@ export function Viewport({ scene, onSceneClick, children }: ViewportProps): Reac
 					domEvent: event,
 				});
 			}
-
-			pointerDownRef.current = null;
-			didDragRef.current = false;
 		};
 
 		window.addEventListener("pointerup", onWindowPointerUp);

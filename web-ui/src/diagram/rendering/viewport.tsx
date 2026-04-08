@@ -137,27 +137,37 @@ export function Viewport({ scene, onSceneClick, children }: ViewportProps): Reac
 		[applyTransform, syncRootTransform],
 	);
 
-	const onPointerUp = useCallback(
-		(event: React.PointerEvent<HTMLDivElement>) => {
+	// Use window-level pointerup to always clear state, even if the event
+	// target is inside dynamically-appended content (nested SVGs from expand)
+	useEffect(() => {
+		const onWindowPointerUp = (event: PointerEvent) => {
+			if (!pointerDownRef.current) return;
+
 			if (didDragRef.current) {
-				containerRef.current?.releasePointerCapture(event.pointerId);
+				try {
+					containerRef.current?.releasePointerCapture(event.pointerId);
+				} catch {
+					// Pointer capture may not be held
+				}
 			}
 
-			if (!didDragRef.current && pointerDownRef.current && onSceneClick) {
+			if (!didDragRef.current && onSceneClick) {
 				const screenPoint = { x: event.clientX, y: event.clientY };
 				const scenePoint = screenToScene(screenPoint);
 				onSceneClick({
 					scenePoint,
 					screenPoint,
-					domEvent: event.nativeEvent,
+					domEvent: event,
 				});
 			}
 
 			pointerDownRef.current = null;
 			didDragRef.current = false;
-		},
-		[onSceneClick, screenToScene],
-	);
+		};
+
+		window.addEventListener("pointerup", onWindowPointerUp);
+		return () => window.removeEventListener("pointerup", onWindowPointerUp);
+	}, [onSceneClick, screenToScene]);
 
 	return (
 		<div
@@ -165,7 +175,6 @@ export function Viewport({ scene, onSceneClick, children }: ViewportProps): Reac
 			className="relative w-full h-full overflow-hidden select-none"
 			onPointerDown={onPointerDown}
 			onPointerMove={onPointerMove}
-			onPointerUp={onPointerUp}
 		>
 			<div ref={transformDivRef} style={{ transformOrigin: "0 0", willChange: "transform" }} />
 			{children}

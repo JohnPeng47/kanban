@@ -91,6 +91,8 @@ export class SvgScene implements Scene {
 				stroke-width: 2;
 				filter: drop-shadow(0 0 4px rgba(76, 154, 255, 0.4));
 			}
+			.expanded-content rect[rx] { transition: filter 0.15s ease; }
+			.expanded-content rect[rx]:hover { filter: brightness(1.3) drop-shadow(0 0 4px rgba(76, 154, 255, 0.2)); }
 		`;
 		svg.insertBefore(style, svg.firstChild);
 	}

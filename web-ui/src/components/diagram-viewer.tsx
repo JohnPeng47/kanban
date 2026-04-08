@@ -9,8 +9,14 @@ import { clampDiagramTreePanelWidth, useDiagramViewerLayout } from "@/resize/use
 import { useResizeDrag } from "@/resize/use-resize-drag";
 import { useWindowEvent } from "@/utils/react-use";
 
-export function DiagramViewer({ workspaceId }: { workspaceId: string | null }): React.ReactElement {
-	const viewer = useDiagramViewer(workspaceId);
+export function DiagramViewer({
+	workspaceId,
+	initialPath,
+}: {
+	workspaceId: string | null;
+	initialPath?: string | null;
+}): React.ReactElement {
+	const viewer = useDiagramViewer(workspaceId, initialPath ?? null);
 	const [containerWidth, setContainerWidth] = useState<number | null>(null);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const { startDrag } = useResizeDrag();

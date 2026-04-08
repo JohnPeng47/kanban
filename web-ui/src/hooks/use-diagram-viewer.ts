@@ -17,12 +17,41 @@ export interface UseDiagramViewerResult {
 	onToggleFolder: (path: string) => void;
 }
 
-export function useDiagramViewer(workspaceId: string | null): UseDiagramViewerResult {
+/** Compute the set of ancestor folder paths for a given file path. */
+function getAncestorFolders(filePath: string): string[] {
+	const parts = filePath.split("/");
+	const folders: string[] = [];
+	for (let i = 1; i < parts.length; i++) {
+		folders.push(parts.slice(0, i).join("/"));
+	}
+	return folders;
+}
+
+/** Update the browser URL to reflect the current diagram view state. */
+function syncUrlState(selectedPath: string | null): void {
+	const url = new URL(window.location.href);
+	if (selectedPath) {
+		url.searchParams.set("view", "diagram");
+		url.searchParams.set("path", selectedPath);
+	} else {
+		url.searchParams.delete("view");
+		url.searchParams.delete("path");
+	}
+	history.replaceState(null, "", url.toString());
+}
+
+export function useDiagramViewer(workspaceId: string | null, initialPath?: string | null): UseDiagramViewerResult {
 	const [tree, setTree] = useState<FileTreeNode[]>([]);
 	const [diagramsRootExists, setDiagramsRootExists] = useState(true);
 	const [isTreeLoading, setIsTreeLoading] = useState(true);
-	const [selectedPath, setSelectedPath] = useState<string | null>(null);
-	const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+	const [selectedPath, setSelectedPath] = useState<string | null>(initialPath ?? null);
+	const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
+		// Auto-expand ancestor folders if initialPath is provided
+		if (initialPath) {
+			return new Set(getAncestorFolders(initialPath));
+		}
+		return new Set();
+	});
 	const [content, setContent] = useState<string | null>(null);
 	const [isContentLoading, setIsContentLoading] = useState(false);
 	const [contentError, setContentError] = useState<string | null>(null);
@@ -47,9 +76,7 @@ export function useDiagramViewer(workspaceId: string | null): UseDiagramViewerRe
 				setDiagramsRootExists(result.diagramsRootExists);
 				setIsTreeLoading(false);
 
-				// Store the workspace path for navigate calls
 				if (result.diagramsRootExists) {
-					// diagramsRoot is "{workspacePath}/diagrams", extract workspace path
 					const diagramsRoot = result.diagramsRoot;
 					const wsPath = diagramsRoot.endsWith("/diagrams")
 						? diagramsRoot.slice(0, -"/diagrams".length)
@@ -57,10 +84,16 @@ export function useDiagramViewer(workspaceId: string | null): UseDiagramViewerRe
 					setWorkspacePath(wsPath);
 				}
 
-				// Auto-expand top-level directories
+				// Auto-expand top-level directories (merge with any initial expansion)
 				const topLevelDirs = result.tree.filter((n) => n.type === "directory").map((n) => n.path);
 				if (topLevelDirs.length > 0) {
-					setExpandedFolders(new Set(topLevelDirs));
+					setExpandedFolders((prev) => {
+						const next = new Set(prev);
+						for (const dir of topLevelDirs) {
+							next.add(dir);
+						}
+						return next;
+					});
 				}
 			},
 			() => {
@@ -106,6 +139,11 @@ export function useDiagramViewer(workspaceId: string | null): UseDiagramViewerRe
 			cancelled = true;
 		};
 	}, [workspaceId, selectedPath]);
+
+	// Sync URL when selected path changes
+	useEffect(() => {
+		syncUrlState(selectedPath);
+	}, [selectedPath]);
 
 	const onSelectPath = useCallback((path: string) => {
 		setSelectedPath(path);

@@ -89,7 +89,14 @@ export default function App(): ReactElement {
 	const [homeSidebarSection, setHomeSidebarSection] = useState<"projects" | "agent">("projects");
 	const [isClearTrashDialogOpen, setIsClearTrashDialogOpen] = useState(false);
 	const [isGitHistoryOpen, setIsGitHistoryOpen] = useState(false);
-	const [isDiagramViewerOpen, setIsDiagramViewerOpen] = useState(false);
+	const [isDiagramViewerOpen, setIsDiagramViewerOpen] = useState(() => {
+		const params = new URLSearchParams(window.location.search);
+		return params.get("view") === "diagram";
+	});
+	const [initialDiagramPath] = useState(() => {
+		const params = new URLSearchParams(window.location.search);
+		return params.get("view") === "diagram" ? (params.get("path") ?? null) : null;
+	});
 	const [pendingTaskStartAfterEditId, setPendingTaskStartAfterEditId] = useState<string | null>(null);
 	const taskEditorResetRef = useRef<() => void>(() => {});
 	const lastStreamErrorRef = useRef<string | null>(null);
@@ -565,7 +572,15 @@ export default function App(): ReactElement {
 	const handleToggleDiagramViewer = useCallback(() => {
 		if (hasNoProjects) return;
 		setIsDiagramViewerOpen((current) => {
-			if (!current) setIsGitHistoryOpen(false);
+			if (!current) {
+				setIsGitHistoryOpen(false);
+			} else {
+				// Closing — clear URL params
+				const url = new URL(window.location.href);
+				url.searchParams.delete("view");
+				url.searchParams.delete("path");
+				history.replaceState(null, "", url.toString());
+			}
 			return !current;
 		});
 	}, [hasNoProjects]);
@@ -877,7 +892,7 @@ export default function App(): ReactElement {
 								<div className="flex flex-1 flex-col min-h-0 min-w-0">
 									<div className="flex flex-1 min-h-0 min-w-0">
 										{isDiagramViewerOpen ? (
-											<DiagramViewer workspaceId={currentProjectId} />
+											<DiagramViewer workspaceId={currentProjectId} initialPath={initialDiagramPath} />
 										) : isGitHistoryOpen ? (
 											<GitHistoryView
 												workspaceId={currentProjectId}

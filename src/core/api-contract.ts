@@ -1103,3 +1103,63 @@ export const runtimeHookIngestResponseSchema = z.object({
 	error: z.string().optional(),
 });
 export type RuntimeHookIngestResponse = z.infer<typeof runtimeHookIngestResponseSchema>;
+
+// --- Diagram Viewer ---
+
+export const runtimeDiagramNodeSchema: z.ZodType<RuntimeDiagramNode> = z.object({
+	name: z.string(),
+	path: z.string(),
+	type: z.enum(["file", "directory"]),
+	children: z.lazy(() => z.array(runtimeDiagramNodeSchema)),
+});
+export type RuntimeDiagramNode = {
+	name: string;
+	path: string;
+	type: "file" | "directory";
+	children: RuntimeDiagramNode[];
+};
+
+export const runtimeDiagramListRequestSchema = z.object({
+	root: z.string().optional(),
+});
+export type RuntimeDiagramListRequest = z.infer<typeof runtimeDiagramListRequestSchema>;
+
+export const runtimeDiagramListResponseSchema = z.object({
+	diagramsRoot: z.string(),
+	diagramsRootExists: z.boolean(),
+	tree: z.array(runtimeDiagramNodeSchema),
+});
+export type RuntimeDiagramListResponse = z.infer<typeof runtimeDiagramListResponseSchema>;
+
+export const runtimeDiagramContentRequestSchema = z.object({
+	path: z.string(),
+});
+export type RuntimeDiagramContentRequest = z.infer<typeof runtimeDiagramContentRequestSchema>;
+
+export const runtimeDiagramContentResponseSchema = z.object({
+	path: z.string(),
+	contentType: z.literal("html"),
+	content: z.string(),
+});
+export type RuntimeDiagramContentResponse = z.infer<typeof runtimeDiagramContentResponseSchema>;
+
+export const runtimeDiagramNavigateRequestSchema = z.object({
+	root: z.string(),
+	filePath: z.string(),
+	line: z.number().int().positive().optional(),
+	newTab: z.boolean().optional(),
+});
+export type RuntimeDiagramNavigateRequest = z.infer<typeof runtimeDiagramNavigateRequestSchema>;
+
+export const runtimeDiagramNavigateResponseSchema = z.object({
+	ok: z.boolean(),
+	error: z.string().optional(),
+});
+export type RuntimeDiagramNavigateResponse = z.infer<typeof runtimeDiagramNavigateResponseSchema>;
+
+export const runtimeDiagramExtensionStatusResponseSchema = z.object({
+	available: z.boolean(),
+	workspaceRegistered: z.boolean(),
+	error: z.string().optional(),
+});
+export type RuntimeDiagramExtensionStatusResponse = z.infer<typeof runtimeDiagramExtensionStatusResponseSchema>;

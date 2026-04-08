@@ -30,6 +30,13 @@ import type {
 	RuntimeConfigResponse,
 	RuntimeConfigSaveRequest,
 	RuntimeDebugResetAllStateResponse,
+	RuntimeDiagramContentRequest,
+	RuntimeDiagramContentResponse,
+	RuntimeDiagramExtensionStatusResponse,
+	RuntimeDiagramListRequest,
+	RuntimeDiagramListResponse,
+	RuntimeDiagramNavigateRequest,
+	RuntimeDiagramNavigateResponse,
 	RuntimeFeaturebaseTokenResponse,
 	RuntimeGitCheckoutRequest,
 	RuntimeGitCheckoutResponse,
@@ -110,6 +117,13 @@ import {
 	runtimeConfigResponseSchema,
 	runtimeConfigSaveRequestSchema,
 	runtimeDebugResetAllStateResponseSchema,
+	runtimeDiagramContentRequestSchema,
+	runtimeDiagramContentResponseSchema,
+	runtimeDiagramExtensionStatusResponseSchema,
+	runtimeDiagramListRequestSchema,
+	runtimeDiagramListResponseSchema,
+	runtimeDiagramNavigateRequestSchema,
+	runtimeDiagramNavigateResponseSchema,
 	runtimeFeaturebaseTokenResponseSchema,
 	runtimeGitCheckoutRequestSchema,
 	runtimeGitCheckoutResponseSchema,
@@ -328,6 +342,21 @@ export interface RuntimeTrpcContext {
 	};
 	hooksApi: {
 		ingest: (input: RuntimeHookIngestRequest) => Promise<RuntimeHookIngestResponse>;
+	};
+	diagramsApi: {
+		listDiagrams: (
+			scope: RuntimeTrpcWorkspaceScope,
+			input: RuntimeDiagramListRequest,
+		) => Promise<RuntimeDiagramListResponse>;
+		getDiagramContent: (
+			scope: RuntimeTrpcWorkspaceScope,
+			input: RuntimeDiagramContentRequest,
+		) => Promise<RuntimeDiagramContentResponse>;
+		navigateToDiagramSource: (
+			scope: RuntimeTrpcWorkspaceScope,
+			input: RuntimeDiagramNavigateRequest,
+		) => Promise<RuntimeDiagramNavigateResponse>;
+		checkExtensionStatus: (scope: RuntimeTrpcWorkspaceScope) => Promise<RuntimeDiagramExtensionStatusResponse>;
 	};
 }
 
@@ -647,6 +676,29 @@ export const runtimeAppRouter = t.router({
 			.mutation(async ({ ctx, input }) => {
 				return await ctx.hooksApi.ingest(input);
 			}),
+	}),
+	diagrams: t.router({
+		list: workspaceProcedure
+			.input(runtimeDiagramListRequestSchema)
+			.output(runtimeDiagramListResponseSchema)
+			.query(async ({ ctx, input }) => {
+				return await ctx.diagramsApi.listDiagrams(ctx.workspaceScope, input);
+			}),
+		getContent: workspaceProcedure
+			.input(runtimeDiagramContentRequestSchema)
+			.output(runtimeDiagramContentResponseSchema)
+			.query(async ({ ctx, input }) => {
+				return await ctx.diagramsApi.getDiagramContent(ctx.workspaceScope, input);
+			}),
+		navigate: workspaceProcedure
+			.input(runtimeDiagramNavigateRequestSchema)
+			.output(runtimeDiagramNavigateResponseSchema)
+			.mutation(async ({ ctx, input }) => {
+				return await ctx.diagramsApi.navigateToDiagramSource(ctx.workspaceScope, input);
+			}),
+		checkExtension: workspaceProcedure.output(runtimeDiagramExtensionStatusResponseSchema).query(async ({ ctx }) => {
+			return await ctx.diagramsApi.checkExtensionStatus(ctx.workspaceScope);
+		}),
 	}),
 });
 

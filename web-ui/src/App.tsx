@@ -10,6 +10,7 @@ import { CardDetailView } from "@/components/card-detail-view";
 import { ClearTrashDialog } from "@/components/clear-trash-dialog";
 import { DebugDialog } from "@/components/debug-dialog";
 import { AgentTerminalPanel } from "@/components/detail-panels/agent-terminal-panel";
+import { DiagramViewer } from "@/components/diagram-viewer";
 import { GitHistoryView } from "@/components/git-history-view";
 import { KanbanBoard } from "@/components/kanban-board";
 import { ProjectNavigationPanel } from "@/components/project-navigation-panel";
@@ -88,6 +89,7 @@ export default function App(): ReactElement {
 	const [homeSidebarSection, setHomeSidebarSection] = useState<"projects" | "agent">("projects");
 	const [isClearTrashDialogOpen, setIsClearTrashDialogOpen] = useState(false);
 	const [isGitHistoryOpen, setIsGitHistoryOpen] = useState(false);
+	const [isDiagramViewerOpen, setIsDiagramViewerOpen] = useState(false);
 	const [pendingTaskStartAfterEditId, setPendingTaskStartAfterEditId] = useState<string | null>(null);
 	const taskEditorResetRef = useRef<() => void>(() => {});
 	const lastStreamErrorRef = useRef<string | null>(null);
@@ -95,6 +97,7 @@ export default function App(): ReactElement {
 		setCanPersistWorkspaceState(false);
 		setSelectedTaskId(null);
 		setIsGitHistoryOpen(false);
+		setIsDiagramViewerOpen(false);
 		setPendingTaskStartAfterEditId(null);
 		taskEditorResetRef.current();
 	}, []);
@@ -540,6 +543,7 @@ export default function App(): ReactElement {
 	const handleBack = useCallback(() => {
 		setSelectedTaskId(null);
 		setIsGitHistoryOpen(false);
+		setIsDiagramViewerOpen(false);
 	}, []);
 
 	const handleOpenSettings = useCallback((section?: RuntimeSettingsSection) => {
@@ -550,11 +554,21 @@ export default function App(): ReactElement {
 		if (hasNoProjects) {
 			return;
 		}
-		setIsGitHistoryOpen((current) => !current);
+		setIsGitHistoryOpen((current) => {
+			if (!current) setIsDiagramViewerOpen(false);
+			return !current;
+		});
 	}, [hasNoProjects]);
 	const handleCloseGitHistory = useCallback(() => {
 		setIsGitHistoryOpen(false);
 	}, []);
+	const handleToggleDiagramViewer = useCallback(() => {
+		if (hasNoProjects) return;
+		setIsDiagramViewerOpen((current) => {
+			if (!current) setIsGitHistoryOpen(false);
+			return !current;
+		});
+	}, [hasNoProjects]);
 
 	const {
 		handleProgrammaticCardMoveReady,
@@ -827,6 +841,8 @@ export default function App(): ReactElement {
 						isOpeningWorkspace={isOpeningWorkspace}
 						onToggleGitHistory={hasNoProjects ? undefined : handleToggleGitHistory}
 						isGitHistoryOpen={isGitHistoryOpen}
+						onToggleDiagramViewer={hasNoProjects ? undefined : handleToggleDiagramViewer}
+						isDiagramViewerOpen={isDiagramViewerOpen}
 						hideProjectDependentActions={shouldHideProjectDependentTopBarActions}
 					/>
 					<div className="relative flex flex-1 min-h-0 min-w-0 overflow-hidden">
@@ -860,7 +876,9 @@ export default function App(): ReactElement {
 							) : (
 								<div className="flex flex-1 flex-col min-h-0 min-w-0">
 									<div className="flex flex-1 min-h-0 min-w-0">
-										{isGitHistoryOpen ? (
+										{isDiagramViewerOpen ? (
+											<DiagramViewer workspaceId={currentProjectId} />
+										) : isGitHistoryOpen ? (
 											<GitHistoryView
 												workspaceId={currentProjectId}
 												gitHistory={gitHistory}

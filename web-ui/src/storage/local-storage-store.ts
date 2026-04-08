@@ -13,6 +13,7 @@ export enum LocalStorageKey {
 	GitHistoryRefsPanelWidth = "kanban.git-history-refs-panel-width",
 	GitHistoryCommitsPanelWidth = "kanban.git-history-commits-panel-width",
 	GitDiffFileTreePanelRatio = "kanban.git-diff-file-tree-panel-ratio",
+	DiagramTreePanelWidth = "kanban.diagram-tree-panel-width",
 	OnboardingDialogShown = "kanban.onboarding.dialog.shown",
 	NotificationPermissionPrompted = "kanban.notifications.permission-prompted",
 	PreferredOpenTarget = "kanban.preferred-open-target",
@@ -32,6 +33,7 @@ export const LAYOUT_CUSTOMIZATION_LOCAL_STORAGE_KEYS = [
 	LocalStorageKey.GitHistoryRefsPanelWidth,
 	LocalStorageKey.GitHistoryCommitsPanelWidth,
 	LocalStorageKey.GitDiffFileTreePanelRatio,
+	LocalStorageKey.DiagramTreePanelWidth,
 ] as const;
 
 function getLocalStorage(): Storage | null {

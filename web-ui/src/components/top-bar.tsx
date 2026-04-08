@@ -9,6 +9,7 @@ import {
 	CircleArrowDown,
 	Command,
 	GitBranch,
+	Network,
 	Play,
 	Plus,
 	Settings,
@@ -292,6 +293,8 @@ export function TopBar({
 	isTerminalLoading,
 	onToggleGitHistory,
 	isGitHistoryOpen,
+	onToggleDiagramViewer,
+	isDiagramViewerOpen,
 	onOpenSettings,
 	showDebugButton,
 	onOpenDebugDialog,
@@ -326,6 +329,8 @@ export function TopBar({
 	isTerminalLoading?: boolean;
 	onToggleGitHistory?: () => void;
 	isGitHistoryOpen?: boolean;
+	onToggleDiagramViewer?: () => void;
+	isDiagramViewerOpen?: boolean;
 	onOpenSettings?: (section?: SettingsSection) => void;
 	showDebugButton?: boolean;
 	onOpenDebugDialog?: () => void;
@@ -563,6 +568,18 @@ export function TopBar({
 								Run
 							</Button>
 						) : null
+					) : null}
+					{onToggleDiagramViewer ? (
+						<Tooltip side="bottom" content="Toggle diagram viewer">
+							<Button
+								variant={isDiagramViewerOpen ? "primary" : "ghost"}
+								size="sm"
+								icon={<Network size={16} />}
+								onClick={onToggleDiagramViewer}
+								aria-label={isDiagramViewerOpen ? "Close diagram viewer" : "Open diagram viewer"}
+								className={cn("ml-1", isDiagramViewerOpen && "ring-1 ring-accent")}
+							/>
+						</Tooltip>
 					) : null}
 					{onToggleTerminal ? (
 						<Tooltip

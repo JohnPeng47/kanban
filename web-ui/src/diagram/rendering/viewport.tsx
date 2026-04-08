@@ -159,7 +159,7 @@ export function Viewport({ scene, onSceneClick, children }: ViewportProps): Reac
 	return (
 		<div
 			ref={containerRef}
-			className="relative w-full h-full overflow-hidden"
+			className="relative w-full h-full overflow-hidden select-none"
 			onPointerDown={onPointerDown}
 			onPointerMove={onPointerMove}
 			onPointerUp={onPointerUp}

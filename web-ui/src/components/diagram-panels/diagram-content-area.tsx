@@ -75,9 +75,7 @@ function DiagramScene({
 					if (collapsedG) collapsedG.classList.remove("hidden");
 					if (expandedG) {
 						expandedG.classList.remove("visible");
-						setTimeout(() => {
-							expandedG.innerHTML = "";
-						}, 400);
+						expandedG.innerHTML = "";
 					}
 				}
 				reflow.toggleExpand(elementId);

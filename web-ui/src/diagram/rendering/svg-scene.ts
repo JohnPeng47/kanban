@@ -48,9 +48,7 @@ function findVisualRect(g: SVGGElement): SVGRectElement | null {
 }
 
 export class SvgScene implements Scene {
-	private container: HTMLDivElement;
 	private svg: SVGSVGElement;
-	private transformDiv: HTMLDivElement;
 	private elements = new Map<string, SceneElement>();
 	private domElements = new Map<string, SVGGElement>();
 	private visualRects = new Map<string, SVGRectElement>();
@@ -59,15 +57,6 @@ export class SvgScene implements Scene {
 
 	constructor(svg: SVGSVGElement) {
 		this.svg = svg;
-
-		// Create container structure: container > transformDiv > svg
-		this.container = document.createElement("div");
-		this.container.className = "scene-container";
-		this.container.style.cssText = "width:100%;height:100%;overflow:hidden;position:relative";
-
-		this.transformDiv = document.createElement("div");
-		this.transformDiv.className = "scene-transform";
-		this.transformDiv.style.cssText = "transform-origin:0 0;will-change:transform";
 
 		// Remove viewBox, set explicit dimensions for 1:1 rendering
 		const viewBox = svg.getAttribute("viewBox");
@@ -82,10 +71,6 @@ export class SvgScene implements Scene {
 		svg.style.overflow = "visible";
 		svg.style.display = "block";
 
-		this.transformDiv.appendChild(svg);
-		this.container.appendChild(this.transformDiv);
-
-		// Build the SceneElement tree
 		this.buildElementTree();
 	}
 
@@ -122,7 +107,6 @@ export class SvgScene implements Scene {
 				this.visualRects.set(id, visualRect);
 			}
 
-			// Find nearest tagged ancestor to determine parent
 			let parentId = this.rootId;
 			let ancestor: Element | null = g.parentElement;
 			while (ancestor && ancestor !== (this.svg as Element)) {
@@ -133,7 +117,6 @@ export class SvgScene implements Scene {
 				ancestor = ancestor.parentElement;
 			}
 
-			// Read local bounds from getBBox (element must be in DOM)
 			let localBounds: Rect;
 			try {
 				const bbox = g.getBBox();
@@ -153,14 +136,12 @@ export class SvgScene implements Scene {
 			};
 			this.elements.set(id, element);
 
-			// Register as child of parent
 			const parent = this.elements.get(parentId);
 			if (parent) {
 				parent.childIds.push(id);
 			}
 		}
 
-		// Compute root bounds from SVG dimensions
 		const svgWidth = this.svg.width.baseVal.value || 0;
 		const svgHeight = this.svg.height.baseVal.value || 0;
 		rootElement.localBounds = { x: 0, y: 0, width: svgWidth, height: svgHeight };
@@ -203,19 +184,15 @@ export class SvgScene implements Scene {
 		const element = this.elements.get(id);
 		if (!element) return { x: 0, y: 0, width: 0, height: 0 };
 
-		// Compose transforms from root's children down to this element's parent
-		// Root transform is NOT included (world bounds are in scene space)
 		const parentTransform = this.getAncestorTransform(id);
 		const bounds = transformRect(element.localBounds, parentTransform);
 		this.worldBoundsCache.set(id, bounds);
 		return bounds;
 	}
 
-	/** Compose transforms from root's immediate children down to the element's parent. */
 	private getAncestorTransform(id: string): Transform {
 		const chain: Transform[] = [];
 		let current = this.elements.get(id);
-		// Walk up to root, collecting parent transforms (skip root's own transform)
 		while (current && current.parentId !== null) {
 			const parent = this.elements.get(current.parentId);
 			if (parent && parent.id !== this.rootId) {
@@ -223,7 +200,6 @@ export class SvgScene implements Scene {
 			}
 			current = parent ?? undefined;
 		}
-		// Compose from outermost to innermost
 		chain.reverse();
 		let composed: Transform = { ...IDENTITY_TRANSFORM };
 		for (const t of chain) {
@@ -241,9 +217,9 @@ export class SvgScene implements Scene {
 		element.transform = transform;
 		this.invalidateWorldBoundsCache(id);
 
-		if (id === this.rootId) {
-			this.transformDiv.style.transform = `translate(${transform.tx}px,${transform.ty}px) scale(${transform.scale})`;
-		} else {
+		// Only apply CSS for non-root elements (reflow displacements).
+		// Root transform CSS is managed by the Viewport component.
+		if (id !== this.rootId) {
 			const g = this.domElements.get(id);
 			if (g) {
 				g.style.transform = `translate(${transform.tx}px,${transform.ty}px)`;
@@ -296,7 +272,6 @@ export class SvgScene implements Scene {
 		rect.setAttribute("width", String(currentW + deltaW));
 		rect.setAttribute("height", String(currentH + deltaH));
 
-		// Update localBounds
 		const element = this.elements.get(id);
 		if (element) {
 			element.localBounds = {
@@ -311,16 +286,13 @@ export class SvgScene implements Scene {
 
 	// ─── Hit Testing ───────────────────────────────────────────
 
-	hitTest(scenePoint: Point): string | null {
-		const screenPoint = this.sceneToScreen(scenePoint);
+	hitTest(screenPoint: Point): string | null {
 		const domElement = document.elementFromPoint(screenPoint.x, screenPoint.y);
-		if (!domElement || !this.container.contains(domElement)) return null;
+		if (!domElement || !this.svg.contains(domElement)) return null;
 
-		// Walk up from hit element to find nearest SceneElement
 		const closest = (domElement as Element).closest?.(SCENE_ELEMENT_SELECTOR);
 		if (!closest || !(closest instanceof SVGGElement)) return null;
 
-		// Find the ID for this DOM element
 		for (const [id, g] of this.domElements) {
 			if (g === closest) return id;
 		}
@@ -329,7 +301,6 @@ export class SvgScene implements Scene {
 
 	hitTestRect(sceneRect: Rect, mode: "intersect" | "contain"): string[] {
 		const matches: string[] = [];
-		const testFn = mode === "intersect" ? rectsIntersect : rectContains;
 
 		for (const [id, element] of this.elements) {
 			if (!("interactive" in element.metadata)) continue;
@@ -338,39 +309,17 @@ export class SvgScene implements Scene {
 				if (rectContains(sceneRect, worldBounds)) {
 					matches.push(id);
 				}
-			} else if (testFn(sceneRect, worldBounds)) {
+			} else if (rectsIntersect(sceneRect, worldBounds)) {
 				matches.push(id);
 			}
 		}
 		return matches;
 	}
 
-	// ─── Coordinate Conversion ─────────────────────────────────
-
-	screenToScene(screenPoint: Point): Point {
-		const root = this.getRoot();
-		const { tx, ty, scale } = root.transform;
-		const containerRect = this.container.getBoundingClientRect();
-		return {
-			x: (screenPoint.x - containerRect.left - tx) / scale,
-			y: (screenPoint.y - containerRect.top - ty) / scale,
-		};
-	}
-
-	sceneToScreen(scenePoint: Point): Point {
-		const root = this.getRoot();
-		const { tx, ty, scale } = root.transform;
-		const containerRect = this.container.getBoundingClientRect();
-		return {
-			x: scenePoint.x * scale + tx + containerRect.left,
-			y: scenePoint.y * scale + ty + containerRect.top,
-		};
-	}
-
 	// ─── Rendering ─────────────────────────────────────────────
 
-	getRenderElement(): HTMLElement {
-		return this.container;
+	getSvgElement(): SVGSVGElement {
+		return this.svg;
 	}
 
 	// ─── Lifecycle ─────────────────────────────────────────────
@@ -380,6 +329,5 @@ export class SvgScene implements Scene {
 		this.domElements.clear();
 		this.visualRects.clear();
 		this.worldBoundsCache.clear();
-		this.container.remove();
 	}
 }

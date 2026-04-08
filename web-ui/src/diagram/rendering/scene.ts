@@ -62,18 +62,15 @@ export interface Scene {
 
 	// ─── Hit Testing ───────────────────────────────────────────
 
-	hitTest(scenePoint: Point): string | null;
+	/** Point hit test. Takes a screen-space point (Viewport converts to screen
+	 *  before calling). Uses elementFromPoint for accurate SVG shape testing. */
+	hitTest(screenPoint: Point): string | null;
 	hitTestRect(sceneRect: Rect, mode: "intersect" | "contain"): string[];
-
-	// ─── Coordinate Conversion ─────────────────────────────────
-
-	screenToScene(screenPoint: Point): Point;
-	sceneToScreen(scenePoint: Point): Point;
 
 	// ─── Rendering ─────────────────────────────────────────────
 
-	/** Get the DOM element that renders the scene. D3-zoom attaches here. */
-	getRenderElement(): HTMLElement;
+	/** Get the SVG element for mounting into the Viewport's DOM structure. */
+	getSvgElement(): SVGSVGElement;
 
 	// ─── Lifecycle ─────────────────────────────────────────────
 

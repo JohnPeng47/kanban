@@ -1,18 +1,21 @@
+import { InteractionLayer } from "./interaction/interaction-layer";
+import { InteractiveElementRegistry } from "./interaction/interactive-registry";
+import { ReflowEngine } from "./reflow/engine";
 import type { Scene } from "./rendering/scene";
 import { SvgScene } from "./rendering/svg-scene";
 
 export interface LoadedDiagram {
 	scene: Scene;
+	interactiveRegistry: InteractiveElementRegistry;
+	reflowEngine: ReflowEngine;
+	interactionLayer: InteractionLayer;
 }
 
 /**
- * Parse an HTML string containing an SVG diagram and construct a Scene.
+ * Parse an HTML string containing an SVG diagram and construct a fully
+ * initialized diagram with Scene, registries, reflow engine, and interaction layer.
  *
- * The returned LoadedDiagram owns the Scene. Callers must call
- * scene.destroy() when the diagram is unloaded.
- *
- * Registries and engine are not created here — they are built in later phases
- * (reflow, interaction) and will be added to LoadedDiagram as the framework grows.
+ * Callers must call `destroyDiagram(diagram)` when the diagram is unloaded.
  */
 export function loadDiagram(html: string): LoadedDiagram {
 	const doc = new DOMParser().parseFromString(html, "text/html");
@@ -34,5 +37,24 @@ export function loadDiagram(html: string): LoadedDiagram {
 		}
 	}
 
-	return { scene };
+	// Build registries from Scene
+	const interactiveRegistry = new InteractiveElementRegistry();
+	interactiveRegistry.buildFromScene(scene);
+
+	// Initialize reflow engine (parses scripts from DOM)
+	const reflowEngine = new ReflowEngine();
+	reflowEngine.initialize(scene);
+
+	// Initialize interaction layer (attaches event listeners)
+	const interactionLayer = new InteractionLayer();
+	interactionLayer.initialize(scene, interactiveRegistry);
+
+	return { scene, interactiveRegistry, reflowEngine, interactionLayer };
+}
+
+/** Tear down all components of a loaded diagram. */
+export function destroyDiagram(diagram: LoadedDiagram): void {
+	diagram.interactionLayer.destroy();
+	diagram.reflowEngine.destroy();
+	diagram.scene.destroy();
 }

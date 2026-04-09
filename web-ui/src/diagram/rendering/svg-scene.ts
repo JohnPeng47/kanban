@@ -81,7 +81,7 @@ export class SvgScene implements Scene {
 		const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
 		style.textContent = `
 			[data-interactive] { cursor: pointer; transition: filter 0.15s ease; }
-			[data-interactive]:hover { filter: brightness(1.5) drop-shadow(0 0 6px currentColor); }
+			[data-interactive]:hover, [data-interactive].selected { filter: brightness(1.5) drop-shadow(0 0 6px currentColor); }
 			[data-expandable] .collapsed-content { cursor: pointer; }
 			[data-expandable] .collapsed-content:hover > rect:first-child {
 				filter: brightness(1.3) drop-shadow(0 0 8px rgba(210, 153, 34, 0.4));

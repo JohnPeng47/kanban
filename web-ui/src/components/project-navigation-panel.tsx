@@ -1,6 +1,15 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, ChevronUp, Ellipsis, ExternalLink, Info, Plus } from "lucide-react";
+import {
+	ChevronDown,
+	ChevronUp,
+	Ellipsis,
+	ExternalLink,
+	Info,
+	PanelLeftClose,
+	PanelLeftOpen,
+	Plus,
+} from "lucide-react";
 import { type MouseEvent as ReactMouseEvent, type ReactNode, useCallback, useRef, useState } from "react";
 import { canShowFeaturebaseFeedbackButton } from "@/components/featurebase-feedback-button";
 import { Button } from "@/components/ui/button";
@@ -203,6 +212,14 @@ export function ProjectNavigationPanel({
 				>
 					<Plus size={16} />
 				</button>
+				<button
+					type="button"
+					title="Expand sidebar"
+					onClick={() => setSidebarCollapsed(false)}
+					className="w-8 h-8 rounded-md shrink-0 border-0 cursor-pointer flex items-center justify-center bg-transparent text-text-tertiary hover:text-text-secondary hover:bg-surface-2 mb-1"
+				>
+					<PanelLeftOpen size={16} />
+				</button>
 			</aside>
 		);
 	}
@@ -225,11 +242,19 @@ export function ProjectNavigationPanel({
 				className="absolute top-0 right-0 bottom-0 w-1.5 cursor-ew-resize z-10"
 			/>
 			<div style={{ padding: "12px 12px 8px" }}>
-				<div>
+				<div className="flex items-center justify-between">
 					<div className="font-semibold text-base flex items-baseline gap-1.5">
 						<ClineIcon size={18} className="text-text-primary shrink-0 self-center" />
 						Cline <span className="text-text-secondary font-normal text-xs">v{__APP_VERSION__}</span>
 					</div>
+					<button
+						type="button"
+						title="Collapse sidebar"
+						onClick={() => setSidebarCollapsed(true)}
+						className="flex items-center justify-center w-7 h-7 rounded-md border-0 cursor-pointer bg-transparent text-text-tertiary hover:text-text-secondary hover:bg-surface-3"
+					>
+						<PanelLeftClose size={16} />
+					</button>
 				</div>
 				<div className="mt-2 rounded-md bg-surface-2 p-1">
 					<div className="grid grid-cols-2 gap-1">

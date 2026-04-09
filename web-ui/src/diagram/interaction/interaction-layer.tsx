@@ -1,8 +1,26 @@
-import { type ReactElement, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { showAppToast } from "@/components/app-toaster";
 import type { Scene } from "../rendering/scene";
 import { isExpandable } from "../rendering/scene";
 import { Viewport, type ViewportSceneEvent } from "../rendering/viewport";
+import type { Rect } from "../types";
 import type { InteractiveElement, InteractiveElementRegistry } from "./interactive-registry";
+
+const PATH_DISPLAY_MAX_LEN = 20;
+
+/** Truncate a file path to fit a character budget: always show filename,
+ *  and prepend the closest parent directory only if the combined result fits. */
+function truncatePath(path: string, maxLen: number): string {
+	const lastSlash = path.lastIndexOf("/");
+	if (lastSlash === -1) return path;
+	const filename = path.slice(lastSlash + 1);
+	const parentPath = path.slice(0, lastSlash);
+	const prevSlash = parentPath.lastIndexOf("/");
+	const closestParent = prevSlash === -1 ? parentPath : parentPath.slice(prevSlash + 1);
+	const withParent = `${closestParent}/${filename}`;
+	if (withParent.length <= maxLen) return withParent;
+	return filename;
+}
 
 export interface InteractionLayerProps {
 	scene: Scene;
@@ -85,6 +103,106 @@ export function InteractionLayer({
 				.filter((el): el is InteractiveElement => el != null);
 		},
 		[interactiveRegistry],
+	);
+
+	// Track the current preview set so we can re-render the path list overlay
+	// and clear visuals on drag update.
+	const [dragPreviewIds, setDragPreviewIds] = useState<Set<string>>(new Set());
+
+	const handleSelectionDrag = useCallback(
+		(sceneRect: Rect) => {
+			const hitIds = scene.hitTestRect(sceneRect, "intersect");
+			const validIds = new Set<string>();
+			for (const id of hitIds) {
+				if (interactiveRegistry.get(id)) {
+					validIds.add(id);
+				}
+			}
+
+			setDragPreviewIds((prev) => {
+				// Clear visuals for elements no longer in the lasso
+				for (const id of prev) {
+					if (!validIds.has(id)) {
+						applySelectionVisual(id, false);
+					}
+				}
+				// Apply visuals for newly lassoed elements
+				for (const id of validIds) {
+					applySelectionVisual(id, true);
+				}
+				return validIds;
+			});
+		},
+		[scene, interactiveRegistry, applySelectionVisual],
+	);
+
+	const dragPreviewPaths = useMemo(() => {
+		const items: Array<{ id: string; path: string }> = [];
+		for (const id of dragPreviewIds) {
+			const el = interactiveRegistry.get(id);
+			if (el?.parsedRef.filePath) {
+				items.push({ id, path: truncatePath(el.parsedRef.filePath, PATH_DISPLAY_MAX_LEN) });
+			}
+		}
+		return items;
+	}, [dragPreviewIds, interactiveRegistry]);
+
+	const handleSelectionDragEnd = useCallback(
+		(sceneRect: Rect) => {
+			const hitIds = scene.hitTestRect(sceneRect, "intersect");
+			const newSelectedIds = new Set<string>();
+			for (const id of hitIds) {
+				if (interactiveRegistry.get(id)) {
+					newSelectedIds.add(id);
+				}
+			}
+
+			// Clear any previous selection visuals
+			for (const id of selectedIds) {
+				if (!newSelectedIds.has(id)) {
+					applySelectionVisual(id, false);
+				}
+			}
+			// Apply final selection visuals
+			for (const id of newSelectedIds) {
+				applySelectionVisual(id, true);
+			}
+
+			setDragPreviewIds(new Set());
+			setSelectedIds(newSelectedIds);
+
+			const elements = getSelectedElements(newSelectedIds);
+			onSelectionChange?.(elements);
+
+			// Collect unique file paths and copy to clipboard
+			const refs = new Set<string>();
+			for (const el of elements) {
+				if (el.ref) {
+					refs.add(el.ref);
+				}
+			}
+
+			if (refs.size > 0) {
+				const text = Array.from(refs).join(" ");
+				navigator.clipboard.writeText(text).then(
+					() => {
+						showAppToast({
+							intent: "success",
+							message: `Copied ${refs.size} ref(s)`,
+							timeout: 3000,
+						});
+					},
+					() => {
+						showAppToast({
+							intent: "warning",
+							message: "Failed to copy paths to clipboard",
+							timeout: 3000,
+						});
+					},
+				);
+			}
+		},
+		[scene, interactiveRegistry, selectedIds, applySelectionVisual, getSelectedElements, onSelectionChange],
 	);
 
 	const handleSceneClick = useCallback(
@@ -207,7 +325,13 @@ export function InteractionLayer({
 					whiteSpace: "nowrap",
 				}}
 			/>
-			<Viewport scene={scene} onSceneClick={handleSceneClick}>
+			<Viewport
+				scene={scene}
+				onSceneClick={handleSceneClick}
+				onSelectionDrag={handleSelectionDrag}
+				onSelectionDragEnd={handleSelectionDragEnd}
+				selectionOverlayPaths={dragPreviewPaths}
+			>
 				{children}
 			</Viewport>
 			<style>{`

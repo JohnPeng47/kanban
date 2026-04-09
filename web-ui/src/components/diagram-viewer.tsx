@@ -5,25 +5,34 @@ import { DiagramContentArea } from "@/components/diagram-panels/diagram-content-
 import { DiagramTreePanel } from "@/components/diagram-panels/diagram-tree-panel";
 import { DiagramViewerFallback } from "@/components/diagram-panels/diagram-viewer-fallback";
 import { useCodeVizStatus } from "@/hooks/use-code-viz-status";
+import { type UseDiagramAgentPanelInput, useDiagramAgentPanel } from "@/hooks/use-diagram-agent-panel";
 import { useDiagramViewer } from "@/hooks/use-diagram-viewer";
 import { ResizeHandle } from "@/resize/resize-handle";
-import { clampDiagramTreePanelWidth, useDiagramViewerLayout } from "@/resize/use-diagram-viewer-layout";
+import {
+	clampDiagramAgentPanelWidth,
+	clampDiagramTreePanelWidth,
+	useDiagramViewerLayout,
+} from "@/resize/use-diagram-viewer-layout";
 import { useResizeDrag } from "@/resize/use-resize-drag";
 import { useWindowEvent } from "@/utils/react-use";
 
 export function DiagramViewer({
 	workspaceId,
 	initialPath,
+	agentPanelInput,
 }: {
 	workspaceId: string | null;
 	initialPath?: string | null;
+	agentPanelInput: UseDiagramAgentPanelInput;
 }): React.ReactElement {
 	const viewer = useDiagramViewer(workspaceId, initialPath ?? null);
 	const codeVizStatus = useCodeVizStatus(workspaceId);
+	const agentPanel = useDiagramAgentPanel(agentPanelInput);
 	const [containerWidth, setContainerWidth] = useState<number | null>(null);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const { startDrag } = useResizeDrag();
-	const { displayTreePanelWidth, setTreePanelWidth } = useDiagramViewerLayout({ containerWidth });
+	const { displayTreePanelWidth, setTreePanelWidth, displayAgentPanelWidth, setAgentPanelWidth } =
+		useDiagramViewerLayout({ containerWidth });
 
 	const updateContainerWidth = useCallback(() => {
 		const container = containerRef.current;
@@ -37,27 +46,61 @@ export function DiagramViewer({
 
 	useWindowEvent("resize", updateContainerWidth);
 
-	const handleSeparatorMouseDown = useCallback(
+	const handleTreeSeparatorMouseDown = useCallback(
 		(event: ReactMouseEvent<HTMLDivElement>) => {
 			const container = containerRef.current;
 			if (!container) return;
 			const currentContainerWidth = Math.max(container.offsetWidth, 1);
 			const startX = event.clientX;
 			const startWidth = displayTreePanelWidth;
+			const siblingAgentWidth = displayAgentPanelWidth;
 			startDrag(event, {
 				axis: "x",
 				cursor: "ew-resize",
 				onMove: (pointerX) => {
 					const deltaX = pointerX - startX;
-					setTreePanelWidth(clampDiagramTreePanelWidth(startWidth + deltaX, currentContainerWidth));
+					setTreePanelWidth(
+						clampDiagramTreePanelWidth(startWidth + deltaX, currentContainerWidth, siblingAgentWidth),
+					);
 				},
 				onEnd: (pointerX) => {
 					const deltaX = pointerX - startX;
-					setTreePanelWidth(clampDiagramTreePanelWidth(startWidth + deltaX, currentContainerWidth));
+					setTreePanelWidth(
+						clampDiagramTreePanelWidth(startWidth + deltaX, currentContainerWidth, siblingAgentWidth),
+					);
 				},
 			});
 		},
-		[displayTreePanelWidth, setTreePanelWidth, startDrag],
+		[displayTreePanelWidth, displayAgentPanelWidth, setTreePanelWidth, startDrag],
+	);
+
+	const handleAgentSeparatorMouseDown = useCallback(
+		(event: ReactMouseEvent<HTMLDivElement>) => {
+			const container = containerRef.current;
+			if (!container) return;
+			const currentContainerWidth = Math.max(container.offsetWidth, 1);
+			const startX = event.clientX;
+			const startWidth = displayAgentPanelWidth;
+			const siblingTreeWidth = displayTreePanelWidth;
+			startDrag(event, {
+				axis: "x",
+				cursor: "ew-resize",
+				onMove: (pointerX) => {
+					const deltaX = pointerX - startX;
+					// Dragging the right separator left should grow the agent panel
+					setAgentPanelWidth(
+						clampDiagramAgentPanelWidth(startWidth - deltaX, currentContainerWidth, siblingTreeWidth),
+					);
+				},
+				onEnd: (pointerX) => {
+					const deltaX = pointerX - startX;
+					setAgentPanelWidth(
+						clampDiagramAgentPanelWidth(startWidth - deltaX, currentContainerWidth, siblingTreeWidth),
+					);
+				},
+			});
+		},
+		[displayAgentPanelWidth, displayTreePanelWidth, setAgentPanelWidth, startDrag],
 	);
 
 	if (!viewer.isTreeLoading && !viewer.diagramsRootExists) {
@@ -78,7 +121,7 @@ export function DiagramViewer({
 			<ResizeHandle
 				orientation="vertical"
 				ariaLabel="Resize diagram tree and content panels"
-				onMouseDown={handleSeparatorMouseDown}
+				onMouseDown={handleTreeSeparatorMouseDown}
 			/>
 			<div className="relative flex flex-1 min-w-0 min-h-0">
 				<DiagramContentArea
@@ -93,6 +136,18 @@ export function DiagramViewer({
 					<CodeVizStatusIndicator state={codeVizStatus.state} />
 				</div>
 			</div>
+			{agentPanel ? (
+				<>
+					<ResizeHandle
+						orientation="vertical"
+						ariaLabel="Resize diagram content and agent panels"
+						onMouseDown={handleAgentSeparatorMouseDown}
+					/>
+					<div className="flex min-h-0 shrink-0 flex-col bg-surface-1" style={{ width: displayAgentPanelWidth }}>
+						{agentPanel}
+					</div>
+				</>
+			) : null}
 		</div>
 	);
 }

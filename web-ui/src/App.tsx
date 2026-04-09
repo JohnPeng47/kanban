@@ -892,7 +892,19 @@ export default function App(): ReactElement {
 								<div className="flex flex-1 flex-col min-h-0 min-w-0">
 									<div className="flex flex-1 min-h-0 min-w-0">
 										{isDiagramViewerOpen ? (
-											<DiagramViewer workspaceId={currentProjectId} initialPath={initialDiagramPath} />
+											<DiagramViewer
+												workspaceId={currentProjectId}
+												initialPath={initialDiagramPath}
+												agentPanelInput={{
+													currentProjectId,
+													runtimeProjectConfig,
+													clineSessionContextVersion,
+													taskSessions: sessions,
+													workspaceGit,
+													latestTaskChatMessage,
+													taskChatMessagesByTaskId,
+												}}
+											/>
 										) : isGitHistoryOpen ? (
 											<GitHistoryView
 												workspaceId={currentProjectId}

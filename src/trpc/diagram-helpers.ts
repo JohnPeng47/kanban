@@ -4,14 +4,14 @@ import path from "node:path";
 import type {
 	RuntimeDiagramContentRequest,
 	RuntimeDiagramContentResponse,
+	RuntimeDiagramExtensionStatusResponse,
 	RuntimeDiagramListRequest,
 	RuntimeDiagramListResponse,
 	RuntimeDiagramNavigateRequest,
 	RuntimeDiagramNavigateResponse,
-	RuntimeDiagramExtensionStatusResponse,
 	RuntimeDiagramNode,
 } from "../core/api-contract";
-import { codeVizClient } from "../diagram-providers/code-viz-client";
+import { codeVizClient } from "../diagram/code-viz-client";
 
 const MAX_DIAGRAM_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
@@ -142,8 +142,6 @@ export async function checkDiagramExtensionStatus(
 	return {
 		available: true,
 		workspaceRegistered: registered,
-		error: registered
-			? undefined
-			: "This workspace is not open in a VSCode window with Code Viz active.",
+		error: registered ? undefined : "This workspace is not open in a VSCode window with Code Viz active.",
 	};
 }

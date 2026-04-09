@@ -1,8 +1,10 @@
 import { type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from "react";
 
+import { CodeVizStatusIndicator } from "@/components/diagram-panels/code-viz-status-indicator";
 import { DiagramContentArea } from "@/components/diagram-panels/diagram-content-area";
 import { DiagramTreePanel } from "@/components/diagram-panels/diagram-tree-panel";
 import { DiagramViewerFallback } from "@/components/diagram-panels/diagram-viewer-fallback";
+import { useCodeVizStatus } from "@/hooks/use-code-viz-status";
 import { useDiagramViewer } from "@/hooks/use-diagram-viewer";
 import { ResizeHandle } from "@/resize/resize-handle";
 import { clampDiagramTreePanelWidth, useDiagramViewerLayout } from "@/resize/use-diagram-viewer-layout";
@@ -17,6 +19,7 @@ export function DiagramViewer({
 	initialPath?: string | null;
 }): React.ReactElement {
 	const viewer = useDiagramViewer(workspaceId, initialPath ?? null);
+	const codeVizStatus = useCodeVizStatus(workspaceId);
 	const [containerWidth, setContainerWidth] = useState<number | null>(null);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const { startDrag } = useResizeDrag();
@@ -77,14 +80,19 @@ export function DiagramViewer({
 				ariaLabel="Resize diagram tree and content panels"
 				onMouseDown={handleSeparatorMouseDown}
 			/>
-			<DiagramContentArea
-				content={viewer.content}
-				isLoading={viewer.isContentLoading}
-				error={viewer.contentError}
-				selectedPath={viewer.selectedPath}
-				workspaceId={workspaceId}
-				workspacePath={viewer.workspacePath}
-			/>
+			<div className="relative flex flex-1 min-w-0 min-h-0">
+				<DiagramContentArea
+					content={viewer.content}
+					isLoading={viewer.isContentLoading}
+					error={viewer.contentError}
+					selectedPath={viewer.selectedPath}
+					workspaceId={workspaceId}
+					workspacePath={viewer.workspacePath}
+				/>
+				<div className="absolute top-2 right-2 z-10">
+					<CodeVizStatusIndicator state={codeVizStatus.state} />
+				</div>
+			</div>
 		</div>
 	);
 }

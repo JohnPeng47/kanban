@@ -1,3 +1,5 @@
+import { realpath } from "node:fs/promises";
+
 const DEFAULT_CODE_VIZ_PORT = 24680;
 
 function getCodeVizPort(): number {
@@ -52,6 +54,15 @@ async function checkHealth(): Promise<CodeVizHealthResponse | null> {
 	}
 }
 
+/** Resolve a path to its real filesystem path, stripping trailing slashes. */
+async function resolveRealPath(p: string): Promise<string> {
+	try {
+		return (await realpath(p)).replace(/\/+$/, "");
+	} catch {
+		return p.replace(/\/+$/, "");
+	}
+}
+
 async function checkWorkspace(workspacePath: string): Promise<boolean> {
 	try {
 		const response = await fetch(`${getCodeVizBaseUrl()}/api/workspaces`, {
@@ -59,8 +70,12 @@ async function checkWorkspace(workspacePath: string): Promise<boolean> {
 		});
 		if (!response.ok) return false;
 		const data = (await response.json()) as CodeVizWorkspacesResponse;
-		const normalizedTarget = workspacePath.replace(/\/+$/, "");
-		return data.workspaces.some((ws) => ws.root.replace(/\/+$/, "") === normalizedTarget);
+		const resolvedTarget = await resolveRealPath(workspacePath);
+		for (const ws of data.workspaces) {
+			const resolvedRoot = await resolveRealPath(ws.root);
+			if (resolvedRoot === resolvedTarget) return true;
+		}
+		return false;
 	} catch {
 		return false;
 	}
@@ -72,7 +87,7 @@ async function navigate(input: CodeVizNavigateRequest): Promise<CodeVizNavigateR
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(input),
-			signal: AbortSignal.timeout(2_500),	
+			signal: AbortSignal.timeout(2_500),
 		});
 		if (!response.ok) {
 			return { ok: false, error: `Code Viz returned ${response.status}` };
@@ -85,7 +100,8 @@ async function navigate(input: CodeVizNavigateRequest): Promise<CodeVizNavigateR
 		if (error instanceof DOMException && error.name === "AbortError") {
 			return { ok: false, error: "Navigation request timed out" };
 		}
-		return { ok: false, error: "Unexpected error communicating with Code Viz" };
+		const detail = error instanceof Error ? error.message : String(error);
+		return { ok: false, error: `Code Viz navigate failed: ${detail}` };
 	}
 }
 

@@ -1,8 +1,10 @@
-import { FileText } from "lucide-react";
-import { type ReactElement, useCallback, useMemo, useRef } from "react";
+import { BoxSelect, FileText, Hand } from "lucide-react";
+import { type ReactElement, useCallback, useMemo, useRef, useState } from "react";
 
 import { showAppToast } from "@/components/app-toaster";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip } from "@/components/ui/tooltip";
 import { InteractionLayer } from "@/diagram/interaction/interaction-layer";
 import type { InteractiveElement } from "@/diagram/interaction/interactive-registry";
 import { InteractiveElementRegistry } from "@/diagram/interaction/interactive-registry";
@@ -39,6 +41,7 @@ function DiagramScene({
 
 	const reflow = useReflowEngine(scene);
 	const expandingRef = useRef(new Set<string>());
+	const [selectMode, setSelectMode] = useState(false);
 
 	const handleNavigate = useCallback(
 		(element: InteractiveElement, domEvent: PointerEvent) => {
@@ -163,7 +166,27 @@ function DiagramScene({
 			interactiveRegistry={interactiveRegistry}
 			onNavigate={handleNavigate}
 			onExpand={handleExpand}
-		/>
+			selectMode={selectMode}
+		>
+			<div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg bg-surface-1 border border-border p-1 shadow-lg">
+				<Tooltip content="Pan mode">
+					<Button
+						variant={selectMode ? "ghost" : "default"}
+						size="sm"
+						icon={<Hand size={14} />}
+						onClick={() => setSelectMode(false)}
+					/>
+				</Tooltip>
+				<Tooltip content="Select mode">
+					<Button
+						variant={selectMode ? "default" : "ghost"}
+						size="sm"
+						icon={<BoxSelect size={14} />}
+						onClick={() => setSelectMode(true)}
+					/>
+				</Tooltip>
+			</div>
+		</InteractionLayer>
 	);
 }
 

@@ -28,6 +28,8 @@ export interface InteractionLayerProps {
 	onNavigate?: (element: InteractiveElement, domEvent: PointerEvent) => void;
 	onExpand?: (elementId: string) => void;
 	onSelectionChange?: (elements: InteractiveElement[]) => void;
+	/** When true, single-finger touch drag draws a selection lasso instead of panning. */
+	selectMode?: boolean;
 	children?: ReactNode;
 }
 
@@ -39,16 +41,31 @@ export function InteractionLayer({
 	onNavigate,
 	onExpand,
 	onSelectionChange,
+	selectMode = false,
 	children,
 }: InteractionLayerProps): ReactElement {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const tooltipRef = useRef<HTMLDivElement>(null);
 
-	// Tooltip: mouseover/mousemove/mouseout on data-tt elements
+	// Tooltip: mouseover/mousemove/mouseout on data-tt elements (desktop),
+	// plus pointerdown on touch to show tooltip on tap.
+	const touchTooltipTargetRef = useRef<Element | null>(null);
+
 	useEffect(() => {
 		const svg = scene.getSvgElement();
 		const tooltip = tooltipRef.current;
 		if (!svg || !tooltip) return;
+
+		const showTooltip = (target: Element, x: number, y: number) => {
+			const tt = target.getAttribute("data-tt") ?? "";
+			const parts = tt.split(" — ");
+			tooltip.innerHTML = `<span class="tt-file">${parts[0]}</span>${
+				parts[1] ? `<div class="tt-hint">${parts[1]}</div>` : ""
+			}<div class="tt-action">${"ontouchstart" in window ? "tap to jump to code" : "click to jump to code"}</div>`;
+			tooltip.style.left = `${x + 14}px`;
+			tooltip.style.top = `${y - 10}px`;
+			tooltip.classList.add("visible");
+		};
 
 		const onMouseOver = (e: MouseEvent) => {
 			const target = (e.target as Element).closest?.("[data-tt]");
@@ -56,12 +73,7 @@ export function InteractionLayer({
 				tooltip.classList.remove("visible");
 				return;
 			}
-			const tt = target.getAttribute("data-tt") ?? "";
-			const parts = tt.split(" — ");
-			tooltip.innerHTML = `<span class="tt-file">${parts[0]}</span>${
-				parts[1] ? `<div class="tt-hint">${parts[1]}</div>` : ""
-			}<div class="tt-action">click to jump to code</div>`;
-			tooltip.classList.add("visible");
+			showTooltip(target, e.clientX, e.clientY);
 		};
 
 		const onMouseMove = (e: MouseEvent) => {
@@ -75,13 +87,28 @@ export function InteractionLayer({
 			}
 		};
 
+		// Touch: show tooltip on tap, dismiss on tap elsewhere
+		const onPointerDown = (e: PointerEvent) => {
+			if (e.pointerType !== "touch") return;
+			const target = (e.target as Element).closest?.("[data-tt]");
+			if (target) {
+				touchTooltipTargetRef.current = target;
+				showTooltip(target, e.clientX, e.clientY);
+			} else {
+				touchTooltipTargetRef.current = null;
+				tooltip.classList.remove("visible");
+			}
+		};
+
 		svg.addEventListener("mouseover", onMouseOver);
 		svg.addEventListener("mousemove", onMouseMove);
 		svg.addEventListener("mouseout", onMouseOut);
+		svg.addEventListener("pointerdown", onPointerDown);
 		return () => {
 			svg.removeEventListener("mouseover", onMouseOver);
 			svg.removeEventListener("mousemove", onMouseMove);
 			svg.removeEventListener("mouseout", onMouseOut);
+			svg.removeEventListener("pointerdown", onPointerDown);
 		};
 	}, [scene]);
 
@@ -331,6 +358,7 @@ export function InteractionLayer({
 				onSelectionDrag={handleSelectionDrag}
 				onSelectionDragEnd={handleSelectionDragEnd}
 				selectionOverlayPaths={dragPreviewPaths}
+				selectMode={selectMode}
 			>
 				{children}
 			</Viewport>

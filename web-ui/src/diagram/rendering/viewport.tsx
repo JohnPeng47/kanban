@@ -20,6 +20,8 @@ export interface ViewportProps {
 	onSelectionDragEnd?: (sceneRect: Rect) => void;
 	/** When a selection lasso is active, render these labels to the left of the box. */
 	selectionOverlayPaths?: Array<{ id: string; path: string }>;
+	/** When true, single-finger drag draws a selection lasso instead of panning. */
+	selectMode?: boolean;
 	children?: ReactNode;
 }
 
@@ -31,6 +33,7 @@ export function Viewport({
 	onSelectionDrag,
 	onSelectionDragEnd,
 	selectionOverlayPaths,
+	selectMode = false,
 	children,
 }: ViewportProps): ReactElement {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -40,6 +43,10 @@ export function Viewport({
 	// Pan state
 	const pointerDownRef = useRef<{ x: number; y: number; transform: Transform; ctrl: boolean } | null>(null);
 	const didDragRef = useRef(false);
+
+	// Multi-touch pinch-to-zoom state
+	const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+	const pinchStartRef = useRef<{ distance: number; midpoint: Point; transform: Transform } | null>(null);
 
 	// Selection drag overlay (screen-space rect)
 	const [selectionRect, setSelectionRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -112,21 +119,110 @@ export function Viewport({
 		return () => container.removeEventListener("wheel", onWheel);
 	}, [applyTransform, syncRootTransform]);
 
-	// Pointer events for pan and click
-	const onPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-		if (event.button !== 0) return;
-		pointerDownRef.current = {
-			x: event.clientX,
-			y: event.clientY,
-			transform: { ...transformRef.current },
-			ctrl: event.ctrlKey || event.metaKey,
-		};
-		didDragRef.current = false;
-		// Don't capture yet — only capture when drag threshold is exceeded
+	// --- Pinch-to-zoom helpers ---
+	const getPointerDistance = useCallback((pointers: Map<number, { x: number; y: number }>): number => {
+		const pts = Array.from(pointers.values());
+		if (pts.length < 2) return 0;
+		const a = pts[0]!;
+		const b = pts[1]!;
+		const dx = b.x - a.x;
+		const dy = b.y - a.y;
+		return Math.sqrt(dx * dx + dy * dy);
 	}, []);
+
+	const getPointerMidpoint = useCallback((pointers: Map<number, { x: number; y: number }>): Point => {
+		const pts = Array.from(pointers.values());
+		if (pts.length < 2) return pts[0] ?? { x: 0, y: 0 };
+		const a = pts[0]!;
+		const b = pts[1]!;
+		return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+	}, []);
+
+	// Pointer events for pan, click, and pinch-to-zoom
+	const onPointerDown = useCallback(
+		(event: React.PointerEvent<HTMLDivElement>) => {
+			if (event.button !== 0) return;
+
+			// Track active pointers for multi-touch
+			activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+			if (activePointersRef.current.size === 2) {
+				// Second finger down → start pinch, cancel any single-finger drag
+				pointerDownRef.current = null;
+				didDragRef.current = false;
+				setSelectionRect(null);
+				pinchStartRef.current = {
+					distance: getPointerDistance(activePointersRef.current),
+					midpoint: getPointerMidpoint(activePointersRef.current),
+					transform: { ...transformRef.current },
+				};
+				return;
+			}
+
+			if (activePointersRef.current.size > 2) return;
+
+			// Treat selectMode (touch) the same as Ctrl (desktop)
+			const isSelecting = event.ctrlKey || event.metaKey || (selectMode && event.pointerType === "touch");
+
+			pointerDownRef.current = {
+				x: event.clientX,
+				y: event.clientY,
+				transform: { ...transformRef.current },
+				ctrl: isSelecting,
+			};
+			didDragRef.current = false;
+			// Don't capture yet — only capture when drag threshold is exceeded
+		},
+		[selectMode, getPointerDistance, getPointerMidpoint],
+	);
 
 	const onPointerMove = useCallback(
 		(event: React.PointerEvent<HTMLDivElement>) => {
+			// Update tracked pointer position
+			if (activePointersRef.current.has(event.pointerId)) {
+				activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+			}
+
+			// Pinch-to-zoom: two active pointers
+			const pinchStart = pinchStartRef.current;
+			if (pinchStart && activePointersRef.current.size === 2) {
+				const currentDist = getPointerDistance(activePointersRef.current);
+				const currentMid = getPointerMidpoint(activePointersRef.current);
+				if (pinchStart.distance === 0) return;
+
+				const scaleFactor = currentDist / pinchStart.distance;
+				const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStart.transform.scale * scaleFactor));
+
+				const container = containerRef.current;
+				if (!container) return;
+				const rect = container.getBoundingClientRect();
+				const cx = currentMid.x - rect.left;
+				const cy = currentMid.y - rect.top;
+
+				// Zoom around pinch midpoint + pan by midpoint delta
+				const midDx = currentMid.x - pinchStart.midpoint.x;
+				const midDy = currentMid.y - pinchStart.midpoint.y;
+				const startCx = pinchStart.midpoint.x - rect.left;
+				const startCy = pinchStart.midpoint.y - rect.top;
+
+				const newTransform: Transform = {
+					tx:
+						cx -
+						(startCx - pinchStart.transform.tx) * (newScale / pinchStart.transform.scale) +
+						midDx -
+						(cx - startCx),
+					ty:
+						cy -
+						(startCy - pinchStart.transform.ty) * (newScale / pinchStart.transform.scale) +
+						midDy -
+						(cy - startCy),
+					scale: newScale,
+				};
+				applyTransform(newTransform);
+				syncRootTransform(newTransform);
+				return;
+			}
+
 			const start = pointerDownRef.current;
 			if (!start) return;
 
@@ -141,7 +237,7 @@ export function Viewport({
 
 			if (didDragRef.current) {
 				if (start.ctrl && onSelectionDrag) {
-					// Ctrl+drag → selection lasso
+					// Ctrl+drag or select-mode drag → selection lasso
 					const container = containerRef.current;
 					if (container) {
 						const containerRect = container.getBoundingClientRect();
@@ -178,13 +274,27 @@ export function Viewport({
 				}
 			}
 		},
-		[applyTransform, syncRootTransform, onSelectionDrag, screenToScene],
+		[applyTransform, syncRootTransform, onSelectionDrag, screenToScene, getPointerDistance, getPointerMidpoint],
 	);
 
 	// Use window-level pointerup to always clear state, even if the event
 	// target is inside dynamically-appended content (nested SVGs from expand)
 	useEffect(() => {
 		const onWindowPointerUp = (event: PointerEvent) => {
+			// Clean up tracked pointer
+			activePointersRef.current.delete(event.pointerId);
+
+			// If we were pinching and a finger lifts, end pinch
+			if (pinchStartRef.current) {
+				pinchStartRef.current = null;
+				// Don't fire click after pinch
+				if (activePointersRef.current.size <= 1) {
+					pointerDownRef.current = null;
+					didDragRef.current = false;
+				}
+				return;
+			}
+
 			const start = pointerDownRef.current;
 			if (!start) return;
 
@@ -232,12 +342,20 @@ export function Viewport({
 		return () => window.removeEventListener("pointerup", onWindowPointerUp);
 	}, [onSceneClick, onSelectionDragEnd, screenToScene]);
 
+	const onPointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+		activePointersRef.current.delete(event.pointerId);
+		if (activePointersRef.current.size < 2) {
+			pinchStartRef.current = null;
+		}
+	}, []);
+
 	return (
 		<div
 			ref={containerRef}
-			className="relative w-full h-full overflow-hidden select-none"
+			className="relative w-full h-full overflow-hidden select-none touch-none"
 			onPointerDown={onPointerDown}
 			onPointerMove={onPointerMove}
+			onPointerCancel={onPointerCancel}
 		>
 			<div ref={transformDivRef} style={{ transformOrigin: "0 0", willChange: "transform" }} />
 			{children}

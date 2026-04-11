@@ -1,0 +1,33 @@
+FIBER NODE: TREE POINTERS
+==========================
+How fibers link to form the tree. Not parent/children arrays —
+a linked structure using child (first child), sibling (next), return (parent).
+
+Source: packages/react-reconciler/src/ReactFiber.js
+
+
++------------------------------------------------------------------------+
+|                                                                        |
+|  .return ---------> parent fiber                                      |
+|  .child ----------> first child fiber                                 |
+|  .sibling --------> next sibling fiber                                |
+|                                                                        |
+|       [parent]                                                        |
+|          ^                                                            |
+|          | .return                                                    |
+|          |                                                            |
+|       [THIS] ----.sibling---> [next]                                  |
+|          |                                                            |
+|          | .child                                                     |
+|          v                                                            |
+|       [first child]                                                   |
+|                                                                        |
++------------------------------------------------------------------------+
+
+    WHY NOT parent/children arrays?
+
+    This structure enables depth-first traversal without recursion
+    or a stack. performUnitOfWork just follows pointers:
+      - has child?    -> go to child     (beginWork)
+      - has sibling?  -> go to sibling   (beginWork)
+      - neither?      -> go to return    (completeWork)

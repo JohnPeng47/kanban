@@ -1,0 +1,65 @@
+COMMIT PHASE B: MUTATION
+=========================
+THIS IS WHERE THE DOM CHANGES.
+Walk fibers with MutationMask flags and apply DOM operations.
+
+Source: packages/react-reconciler/src/ReactFiberCommitWork.js
+        (commitMutationEffects)
+
+
+    +=====================================================+
+    |                                                     |
+    |  PHASE B: MUTATION                                  |
+    |  commitMutationEffects()                            |
+    |                                                     |
+    |  For each fiber, check flags:                       |
+    |                                                     |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  Placement (new node):                        |  |
+    |  |    commitPlacement(fiber)                     |  |
+    |  |      find parent DOM node                     |  |
+    |  |      find sibling DOM node (for insertBefore) |  |
+    |  |      --> parent.appendChild(child)            |  |
+    |  |      or  parent.insertBefore(child, sibling)  |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  Update (props changed):                      |  |
+    |  |    commitWork(fiber)                          |  |
+    |  |      HostComponent:                           |  |
+    |  |        --> commitUpdate(dom, type, old, new)  |  |
+    |  |        --> updateProperties(dom, old, new)    |  |
+    |  |            - diff style objects               |  |
+    |  |            - update className                 |  |
+    |  |            - add/remove event listeners       |  |
+    |  |            - update data- attributes          |  |
+    |  |      HostText:                                |  |
+    |  |        --> textNode.nodeValue = newText        |  |
+    |  |      FunctionComponent:                       |  |
+    |  |        --> run useInsertionEffect cleanup      |  |
+    |  |        --> run useInsertionEffect create       |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  ChildDeletion (removed nodes):               |  |
+    |  |    commitDeletionEffects(fiber)               |  |
+    |  |      recursively walk deleted subtree:         |  |
+    |  |        --> run useInsertionEffect cleanup      |  |
+    |  |        --> run useLayoutEffect cleanup         |  |
+    |  |        --> componentWillUnmount()              |  |
+    |  |        --> detach refs                         |  |
+    |  |        --> parent.removeChild(dom)             |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  ContentReset:                                |  |
+    |  |    --> dom.textContent = ""                    |  |
+    |  |                                               |  |
+    |  |  Ref (detach old ref):                        |  |
+    |  |    --> oldRef.current = null                   |  |
+    |  |    or  oldRef(null)                            |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    +=====================================================+

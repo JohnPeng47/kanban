@@ -1,0 +1,70 @@
+CONTINUATION PATTERN
+======================
+How React pauses and resumes work across scheduler time slices.
+
+Source: packages/scheduler/src/forks/Scheduler.js (workLoop)
+        packages/react-reconciler/src/ReactFiberWorkLoop.js (performWorkOnRoot)
+
+
+    React's reconciler returns a continuation when it yields:
+
+    function performWorkOnRoot(root, lanes, didTimeout) {
+      // ... render some fibers ...
+      if (workInProgress !== null) {
+        // Not done yet -- return self as continuation
+        return performWorkOnRoot.bind(null, root, lanes);
+      }
+      // Done -- commit
+      commitRoot(root);
+      return null;
+    }
+
+
+    The scheduler sees the returned function and keeps the task alive:
+
+    // In workLoop:
+    const continuationCallback = callback(didTimeout);
+
+    if (typeof continuationCallback === 'function') {
+      currentTask.callback = continuationCallback;
+      // task stays in the heap, runs again next iteration
+    } else {
+      // task is done, remove from heap
+      pop(taskQueue);
+    }
+
+
+    THE CYCLE:
+
+    +------------------+
+    | Scheduler calls  |
+    | performWorkOn-   |---> renders fibers for ~5ms
+    | Root()           |
+    +------------------+
+           |
+           | shouldYield() returns true
+           | workLoop breaks
+           | performWorkOnRoot returns itself (continuation)
+           v
+    +------------------+
+    | Scheduler keeps  |
+    | task in heap     |---> posts MessageChannel
+    | with new         |---> browser gets time
+    | callback         |
+    +------------------+
+           |
+           | next macrotask
+           v
+    +------------------+
+    | Scheduler calls  |
+    | the continuation |---> renders more fibers
+    | (same task)      |
+    +------------------+
+           |
+           | ... repeats until workInProgress === null
+           v
+    +------------------+
+    | performWorkOn-   |
+    | Root returns     |---> task removed from heap
+    | null (done)      |---> commitRoot() runs
+    +------------------+

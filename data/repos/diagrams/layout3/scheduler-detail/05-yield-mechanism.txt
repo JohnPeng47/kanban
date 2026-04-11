@@ -1,0 +1,46 @@
+THE YIELD MECHANISM
+=====================
+How the scheduler decides when to give time back to the browser.
+
+Source: packages/scheduler/src/forks/Scheduler.js
+        packages/scheduler/src/SchedulerFeatureFlags.js (frameYieldMs = 5)
+
+
+    function shouldYieldToHost() {
+      const timeElapsed = getCurrentTime() - startTime;
+
+      if (timeElapsed < frameInterval) {  // frameInterval = 5ms
+        return false;  // keep working, we have time
+      }
+
+      // We've used our 5ms budget
+      if (enableIsInputPending) {   // experimental
+        if (needsPaint) return true;
+        if (timeElapsed < 300) {
+          // Check if there's pending user input
+          return isInputPending();
+        }
+      }
+
+      return true;  // yield
+    }
+
+
+    TIMELINE:
+
+    |<---- 5ms ---->|<-- browser -->|<---- 5ms ---->|<-- browser -->|
+    | React work    | input, paint  | React work    | input, paint  |
+    | (fiber by     | rAF, layout   | (more fibers) | rAF, layout   |
+    |  fiber)       |               |               |               |
+
+    ^               ^               ^               ^
+    |               |               |               |
+    startTime       shouldYield     startTime       shouldYield
+    recorded        returns true    recorded        returns true
+
+
+    KEY INSIGHT:
+    The 5ms budget is per scheduler run, not per frame.
+    The browser decides when to paint — React just yields often enough
+    that the browser gets a chance. At 5ms yields, React gives ~200
+    opportunities per second for the browser to do its work.

@@ -1,0 +1,43 @@
+COMMIT PHASE D: PASSIVE EFFECTS
+==================================
+Asynchronous effects (useEffect). Scheduled via Scheduler.
+Run AFTER the browser has painted.
+
+Source: packages/react-reconciler/src/ReactFiberCommitWork.js
+        packages/react-reconciler/src/ReactFiberCommitEffects.js
+        (flushPassiveEffects, commitPassiveMountEffects, commitPassiveUnmountEffects)
+
+
+    [browser paints here]
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  PHASE D: PASSIVE EFFECTS                           |
+    |  flushPassiveEffects()                              |
+    |                                                     |
+    |  D1: UNMOUNT (cleanup from previous render)          |
+    |  +-----------------------------------------------+  |
+    |  | commitPassiveUnmountEffects()                  |  |
+    |  |                                               |  |
+    |  | Walk fibers with Passive flag.                 |  |
+    |  | For each useEffect whose deps changed:         |  |
+    |  |   if (effect.inst.destroy !== undefined)       |  |
+    |  |     effect.inst.destroy()  // run cleanup      |  |
+    |  |                                               |  |
+    |  | Order: parent before child (top-down)          |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    |  D2: MOUNT (run new effects)                        |
+    |  +-----------------------------------------------+  |
+    |  | commitPassiveMountEffects()                    |  |
+    |  |                                               |  |
+    |  | Walk fibers with Passive flag.                 |  |
+    |  | For each useEffect with HookHasEffect tag:     |  |
+    |  |   const cleanup = effect.create()  // run it   |  |
+    |  |   effect.inst.destroy = cleanup    // store    |  |
+    |  |                                               |  |
+    |  | Order: child before parent (bottom-up)         |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    +=====================================================+

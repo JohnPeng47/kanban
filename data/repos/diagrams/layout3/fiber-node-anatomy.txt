@@ -1,0 +1,123 @@
+ANATOMY OF A SINGLE FIBER NODE
+================================
+Every component instance in a React app becomes one of these.
+This is the fundamental unit the reconciler operates on.
+
+Source: packages/react-reconciler/src/ReactFiber.js
+        packages/react-reconciler/src/ReactWorkTags.js
+        packages/react-reconciler/src/ReactFiberFlags.js
+        packages/react-reconciler/src/ReactFiberLane.js
+
+
++==============================================================================+
+|                                                                              |
+|  FIBER                                                                       |
+|                                                                              |
+|  IDENTITY                                                                    |
+|  +------------------------------------------------------------------------+  |
+|  | tag: WorkTag              what kind of fiber this is                   |  |
+|  |   0  = FunctionComponent     5  = HostComponent ("div")               |  |
+|  |   1  = ClassComponent        6  = HostText ("hello")                  |  |
+|  |   3  = HostRoot              13 = SuspenseComponent                   |  |
+|  |   7  = Fragment              11 = ForwardRef                          |  |
+|  |   ...25+ total types                                                  |  |
+|  |                                                                        |  |
+|  | type: any                 the actual component                        |  |
+|  |   FunctionComponent --> the function itself                           |  |
+|  |   ClassComponent    --> the class                                     |  |
+|  |   HostComponent     --> "div", "span", "button" (string)             |  |
+|  |   HostText          --> null                                          |  |
+|  |                                                                        |  |
+|  | key: string | null        from JSX key prop, used in diffing          |  |
+|  +------------------------------------------------------------------------+  |
+|                                                                              |
+|  TREE STRUCTURE                                                              |
+|  +------------------------------------------------------------------------+  |
+|  |                                                                        |  |
+|  |  .return ---------> parent fiber                                      |  |
+|  |  .child ----------> first child fiber                                 |  |
+|  |  .sibling --------> next sibling fiber                                |  |
+|  |                                                                        |  |
+|  |       [parent]                                                        |  |
+|  |          ^                                                            |  |
+|  |          | .return                                                    |  |
+|  |          |                                                            |  |
+|  |       [THIS] ----.sibling---> [next]                                  |  |
+|  |          |                                                            |  |
+|  |          | .child                                                     |  |
+|  |          v                                                            |  |
+|  |       [first child]                                                   |  |
+|  |                                                                        |  |
+|  +------------------------------------------------------------------------+  |
+|                                                                              |
+|  STATE & PROPS                                                               |
+|  +------------------------------------------------------------------------+  |
+|  |                                                                        |  |
+|  |  pendingProps: any        props passed in this render                  |  |
+|  |  memoizedProps: any       props from last completed render             |  |
+|  |                                                                        |  |
+|  |  memoizedState: any       OVERLOADED FIELD:                            |  |
+|  |    FunctionComponent --> head of Hook linked list (see hooks diagram)  |  |
+|  |    ClassComponent    --> this.state object                             |  |
+|  |    HostRoot          --> { element: <App /> }                          |  |
+|  |                                                                        |  |
+|  |  updateQueue: any         OVERLOADED FIELD:                            |  |
+|  |    FunctionComponent --> circular linked list of Effects               |  |
+|  |    ClassComponent    --> queue of setState updates                     |  |
+|  |    HostRoot          --> queue of render() calls                       |  |
+|  |                                                                        |  |
+|  +------------------------------------------------------------------------+  |
+|                                                                              |
+|  WORK TRACKING                                                               |
+|  +------------------------------------------------------------------------+  |
+|  |                                                                        |  |
+|  |  flags: Flags (bitmask)   what work THIS fiber needs during commit    |  |
+|  |    0b0000000000000001  = Placement     (insert into DOM)              |  |
+|  |    0b0000000000000100  = Update        (update DOM props)             |  |
+|  |    0b0000000000010000  = ChildDeletion (child was removed)            |  |
+|  |    0b0000000000100000  = ContentReset                                 |  |
+|  |    0b0000000100000000  = Ref           (ref needs attaching)          |  |
+|  |    0b0000100000000000  = Passive       (useEffect needs to run)       |  |
+|  |    0b0010000000000000  = LayoutEffect  (useLayoutEffect to run)       |  |
+|  |    ...many more                                                       |  |
+|  |                                                                        |  |
+|  |  subtreeFlags: Flags      OR of all descendant flags                  |  |
+|  |    (bubbled up during completeWork so commit can skip                  |  |
+|  |     entire subtrees that have no work)                                |  |
+|  |                                                                        |  |
+|  |  lanes: Lanes (bitmask)   pending update priorities on THIS fiber     |  |
+|  |  childLanes: Lanes        pending updates in descendants              |  |
+|  |    (if childLanes === NoLanes, skip entire subtree during render)     |  |
+|  |                                                                        |  |
+|  +------------------------------------------------------------------------+  |
+|                                                                              |
+|  DOUBLE BUFFERING                                                            |
+|  +------------------------------------------------------------------------+  |
+|  |                                                                        |  |
+|  |  alternate: Fiber | null  the other version of this fiber             |  |
+|  |                                                                        |  |
+|  |    "current" fiber:   committed to DOM, what user sees                |  |
+|  |    "workInProgress":  being built during render                       |  |
+|  |                                                                        |  |
+|  |    They point to each other:                                          |  |
+|  |      current.alternate === workInProgress                             |  |
+|  |      workInProgress.alternate === current                             |  |
+|  |                                                                        |  |
+|  |    On commit: root.current = workInProgress                           |  |
+|  |    (the WIP becomes the new current; old current is recycled)         |  |
+|  |                                                                        |  |
+|  +------------------------------------------------------------------------+  |
+|                                                                              |
+|  HOST INSTANCE                                                               |
+|  +------------------------------------------------------------------------+  |
+|  |                                                                        |  |
+|  |  stateNode: any           link to the "real" thing                    |  |
+|  |    HostComponent --> the DOM element (div, span, etc.)                |  |
+|  |    HostText      --> the DOM text node                                |  |
+|  |    HostRoot      --> the FiberRoot container                          |  |
+|  |    ClassComponent -> the class instance (this)                        |  |
+|  |    FunctionComponent -> null (no instance)                            |  |
+|  |                                                                        |  |
+|  +------------------------------------------------------------------------+  |
+|                                                                              |
++==============================================================================+

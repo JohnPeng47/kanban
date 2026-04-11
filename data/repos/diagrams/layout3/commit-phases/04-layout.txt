@@ -1,0 +1,39 @@
+COMMIT PHASE C: LAYOUT
+========================
+Synchronous effects that run after DOM mutation but BEFORE browser paint.
+
+Source: packages/react-reconciler/src/ReactFiberCommitWork.js
+        (commitLayoutEffects)
+
+
+    +=====================================================+
+    |                                                     |
+    |  PHASE C: LAYOUT                                    |
+    |  commitLayoutEffects()                              |
+    |                                                     |
+    |  Walk fibers with LayoutMask flags.                 |
+    |  DOM has been updated. Reads will see new state.    |
+    |  But browser has NOT painted yet.                   |
+    |                                                     |
+    |  What runs here:                                    |
+    |                                                     |
+    |    FunctionComponent:                               |
+    |      useLayoutEffect CREATE functions               |
+    |      (synchronous, before paint -- use for           |
+    |       measuring DOM, scroll position, etc.)          |
+    |                                                     |
+    |    ClassComponent:                                   |
+    |      componentDidMount()    (on mount)               |
+    |      componentDidUpdate()   (on update)              |
+    |      setState callbacks                              |
+    |                                                     |
+    |    Ref attachments:                                  |
+    |      ref.current = domElement                        |
+    |      or ref(domElement)   (callback refs)            |
+    |                                                     |
+    +=====================================================+
+
+    NOTE: This runs synchronously before browser paint.
+    If you do expensive work here, it blocks painting.
+    That's why useLayoutEffect docs say "prefer
+    useEffect unless you need to read layout."

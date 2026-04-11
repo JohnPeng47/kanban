@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>React Scheduler — Interactive Diagram (iter 1)</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+
+    /* Expandable seams */
+    [data-expandable] .collapsed-content { cursor: pointer; }
+    [data-expandable] .collapsed-content:hover > rect:first-child {
+      filter: brightness(1.3) drop-shadow(0 0 8px rgba(210, 153, 34, 0.4));
+    }
+
+    /* Smooth transforms for expansion displacement */
+    [data-reflow-group], [data-arrow] {
+      transition: transform 0.45s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+
+    .expanded-content { opacity: 0; transition: opacity 0.35s ease 0.1s; }
+    .expanded-content.visible { opacity: 1; }
+    .collapsed-content { transition: opacity 0.2s ease; }
+    .collapsed-content.hidden { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1960"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace" font-size="11">
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .tiny { font-size: 9px; }
+    .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
+    @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+    .box-glow { transition: filter 0.2s ease; }
+    .box-glow:hover { filter: drop-shadow(0 0 8px rgba(76,154,255,0.3)); }
+    .pulse { animation: pulse-glow 2s ease-in-out infinite; }
+    @keyframes pulse-glow { 0%,100% { opacity: 0.4; r: 3; } 50% { opacity: 1; r: 5; } }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+    <marker id="ao" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#D29922" stroke-width="1"/>
+    </marker>
+    <marker id="ag" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#3FB950" stroke-width="1"/>
+    </marker>
+    <marker id="ar" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#F85149" stroke-width="1"/>
+    </marker>
+    <marker id="av" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#A371F7" stroke-width="1"/>
+    </marker>
+    <filter id="glow-blue" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#4C9AFF" flood-opacity="0.15"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#3FB950" flood-opacity="0.15"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#D29922" flood-opacity="0.15"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-violet" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#A371F7" flood-opacity="0.15"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#F85149" flood-opacity="0.15"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background rect for pan target -->
+  <rect x="-5000" y="-5000" width="12000" height="12000" fill="#1F2428"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Title                                       -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">REACT SCHEDULER</text>
+    <text x="210" y="28" class="dim" font-size="11">packages/scheduler/src/forks/Scheduler.js · 598 lines</text>
+    <line x1="20" y1="36" x2="200" y2="36" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="52" class="dim subhead">Cooperative time-slicing on the browser main thread. Zero preemption — everything is heap + flags + MessageChannel pump.</text>
+    <text x="20" y="66" class="dim subhead">Click any ► node to jump to source. Scroll to zoom, drag to pan. Orange panels with [expand] drill deeper.</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- BROWSER MAIN THREAD                         -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="browser-main-thread" class="fade-section" style="animation-delay: 0.05s">
+    <rect x="20" y="80" width="1160" height="44" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1.2"/>
+    <rect x="22" y="82" width="1156" height="40" rx="3" fill="none" stroke="#3FB950" stroke-width="0.4"/>
+    <text x="600" y="99" text-anchor="middle" class="green heading">BROWSER MAIN THREAD</text>
+    <text x="600" y="115" text-anchor="middle" class="dim subhead">JS execution · style calc · layout · paint · input · rAF — all compete for one thread. Scheduler has no OS preemption: only cooperative yield.</text>
+  </g>
+
+  <!-- Arrow + problem statement -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.1s">
+    <line x1="440" y1="124" x2="440" y2="235" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="450" y="147" class="dim subhead">without scheduler: 200ms block, page freezes</text>
+    <text x="450" y="161" class="dim subhead">with scheduler: 5ms chunks, page stays responsive</text>
+    <text x="450" y="225" class="dim subhead">reconciler: scheduleCallback(priority, performWorkOnRootViaSchedulerTask.bind(null, root))</text>
+  </g>
+
+  <g data-reflow-group="problem-statement" class="fade-section" style="animation-delay: 0.1s">
+    <rect x="720" y="135" width="460" height="72" rx="4" fill="#24292E" stroke="#444C56" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <g data-interactive="problem-statement-source" data-ref="packages/scheduler/src/forks/Scheduler.js:1" data-category="module" data-label="the-problem">
+      <text x="732" y="154" class="dim heading"
+        data-tt="Scheduler.js — the problem: 200ms block vs 5ms slices">► The problem: 200ms block vs 5ms slices</text>
+    </g>
+    <text x="732" y="173" class="dim subhead">|&lt;------200ms------&gt;|&lt;-browser-&gt;|  (without)</text>
+    <text x="732" y="188" class="dim subhead">|&lt;5&gt;|&lt;b&gt;|&lt;5&gt;|&lt;b&gt;|...|&lt;5&gt;|&lt;done&gt;|  (with)</text>
+    <text x="732" y="202" class="red tiny" font-style="italic">No true preemption — cooperative yield + heap re-root between macrotasks.</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PUBLIC API SURFACE                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="public-api" class="fade-section box-glow" style="animation-delay: 0.13s" filter="url(#glow-violet)">
+    <rect x="20" y="243" width="1160" height="100" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <g data-interactive="public-api-exports" data-ref="packages/scheduler/src/forks/Scheduler.js:572" data-category="module" data-label="public-api">
+      <text x="32" y="263" class="violet heading"
+        data-tt="Scheduler.js:572-588 — unstable_* public API surface">► Public API (unstable_*, lines 572–588)</text>
+    </g>
+    <text x="400" y="263" class="dim subhead">16 exports. Scheduler has zero knowledge of React; reconciler is one consumer of many.</text>
+
+    <!-- Column 1: Scheduling -->
+    <text x="32" y="284" class="violet subhead">SCHEDULING</text>
+    <text x="32" y="298" class="white tiny">unstable_scheduleCallback</text>
+    <text x="195" y="298" class="dim tiny">327</text>
+    <text x="32" y="311" class="white tiny">unstable_cancelCallback</text>
+    <text x="195" y="311" class="dim tiny">418</text>
+    <text x="32" y="324" class="dim tiny">→ lazy tombstone (task.callback=null)</text>
+
+    <!-- Column 2: Ambient priority -->
+    <text x="240" y="284" class="violet subhead">AMBIENT PRIORITY</text>
+    <text x="240" y="298" class="white tiny">unstable_runWithPriority</text>
+    <text x="400" y="298" class="dim tiny">260</text>
+    <text x="240" y="311" class="white tiny">unstable_next</text>
+    <text x="400" y="311" class="dim tiny">285</text>
+    <text x="240" y="324" class="white tiny">unstable_wrapCallback</text>
+    <text x="400" y="324" class="dim tiny">310</text>
+    <text x="240" y="337" class="white tiny">unstable_getCurrentPriorityLevel</text>
+    <text x="400" y="337" class="dim tiny">433</text>
+
+    <!-- Column 3: Yield / paint -->
+    <text x="460" y="284" class="violet subhead">YIELD / PAINT / CLOCK</text>
+    <text x="460" y="298" class="white tiny">unstable_shouldYield</text>
+    <text x="620" y="298" class="dim tiny">447</text>
+    <text x="460" y="311" class="white tiny">unstable_requestPaint</text>
+    <text x="620" y="311" class="dim tiny">462</text>
+    <text x="460" y="324" class="white tiny">unstable_forceFrameRate</text>
+    <text x="620" y="324" class="dim tiny">468</text>
+    <text x="460" y="337" class="white tiny">unstable_now</text>
+    <text x="620" y="337" class="dim tiny">59</text>
+
+    <!-- Column 4: Priority constants -->
+    <text x="680" y="284" class="violet subhead">PRIORITY CONSTANTS</text>
+    <text x="680" y="298" class="white tiny">unstable_ImmediatePriority = 1</text>
+    <text x="680" y="311" class="white tiny">unstable_UserBlockingPriority = 2</text>
+    <text x="680" y="324" class="white tiny">unstable_NormalPriority = 3</text>
+    <text x="680" y="337" class="white tiny">unstable_LowPriority = 4, unstable_IdlePriority = 5</text>
+
+    <!-- Column 5: notes -->
+    <text x="920" y="284" class="violet subhead">NOTES</text>
+    <text x="920" y="298" class="dim tiny">unstable_Profiling: null unless enableProfiling</text>
+    <text x="920" y="311" class="dim tiny">unstable_next demotes but never promotes</text>
+    <text x="920" y="324" class="dim tiny">wrapCallback captures priority at wrap time</text>
+    <text x="920" y="337" class="dim tiny">forceFrameRate range: [0, 125] fps</text>
+  </g>
+
+  <!-- Arrow: public api → priority mapping -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.15s">
+    <line x1="600" y1="343" x2="600" y2="360" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PRIORITY-TIMEOUT MAPPING                    -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="priority-mapping" class="fade-section box-glow" style="animation-delay: 0.18s" filter="url(#glow-blue)">
+    <rect x="20" y="365" width="1160" height="92" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <g data-interactive="scheduler-priorities" data-ref="packages/scheduler/src/SchedulerPriorities.js:10" data-category="data" data-label="priority-to-expiration">
+      <text x="32" y="385" class="blue heading"
+        data-tt="SchedulerPriorities.js:10 — five priority levels; timeout table in Scheduler.js:346-369">► Priority → timeout → expirationTime</text>
+    </g>
+    <g data-interactive="schedule-callback-switch" data-ref="packages/scheduler/src/forks/Scheduler.js:346" data-category="function" data-label="timeout-switch">
+      <text x="32" y="405" class="white"
+        data-tt="Scheduler.js:346-369 — switch on priorityLevel assigns timeout">expirationTime = startTime + timeout   (sortIndex in taskQueue)</text>
+    </g>
+
+    <!-- Table of priorities -->
+    <text x="32" y="425" class="blue tiny">Immediate</text>
+    <text x="120" y="425" class="white tiny">timeout = -1</text>
+    <text x="230" y="425" class="dim tiny">always expired, bypasses yield check (Scheduler.js:350)</text>
+
+    <text x="560" y="425" class="blue tiny">Normal (default)</text>
+    <text x="680" y="425" class="white tiny">timeout = 5000</text>
+    <text x="790" y="425" class="dim tiny">FeatureFlags.js:14 — standard render, passive effects</text>
+
+    <text x="32" y="439" class="blue tiny">UserBlocking</text>
+    <text x="120" y="439" class="white tiny">timeout = 250</text>
+    <text x="230" y="439" class="dim tiny">FeatureFlags.js:13 — discrete/continuous input (clicks)</text>
+
+    <text x="560" y="439" class="blue tiny">Low</text>
+    <text x="680" y="439" class="white tiny">timeout = 10000</text>
+    <text x="790" y="439" class="dim tiny">FeatureFlags.js:15 — exported but no production caller</text>
+
+    <text x="32" y="453" class="blue tiny">Idle</text>
+    <text x="120" y="453" class="white tiny">timeout = 1073741823</text>
+    <text x="250" y="453" class="dim tiny">= maxSigned31BitInt = 2³⁰-1 ≈ 12.43 days (V8 SMI-tagged)</text>
+    <text x="560" y="453" class="red tiny">NoPriority (0)</text>
+    <text x="680" y="453" class="dim tiny">sentinel — falls through switch → NormalPriority</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- MODULE STATE                                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="module-state" class="fade-section box-glow" style="animation-delay: 0.22s" filter="url(#glow-blue)">
+    <rect x="20" y="475" width="1160" height="170" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <g data-interactive="module-state" data-ref="packages/scheduler/src/forks/Scheduler.js:59" data-category="module" data-label="module-state">
+      <text x="32" y="495" class="blue heading"
+        data-tt="Scheduler.js:59-101, 437-445 — all module-level state is load-bearing">► Module state (all the moving parts are global vars + flags)</text>
+    </g>
+    <text x="440" y="495" class="dim subhead">Everything except the two heaps is a flag or a captured function pointer.</text>
+
+    <!-- Column 1: Time + constants -->
+    <text x="32" y="516" class="blue subhead">TIME / CONST</text>
+    <text x="32" y="530" class="white tiny">getCurrentTime</text>
+    <text x="160" y="530" class="dim tiny">L59 perf.now or Date.now</text>
+    <text x="32" y="543" class="white tiny">maxSigned31BitInt</text>
+    <text x="160" y="543" class="dim tiny">L76 = 1073741823 (2³⁰-1)</text>
+    <text x="32" y="556" class="white tiny">taskIdCounter</text>
+    <text x="160" y="556" class="dim tiny">L83 FIFO tiebreaker in heap</text>
+
+    <!-- Column 2: Heaps -->
+    <text x="32" y="580" class="blue subhead">HEAPS (the only real data structures)</text>
+    <text x="32" y="594" class="white tiny">taskQueue</text>
+    <text x="160" y="594" class="dim tiny">L79 ready, sortIndex = expirationTime</text>
+    <text x="32" y="607" class="white tiny">timerQueue</text>
+    <text x="160" y="607" class="dim tiny">L80 delayed, sortIndex = startTime</text>
+    <text x="32" y="620" class="white tiny">(min-heaps)</text>
+    <text x="160" y="620" class="dim tiny">flat arrays in SchedulerMinHeap.js</text>
+
+    <!-- Column 3: Execution state -->
+    <text x="320" y="516" class="blue subhead">EXECUTION</text>
+    <text x="320" y="530" class="white tiny">currentTask</text>
+    <text x="450" y="530" class="dim tiny">L85 in-flight pointer (module, not local)</text>
+    <text x="320" y="543" class="white tiny">currentPriorityLevel</text>
+    <text x="450" y="543" class="dim tiny">L86 ambient priority (leaks mid-loop)</text>
+    <text x="320" y="556" class="white tiny">isPerformingWork</text>
+    <text x="450" y="556" class="dim tiny">L89 re-entrance guard</text>
+
+    <!-- Column 4: Pump flags -->
+    <text x="320" y="580" class="blue subhead">PUMP FLAGS</text>
+    <text x="320" y="594" class="white tiny">isHostCallbackScheduled</text>
+    <text x="450" y="594" class="dim tiny">L91 MessageChannel msg in flight</text>
+    <text x="320" y="607" class="white tiny">isHostTimeoutScheduled</text>
+    <text x="450" y="607" class="dim tiny">L92 handleTimeout armed</text>
+    <text x="320" y="620" class="white tiny">isMessageLoopRunning</text>
+    <text x="450" y="620" class="dim tiny">L437 pump guard (no cancelHostCallback!)</text>
+
+    <!-- Column 5: Paint + slice -->
+    <text x="650" y="516" class="blue subhead">PAINT / SLICE ANCHOR</text>
+    <text x="650" y="530" class="white tiny">needsPaint</text>
+    <text x="780" y="530" class="dim tiny">L94 set by requestPaint, cleared L487</text>
+    <text x="650" y="543" class="white tiny">frameInterval</text>
+    <text x="780" y="543" class="dim tiny">L444 = frameYieldMs (5ms prod, 10ms www)</text>
+    <text x="650" y="556" class="orange tiny">startTime</text>
+    <text x="780" y="556" class="dim tiny">L445 per-slice anchor (NOT Task.startTime!)</text>
+    <text x="650" y="569" class="red tiny" font-size="8.5">⚠ naming collision w/ Task.startTime</text>
+
+    <!-- Column 6: Native captures -->
+    <text x="650" y="592" class="blue subhead">CAPTURED NATIVE APIs</text>
+    <text x="650" y="606" class="white tiny">localSetTimeout</text>
+    <text x="780" y="606" class="dim tiny">L97 pinned, defeats polyfills</text>
+    <text x="650" y="619" class="white tiny">localClearTimeout</text>
+    <text x="780" y="619" class="dim tiny">L98</text>
+    <text x="650" y="632" class="white tiny">localSetImmediate</text>
+    <text x="780" y="632" class="dim tiny">L100 Node/IE only</text>
+
+    <!-- Column 7: Timer handle -->
+    <text x="960" y="516" class="blue subhead">TIMER HANDLE</text>
+    <text x="960" y="530" class="white tiny">taskTimeoutID</text>
+    <text x="960" y="543" class="dim tiny">L438 handle from localSetTimeout</text>
+    <text x="960" y="556" class="dim tiny">-1 sentinel = none armed</text>
+    <text x="960" y="569" class="dim tiny">single-slot (earlier delay</text>
+    <text x="960" y="582" class="dim tiny">cancels + re-arms)</text>
+
+    <text x="960" y="606" class="violet subhead">THESIS</text>
+    <text x="960" y="620" class="red tiny">No true preemption.</text>
+    <text x="960" y="632" class="dim tiny">Yield + heap re-root between slices.</text>
+  </g>
+
+  <!-- Arrow: module state → data structures detail -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.26s">
+    <line x1="600" y1="645" x2="600" y2="676" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="610" y="664" class="dim subhead">scheduleCallback builds Task{id,callback,priorityLevel,startTime,expirationTime,sortIndex}</text>
+    <circle cx="600" cy="660" r="3" fill="#4C9AFF" class="pulse"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DATA STRUCTURES (detailed)                  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="data-structures" class="fade-section box-glow" style="animation-delay: 0.3s" filter="url(#glow-blue)">
+    <rect x="20" y="683" width="1160" height="180" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <g data-interactive="scheduler-min-heap" data-ref="packages/scheduler/src/SchedulerMinHeap.js:17" data-category="data" data-label="min-heaps">
+      <text x="32" y="703" class="blue heading"
+        data-tt="SchedulerMinHeap.js — flat-array binary min-heaps, only root is extractable">► Min-heaps (taskQueue / timerQueue)</text>
+    </g>
+    <text x="330" y="703" class="dim subhead">Array-backed. Heap only supports popping the root → WHY cancellation is lazy.</text>
+
+    <!-- taskQueue -->
+    <rect x="40" y="718" width="440" height="72" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <g data-interactive="task-queue" data-ref="packages/scheduler/src/forks/Scheduler.js:79" data-category="data" data-label="taskQueue">
+      <text x="52" y="737" class="blue"
+        data-tt="Scheduler.js:79 — var taskQueue: Array&lt;Task&gt; = []">taskQueue (min-heap)</text>
+    </g>
+    <text x="210" y="737" class="dim tiny">sortIndex = expirationTime</text>
+    <text x="52" y="754" class="dim subhead">root = most urgent ready task</text>
+    <text x="52" y="770" class="white tiny">[ Immed(−1) · UserBlk(~250) · Normal(~5000) · Idle(~1.07e9) ]</text>
+    <text x="52" y="784" class="dim tiny">push / peek / pop used in: advanceTimers, workLoop, scheduleCallback</text>
+
+    <!-- timerQueue -->
+    <rect x="720" y="718" width="440" height="72" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <g data-interactive="timer-queue" data-ref="packages/scheduler/src/forks/Scheduler.js:80" data-category="data" data-label="timerQueue">
+      <text x="732" y="737" class="blue"
+        data-tt="Scheduler.js:80 — var timerQueue: Array&lt;Task&gt; = []">timerQueue (min-heap)</text>
+    </g>
+    <text x="890" y="737" class="dim tiny">sortIndex = startTime</text>
+    <text x="732" y="754" class="dim subhead">root = earliest-to-wake delayed task</text>
+    <text x="732" y="770" class="white tiny">populated by scheduleCallback(pri, cb, {delay: N &gt; 0})</text>
+    <text x="732" y="784" class="red tiny">⚠ {delay: 0} is NOT a delay — strict &gt; 0 check, falls to immediate branch</text>
+
+    <!-- advanceTimers arrow -->
+    <line x1="720" y1="750" x2="480" y2="750" stroke="#4C9AFF" stroke-width="1" class="flow-dash" marker-end="url(#ab)"/>
+    <g data-interactive="advance-timers" data-ref="packages/scheduler/src/forks/Scheduler.js:103" data-category="function" data-label="advanceTimers">
+      <text x="520" y="743" class="blue tiny"
+        data-tt="Scheduler.js:103-125 — promote fired timers from timerQueue → taskQueue">► advanceTimers (L103–125)</text>
+    </g>
+    <text x="520" y="780" class="dim tiny">loop: peek→cancelled? pop : fired? pop+rewrite sortIndex+push : return</text>
+    <circle cx="600" cy="750" r="3" fill="#4C9AFF" class="pulse" style="animation-delay: 0.3s"/>
+
+    <!-- Comparator + heap API mini-panel -->
+    <rect x="40" y="800" width="560" height="56" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.4"/>
+    <g data-interactive="heap-compare" data-ref="packages/scheduler/src/SchedulerMinHeap.js:91" data-category="function" data-label="heap-compare">
+      <text x="52" y="817" class="blue tiny"
+        data-tt="SchedulerMinHeap.js:91-95 — compare(a,b)">► compare(a,b): sortIndex primary, id secondary (FIFO tiebreaker)</text>
+    </g>
+    <text x="52" y="832" class="white tiny">const diff = a.sortIndex - b.sortIndex; return diff !== 0 ? diff : a.id - b.id;</text>
+    <text x="52" y="848" class="dim tiny">peek O(1) · push O(log n) · pop O(log n) · cancelCallback O(1) · advanceTimers k timers O(k log n)</text>
+
+    <!-- Task shape mini-panel -->
+    <rect x="620" y="800" width="540" height="56" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.4"/>
+    <g data-interactive="task-shape" data-ref="packages/scheduler/src/forks/Scheduler.js:49" data-category="data" data-label="task-type">
+      <text x="632" y="817" class="blue tiny"
+        data-tt="Scheduler.js:49-57 — Task type">► Task = { id, callback, priorityLevel, startTime, expirationTime, sortIndex, isQueued? }</text>
+    </g>
+    <text x="632" y="832" class="white tiny">Callback = (didTimeout: boolean) =&gt; ?Callback</text>
+    <text x="632" y="848" class="red tiny">THE five-line contract. Return fn = continuation, return null = done.</text>
+  </g>
+
+  <!-- Arrow: data → host pump -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.34s">
+    <line x1="245" y1="863" x2="245" y2="895" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="255" y="884" class="dim subhead">immediate branch → requestHostCallback() (line 411)</text>
+    <line x1="940" y1="863" x2="940" y2="895" stroke="#D29922" stroke-width="1" marker-end="url(#ao)"/>
+    <text x="650" y="884" class="orange subhead">delayed branch → requestHostTimeout(handleTimeout, startTime - now) (line 395)</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- HOST PUMP (3-tier) + TIMER PATH (expandable)-->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="host-pump" data-expandable="true" data-expand-src="host-pump.html" data-expand-w="1160" data-expand-h="380"
+     class="fade-section" style="animation-delay: 0.38s">
+    <g class="collapsed-content">
+      <rect x="20" y="900" width="1160" height="180" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1" filter="url(#glow-orange)"/>
+      <g data-interactive="schedule-perform-work" data-ref="packages/scheduler/src/forks/Scheduler.js:516" data-category="function" data-label="host-pump">
+        <text x="32" y="920" class="orange heading"
+          data-tt="Scheduler.js:516-547 — 3-tier host-pump selector, chosen once at module init">► Host pump (setImmediate → MessageChannel → setTimeout)</text>
+      </g>
+      <text x="470" y="920" class="dim subhead">Selector runs ONCE at module init (L516–547); captures references to defeat polyfills.</text>
+      <text x="1060" y="920" class="dim tiny">[expand]</text>
+
+      <!-- Three tiers -->
+      <rect x="40" y="935" width="300" height="62" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.8"/>
+      <text x="52" y="952" class="orange tiny">Tier 1 · setImmediate</text>
+      <text x="240" y="952" class="dim tiny">L529</text>
+      <text x="52" y="966" class="white tiny">Node.js + legacy IE + jsdom</text>
+      <text x="52" y="979" class="dim tiny">preferred even if MessageChannel exists</text>
+      <text x="52" y="991" class="dim tiny">#20756: doesn't keep Node alive</text>
+
+      <rect x="360" y="935" width="300" height="62" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.8"/>
+      <text x="372" y="952" class="orange tiny">Tier 2 · MessageChannel</text>
+      <text x="560" y="952" class="dim tiny">L538</text>
+      <text x="372" y="966" class="white tiny">browsers + Workers</text>
+      <text x="372" y="979" class="dim tiny">port.postMessage(null) → macrotask</text>
+      <text x="372" y="991" class="dim tiny">no 4ms clamp; bg throttled ~1/min</text>
+
+      <rect x="680" y="935" width="300" height="62" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.8"/>
+      <text x="692" y="952" class="orange tiny">Tier 3 · setTimeout(fn, 0)</text>
+      <text x="880" y="952" class="dim tiny">L543</text>
+      <text x="692" y="966" class="white tiny">exotic non-browser hosts</text>
+      <text x="692" y="979" class="dim tiny">4ms clamp after 5 nestings (HTML spec)</text>
+      <text x="692" y="991" class="red tiny">heavy background throttling</text>
+
+      <!-- requestHostCallback -->
+      <rect x="40" y="1005" width="460" height="64" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <g data-interactive="request-host-callback" data-ref="packages/scheduler/src/forks/Scheduler.js:549" data-category="function" data-label="requestHostCallback">
+        <text x="52" y="1023" class="orange tiny"
+          data-tt="Scheduler.js:549-554 — requestHostCallback: idempotent guard via isMessageLoopRunning">► requestHostCallback (L549–554)</text>
+      </g>
+      <text x="52" y="1038" class="white tiny">if (!isMessageLoopRunning) { isMessageLoopRunning = true; schedulePerformWorkUntilDeadline(); }</text>
+      <text x="52" y="1053" class="dim tiny">idempotent. NO cancelHostCallback — "cancel" = flip isMessageLoopRunning=false</text>
+      <text x="52" y="1066" class="red tiny">effective cancel: pump bails on re-check at line 489</text>
+
+      <!-- handleTimeout / requestHostTimeout -->
+      <rect x="520" y="1005" width="640" height="64" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.8"/>
+      <g data-interactive="request-host-timeout" data-ref="packages/scheduler/src/forks/Scheduler.js:556" data-category="function" data-label="requestHostTimeout">
+        <text x="532" y="1023" class="orange tiny"
+          data-tt="Scheduler.js:556-570 — requestHostTimeout/cancelHostTimeout: real setTimeout path for delayed tasks">► handleTimeout + requestHostTimeout (L127–142, L556–570) — SECOND, SEPARATE PUMP</text>
+      </g>
+      <text x="532" y="1038" class="white tiny">timerQueue → localSetTimeout(handleTimeout, ms) → clear flag → advanceTimers → requestHostCallback OR re-arm</text>
+      <text x="532" y="1053" class="dim tiny">real setTimeout (clamp irrelevant — delay is intentional). taskTimeoutID single-slot.</text>
+      <text x="532" y="1066" class="red tiny">orphaned timeouts fire harmlessly: handleTimeout is idempotent</text>
+    </g>
+    <g class="expanded-content"></g>
+    <script type="application/reflow+json">
+    {
+      "shifts": [
+        {
+          "trigger": "host-pump",
+          "deltaH": 200,
+          "affects": [
+            { "id": "work-loop", "dy": 200 },
+            { "id": "browser-time", "dy": 200 },
+            { "id": "error-resilience", "dy": 200 },
+            { "id": "reconciler-bridge", "dy": 200 },
+            { "id": "separator", "dy": 200 },
+            { "id": "continuation-pattern", "dy": 200 },
+            { "id": "preemption", "dy": 200 }
+          ],
+          "affects_arrows_below_y": 1080
+        }
+      ]
+    }
+    </script>
+  </g>
+
+  <!-- Arrow: host pump → work loop -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.42s">
+    <line x1="600" y1="1080" x2="600" y2="1120" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="610" y="1105" class="dim subhead">macrotask fires → performWorkUntilDeadline → flushWork → workLoop</text>
+    <circle cx="600" cy="1100" r="3" fill="#8B949E" class="pulse" style="animation-delay: 0.5s"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- WORK LOOP (double border, prominent)        -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="work-loop" class="fade-section" style="animation-delay: 0.46s">
+    <rect x="20" y="1125" width="1160" height="420" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1.5"/>
+    <rect x="23" y="1128" width="1154" height="414" rx="3" fill="none" stroke="#D29922" stroke-width="0.5"/>
+
+    <g data-interactive="perform-work-until-deadline" data-ref="packages/scheduler/src/forks/Scheduler.js:485" data-category="function" data-label="performWorkUntilDeadline">
+      <text x="32" y="1147" class="orange heading"
+        data-tt="Scheduler.js:485-514 — performWorkUntilDeadline, the host pump body">► performWorkUntilDeadline (L485–514) — host pump body</text>
+    </g>
+    <text x="450" y="1147" class="dim subhead">let hasMoreWork = true  ◄── init BEFORE try: self-healing on throw</text>
+
+    <!-- performWorkUntilDeadline steps -->
+    <rect x="32" y="1156" width="1136" height="50" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.4"/>
+    <text x="44" y="1172" class="white tiny">if (enableRequestPaint) needsPaint = false;  // L487 clear at slice start</text>
+    <text x="44" y="1185" class="white tiny">if (!isMessageLoopRunning) return;  // L489 cooperative cancel check</text>
+    <text x="44" y="1198" class="white tiny">startTime = currentTime;  // L493 per-slice anchor (module var, NOT Task.startTime)</text>
+    <text x="620" y="1172" class="white tiny">let hasMoreWork = true;  // L501 init before try — self-heal on throw</text>
+    <text x="620" y="1185" class="white tiny">try { hasMoreWork = flushWork(currentTime); }  // L503</text>
+    <text x="620" y="1198" class="white tiny">finally { hasMoreWork ? schedulePerformWorkUntilDeadline() : isMessageLoopRunning=false; }</text>
+
+    <!-- flushWork band -->
+    <g data-interactive="flush-work" data-ref="packages/scheduler/src/forks/Scheduler.js:144" data-category="function" data-label="flushWork">
+      <text x="32" y="1225" class="orange heading"
+        data-tt="Scheduler.js:144-186 — flushWork: re-entry guard + try/finally">► flushWork (L144–186) — state guard + try/finally around workLoop</text>
+    </g>
+    <rect x="32" y="1234" width="1136" height="52" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.4"/>
+    <text x="44" y="1250" class="white tiny">isHostCallbackScheduled = false; // L150 (we ARE the callback now)</text>
+    <text x="44" y="1263" class="white tiny">if (isHostTimeoutScheduled) { isHostTimeoutScheduled=false; cancelHostTimeout(); } // L151–155</text>
+    <text x="44" y="1276" class="white tiny">isPerformingWork = true; previousPriorityLevel = currentPriorityLevel;   // L157–158</text>
+    <text x="620" y="1250" class="white tiny">PROD: return workLoop(initialTime);                        // L174 no try/catch</text>
+    <text x="620" y="1263" class="white tiny">PROFILING: inner try/catch → markTaskErrored → re-throw    // L160–172</text>
+    <text x="620" y="1276" class="white tiny">finally: currentTask=null; restore priority; isPerformingWork=false;  // L177–185</text>
+
+    <!-- workLoop title + body -->
+    <g data-interactive="work-loop-fn" data-ref="packages/scheduler/src/forks/Scheduler.js:188" data-category="function" data-label="workLoop">
+      <text x="32" y="1305" class="orange heading"
+        data-tt="Scheduler.js:188-258 — workLoop, the core scheduling loop">► workLoop (L188–258)  drain taskQueue under time budget</text>
+    </g>
+
+    <!-- workLoop code -->
+    <rect x="32" y="1314" width="720" height="180" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+    <text x="44" y="1330" class="dim tiny">L189</text>
+    <text x="80" y="1330" class="white tiny">let currentTime = initialTime;</text>
+    <text x="44" y="1343" class="dim tiny">L190</text>
+    <text x="80" y="1343" class="white tiny">advanceTimers(currentTime);</text>
+    <text x="44" y="1356" class="dim tiny">L191</text>
+    <text x="80" y="1356" class="white tiny">currentTask = peek(taskQueue);</text>
+    <text x="44" y="1369" class="dim tiny">L192</text>
+    <text x="80" y="1369" class="white tiny">while (currentTask !== null) {</text>
+    <text x="44" y="1382" class="dim tiny">L194</text>
+    <text x="80" y="1382" class="orange tiny">if (currentTask.expirationTime &gt; currentTime</text>
+    <text x="325" y="1382" class="orange tiny">&amp;&amp; shouldYieldToHost()) break;  ◄ both conjuncts!</text>
+    <text x="44" y="1395" class="dim tiny">L200</text>
+    <text x="80" y="1395" class="white tiny">const callback = currentTask.callback;</text>
+    <text x="44" y="1408" class="dim tiny">L201</text>
+    <text x="80" y="1408" class="white tiny">if (typeof callback === 'function') {</text>
+    <text x="44" y="1421" class="dim tiny">L203</text>
+    <text x="80" y="1421" class="red tiny">currentTask.callback = null;  ◄ PRE-INVOCATION TOMBSTONE (before invoke)</text>
+    <text x="44" y="1434" class="dim tiny">L205</text>
+    <text x="80" y="1434" class="white tiny">currentPriorityLevel = currentTask.priorityLevel;</text>
+    <text x="44" y="1447" class="dim tiny">L207</text>
+    <text x="80" y="1447" class="white tiny">const didUserCallbackTimeout = currentTask.expirationTime &lt;= currentTime;</text>
+    <text x="44" y="1460" class="dim tiny">L212</text>
+    <text x="80" y="1460" class="red tiny">const continuationCallback = callback(didUserCallbackTimeout); // NO try/catch</text>
+    <text x="44" y="1473" class="dim tiny">L213</text>
+    <text x="80" y="1473" class="orange tiny">currentTime = getCurrentTime();  ◄ post-callback clock refresh</text>
+    <text x="44" y="1486" class="dim tiny">L214</text>
+    <text x="80" y="1486" class="white tiny">if (typeof continuationCallback === 'function') { ... } else { ... }</text>
+
+    <!-- Yield mechanism sub-panel (right side) -->
+    <g data-reflow-group="yield-mechanism">
+      <rect x="770" y="1314" width="390" height="92" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <g data-interactive="should-yield-to-host" data-ref="packages/scheduler/src/forks/Scheduler.js:447" data-category="function" data-label="shouldYieldToHost">
+        <text x="782" y="1332" class="orange tiny"
+          data-tt="Scheduler.js:447-460 — shouldYieldToHost: paint check + deadline check">► shouldYieldToHost (L447–460)</text>
+      </g>
+      <text x="782" y="1348" class="white tiny">if (needsPaint) return true;           // L448 paint fast-path</text>
+      <text x="782" y="1361" class="white tiny">timeElapsed = now() - startTime;       // L452 (module startTime)</text>
+      <text x="782" y="1374" class="white tiny">if (timeElapsed &lt; frameInterval)       // L453  (default 5ms)</text>
+      <text x="782" y="1387" class="white tiny">  return false;                         // keep working</text>
+      <text x="782" y="1400" class="white tiny">return true;                            // yield now</text>
+    </g>
+
+    <!-- Branches panel -->
+    <rect x="770" y="1414" width="390" height="80" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+    <text x="782" y="1430" class="orange tiny">Branches after callback returns:</text>
+    <g data-interactive="continuation-branch" data-ref="packages/scheduler/src/forks/Scheduler.js:214" data-category="function" data-label="continuation-branch">
+      <text x="782" y="1444" class="green tiny"
+        data-tt="Scheduler.js:214-224 — continuation branch: task.callback = result; advanceTimers; return true">(A) typeof result === 'function' (continuation):</text>
+    </g>
+    <text x="782" y="1457" class="dim tiny">  L218 task.callback = continuationCallback</text>
+    <text x="782" y="1469" class="dim tiny">  L223 advanceTimers(currentTime); L224 return true</text>
+    <g data-interactive="completion-branch" data-ref="packages/scheduler/src/forks/Scheduler.js:225" data-category="function" data-label="completion-branch">
+      <text x="782" y="1482" class="red tiny"
+        data-tt="Scheduler.js:232 — if (currentTask === peek(taskQueue)) pop(taskQueue);">(B) non-fn (done): if (currentTask===peek) pop ← GUARDED</text>
+    </g>
+    <g data-interactive="cancelled-branch" data-ref="packages/scheduler/src/forks/Scheduler.js:237" data-category="function" data-label="cancelled-branch">
+      <text x="782" y="1494" class="violet tiny"
+        data-tt="Scheduler.js:237-238 — else { pop(taskQueue); } cancelled tombstone">(C) callback===null (tombstone): pop unconditionally</text>
+    </g>
+
+    <!-- Loop-back line -->
+    <polyline points="60,1500 60,1520 720,1520 720,1500" fill="none" stroke="#8B949E" stroke-width="0.8" class="flow-dash"/>
+    <text x="65" y="1516" class="dim tiny">loop: currentTask = peek(taskQueue); // L240</text>
+
+    <!-- Termination -->
+    <text x="44" y="1535" class="dim tiny">L248–256 exit tail:</text>
+    <text x="180" y="1535" class="white tiny">currentTask !== null → return true (yielded, more work)</text>
+    <text x="620" y="1535" class="white tiny">else: firstTimer = peek(timerQueue); if not null: requestHostTimeout(handleTimeout, ...); return false;</text>
+  </g>
+
+  <!-- Arrow: work loop → branches (hasMoreWork flow) -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.5s">
+    <line x1="600" y1="1545" x2="600" y2="1582" stroke="#8B949E" stroke-width="1"/>
+    <line x1="600" y1="1582" x2="330" y2="1595" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <line x1="600" y1="1582" x2="870" y2="1595" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- MORE WORK / NO MORE WORK -->
+  <g data-reflow-group="more-work" class="fade-section" style="animation-delay: 0.54s">
+    <rect x="180" y="1600" width="300" height="40" rx="3" fill="#24292E" stroke="#3FB950" stroke-width="0.8"/>
+    <text x="192" y="1618" class="green">hasMoreWork = true</text>
+    <text x="192" y="1632" class="dim subhead">schedulePerformWorkUntilDeadline → next chunk (or ERROR: init=true → self-heal)</text>
+  </g>
+  <g data-reflow-group="no-more-work" class="fade-section" style="animation-delay: 0.54s">
+    <rect x="720" y="1600" width="300" height="40" rx="3" fill="#24292E" stroke="#A371F7" stroke-width="0.8"/>
+    <text x="732" y="1618" class="violet">hasMoreWork = false</text>
+    <text x="732" y="1632" class="dim subhead">isMessageLoopRunning=false; pump dormant until next scheduleCallback</text>
+  </g>
+
+  <!-- Arrow: more work → browser time -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.58s">
+    <line x1="330" y1="1640" x2="330" y2="1665" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- BROWSER TIME                                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="browser-time" class="fade-section" style="animation-delay: 0.6s">
+    <rect x="20" y="1670" width="1160" height="36" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1.2"/>
+    <rect x="22" y="1672" width="1156" height="32" rx="3" fill="none" stroke="#3FB950" stroke-width="0.4"/>
+    <text x="600" y="1693" text-anchor="middle" class="green">BROWSER TIME     style recalc → layout → paint → handle input → rAF      (macrotask boundary = preemption window)</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- ERROR RESILIENCE                            -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="error-resilience" class="fade-section box-glow" style="animation-delay: 0.62s" filter="url(#glow-red)">
+    <rect x="20" y="1720" width="1160" height="100" rx="4" fill="#24292E" stroke="#F85149" stroke-width="1"/>
+    <g data-interactive="error-resilience" data-ref="packages/scheduler/src/forks/Scheduler.js:495" data-category="module" data-label="error-resilience">
+      <text x="32" y="1740" class="red heading"
+        data-tt="Scheduler.js:495-500 — the only code comment explaining error philosophy">► Error resilience  (Scheduler.js:495–500 comment)</text>
+    </g>
+    <text x="440" y="1740" class="dim subhead">The scheduler never swallows errors — and never re-invokes a throwing task.</text>
+
+    <text x="32" y="1761" class="white tiny">// Intentionally not using a try-catch, since that makes some debugging techniques harder.</text>
+    <text x="32" y="1774" class="white tiny">// Instead, if flushWork errors, then hasMoreWork will remain true, and we'll continue the work loop.</text>
+
+    <text x="32" y="1793" class="red tiny">(1) NO try/catch around callback(didTimeout) at L212 — errors propagate out of workLoop.</text>
+    <text x="620" y="1793" class="red tiny">(2) The only catch in the scheduler is the profiling error TAP at L164 (re-throws).</text>
+    <text x="32" y="1806" class="red tiny">(3) hasMoreWork = true init BEFORE try L501 → throw leaves it true → pump re-schedules.</text>
+    <text x="620" y="1806" class="red tiny">(4) Pre-invocation tombstone L203 → throwing task is dead → next slice hits cancelled branch L237.</text>
+  </g>
+
+  <!-- Arrow: error resilience → reconciler bridge -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.64s">
+    <line x1="600" y1="1820" x2="600" y2="1840" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- RECONCILER BRIDGE                           -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="reconciler-bridge" class="fade-section box-glow" style="animation-delay: 0.66s" filter="url(#glow-green)">
+    <rect x="20" y="1845" width="1160" height="170" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1"/>
+    <g data-interactive="reconciler-bridge" data-ref="packages/react-reconciler/src/ReactFiberRootScheduler.js:500" data-category="module" data-label="reconciler-bridge">
+      <text x="32" y="1865" class="green heading"
+        data-tt="ReactFiberRootScheduler.js:500-503 — main scheduleCallback call site">► Reconciler bridge  (ReactFiberRootScheduler.js:500–606)</text>
+    </g>
+    <text x="500" y="1865" class="dim subhead">Scheduler has zero React dependency. Reconciler is one consumer; SchedulerMock and SchedulerNative are others.</text>
+
+    <!-- lane → event → scheduler mapping -->
+    <text x="32" y="1888" class="green subhead">LANE → EVENT PRIORITY → SCHEDULER PRIORITY</text>
+    <text x="32" y="1904" class="white tiny">SyncLane / DiscreteEventPriority</text>
+    <text x="260" y="1904" class="red tiny">→ MICROTASK (bypasses scheduler entirely!)</text>
+    <text x="32" y="1918" class="white tiny">InputContinuousLane / ContinuousEventPriority</text>
+    <text x="260" y="1918" class="violet tiny">→ UserBlockingSchedulerPriority  (250ms)</text>
+    <text x="32" y="1932" class="white tiny">DefaultLane / DefaultEventPriority</text>
+    <text x="260" y="1932" class="violet tiny">→ NormalSchedulerPriority  (5000ms)</text>
+    <text x="32" y="1946" class="white tiny">IdleLane / IdleEventPriority</text>
+    <text x="260" y="1946" class="violet tiny">→ IdleSchedulerPriority  (~12.43 days)</text>
+
+    <!-- callback flow -->
+    <text x="520" y="1888" class="green subhead">THE CALLBACK DANCE</text>
+    <text x="520" y="1904" class="white tiny">newCallbackNode = scheduleCallback(</text>
+    <text x="520" y="1918" class="white tiny">  schedulerPriorityLevel,</text>
+    <text x="520" y="1932" class="white tiny">  performWorkOnRootViaSchedulerTask.bind(null, root));  // L500–503</text>
+    <text x="520" y="1946" class="white tiny">root.callbackNode = newCallbackNode;  // L500 stable handle for id-check</text>
+
+    <text x="520" y="1966" class="white tiny">// Later in the Scheduler task…</text>
+    <text x="520" y="1979" class="white tiny">forceSync = didTimeout;  // L521 starvation → renderRootSync</text>
+    <text x="520" y="1992" class="white tiny">if (root.callbackNode === originalCallbackNode) // L600 identity check</text>
+    <text x="520" y="2005" class="white tiny">  return performWorkOnRootViaSchedulerTask.bind(null, root); // L603</text>
+
+    <text x="32" y="1969" class="orange tiny">workLoopConcurrentByScheduler (ReactFiberWorkLoop.js:3051):</text>
+    <text x="32" y="1982" class="white tiny">while (workInProgress !== null &amp;&amp; !shouldYield())</text>
+    <text x="32" y="1995" class="white tiny">  performUnitOfWork(workInProgress);  // fiber-by-fiber yield</text>
+    <text x="32" y="2008" class="dim tiny">shouldYield === Scheduler.shouldYieldToHost — shared clock on both sides</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SEPARATOR                                   -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="separator" class="fade-section" style="animation-delay: 0.72s">
+    <line x1="20" y1="2035" x2="1180" y2="2035" stroke="#444C56" stroke-width="1" stroke-dasharray="3,4"/>
+    <text x="20" y="2055" class="white title">EMERGENT BEHAVIORS</text>
+    <text x="240" y="2055" class="dim subhead">(built from the primitives above)</text>
+    <line x1="20" y1="2063" x2="1180" y2="2063" stroke="#444C56" stroke-width="1" stroke-dasharray="3,4"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CONTINUATION PATTERN (left, expandable)     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="continuation-pattern" data-expandable="true" data-expand-src="continuation.html" data-expand-w="570" data-expand-h="470"
+     class="fade-section" style="animation-delay: 0.76s">
+    <g class="collapsed-content">
+      <rect x="20" y="2080" width="570" height="250" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1" filter="url(#glow-orange)"/>
+      <text x="32" y="2100" class="orange heading">► Continuation (in-place Task mutation)</text>
+      <text x="475" y="2100" class="dim subhead">[expand]</text>
+      <text x="32" y="2120" class="dim">One render, many time slices — zero serialized state:</text>
+
+      <!-- Three slice boxes -->
+      <rect x="42" y="2130" width="95" height="44" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="2148" class="orange" font-size="10">slice 1</text>
+      <text x="52" y="2164" class="dim subhead">return self</text>
+
+      <rect x="163" y="2130" width="95" height="44" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="173" y="2148" class="orange" font-size="10">slice 2</text>
+      <text x="173" y="2164" class="dim subhead">return self</text>
+
+      <rect x="284" y="2130" width="95" height="44" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="294" y="2148" class="orange" font-size="10">slice N</text>
+      <text x="294" y="2164" class="dim subhead">return null</text>
+
+      <line x1="137" y1="2152" x2="163" y2="2152" stroke="#D29922" stroke-width="1" marker-end="url(#ao)"/>
+      <line x1="258" y1="2152" x2="284" y2="2152" stroke="#D29922" stroke-width="1" marker-end="url(#ao)"/>
+      <line x1="379" y1="2152" x2="415" y2="2152" stroke="#3FB950" stroke-width="1" marker-end="url(#ag)"/>
+      <text x="421" y="2156" class="green" font-size="10">commit</text>
+
+      <text x="52" y="2194" class="green subhead">[browser]</text>
+      <text x="173" y="2194" class="green subhead">[browser]</text>
+
+      <!-- Invariant callout -->
+      <rect x="32" y="2205" width="530" height="48" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.5"/>
+      <text x="42" y="2221" class="orange tiny">INVARIANT: Same Task object mutated in place.</text>
+      <text x="42" y="2234" class="white tiny">sortIndex, expirationTime, id, heap position ALL unchanged. No siftUp/siftDown.</text>
+      <text x="42" y="2247" class="red tiny">→ root.callbackNode === originalCallbackNode holds across every slice.</text>
+
+      <text x="32" y="2273" class="dim subhead">task.callback = continuationCallback  // L218</text>
+      <text x="32" y="2289" class="dim subhead">Pre-inv tombstone L203 already fired — heap entry is momentarily dead.</text>
+      <text x="32" y="2305" class="dim subhead">Per-pause state lives entirely in reconciler module globals</text>
+      <text x="32" y="2321" class="dim subhead">(workInProgress, workInProgressRoot, …) — Scheduler holds nothing.</text>
+    </g>
+    <g class="expanded-content"></g>
+    <script type="application/reflow+json">
+    {
+      "shifts": [
+        {
+          "trigger": "continuation-pattern",
+          "deltaH": 220,
+          "affects": [],
+          "affects_arrows_below_y": 2330
+        }
+      ]
+    }
+    </script>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PREEMPTION (right, expandable)              -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g data-reflow-group="preemption" data-expandable="true" data-expand-src="preemption.html" data-expand-w="570" data-expand-h="540"
+     class="fade-section" style="animation-delay: 0.8s">
+    <g class="collapsed-content">
+      <rect x="610" y="2080" width="570" height="250" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1" filter="url(#glow-orange)"/>
+      <text x="622" y="2100" class="orange heading">► Preemption (heap re-root between macrotasks)</text>
+      <text x="1060" y="2100" class="dim subhead">[expand]</text>
+      <text x="622" y="2120" class="red subhead" font-style="italic">Preemption is a heap re-root between macrotasks, not during one.</text>
+
+      <text x="622" y="2143" class="white">Transition render ─── user clicks ─── click task</text>
+      <text x="622" y="2158" class="dim subhead">(Normal, expirationTime ≈ 5000)        (UserBlocking, expirationTime ≈ 250)</text>
+
+      <text x="622" y="2180" class="dim">1. transition callback polls shouldYield() → true, returns continuation.</text>
+      <text x="622" y="2194" class="dim">2. Click handler calls scheduleCallback(UserBlocking, …).</text>
+      <text x="622" y="2208" class="dim">3. push(taskQueue, clickTask) → siftUp → clickTask becomes heap root.</text>
+      <text x="622" y="2222" class="white">heap: [ click(~250), transition(~5000) ]</text>
+      <text x="632" y="2238" class="dim">├──► next macrotask: peek → clickTask → runs to completion, commits</text>
+      <text x="632" y="2252" class="dim">└──► transition resumes, but root lanes changed → prepareFreshStack, restart</text>
+
+      <rect x="622" y="2263" width="548" height="52" rx="3" fill="#2D3339" stroke="#F85149" stroke-width="0.6"/>
+      <text x="632" y="2279" class="red tiny">⚠ SyncLane work never reaches the scheduler — flushed via queueMicrotask</text>
+      <text x="632" y="2292" class="red tiny">   in processRootScheduleInMicrotask (ReactFiberRootScheduler.js:442–456).</text>
+      <text x="632" y="2305" class="red tiny">   Scheduler's ImmediatePriority is effectively unreachable from reconciler concurrent mode.</text>
+    </g>
+    <g class="expanded-content"></g>
+    <script type="application/reflow+json">
+    {
+      "shifts": [
+        {
+          "trigger": "preemption",
+          "deltaH": 300,
+          "affects": [],
+          "affects_arrows_below_y": 2330
+        }
+      ]
+    }
+    </script>
+  </g>
+
+</svg>
+
+</body>
+</html>

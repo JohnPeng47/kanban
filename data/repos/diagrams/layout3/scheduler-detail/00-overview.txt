@@ -1,0 +1,121 @@
+REACT SCHEDULER
+================
+packages/scheduler/src/forks/Scheduler.js
+
+Cooperative multitasking for the browser main thread.
+Breaks React's rendering work into ~5ms chunks, yielding between them so the browser can handle input and paint.
+
+
+  ╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+  ║                                          BROWSER MAIN THREAD                                                    ║
+  ║                                                                                                                  ║
+  ║  JS execution · style calc · layout · paint · input · rAF  —  all compete for one thread                        ║
+  ╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+       │
+       │ without scheduler: 200ms block, page freezes
+       │ with scheduler:    5ms chunks, page stays responsive
+       │                                                              ┌──────────────────────────────────────────────┐
+       │                                                              │ ► 01-problem-statement                      │
+       │                                                              │                                              │
+       │                                                              │ |<------200ms------>|<-browser->|  (without) │
+       │                                                              │ |<5>|<b>|<5>|<b>|...|<5>|<done>|  (with)    │
+       │                                                              └──────────────────────────────────────────────┘
+       │
+       │ React reconciler calls scheduleCallback(priority, callback)
+       ▼
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ► 03-priority-timeout-mapping                                                                                     │
+  │                                                                                                                    │
+  │ priority ──► timeout ──► expirationTime          Immediate: -1ms · UserBlocking: 250ms · Normal: 5000ms           │
+  │                                                   Low: 10000ms · Idle: ~12 days                                    │
+  └──────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┘
+                                                         │
+                                                         │ creates task { id, callback, priorityLevel, startTime, expirationTime, sortIndex }
+                                                         ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ► 02-data-structures                                                                                                │
+  │                                                                                                                      │
+  │  ┌───────────────────────────────────────────┐                  ┌───────────────────────────────────────────┐        │
+  │  │ taskQueue (min-heap)                      │◄── advanceTimers ──│ timerQueue (min-heap)                    │        │
+  │  │ ready tasks, sorted by expirationTime     │    moves ready   │ delayed tasks, sorted by startTime       │        │
+  │  │                                           │    tasks over    │ setTimeout fires when first timer ready   │        │
+  │  └─────────────────────┬─────────────────────┘                  └───────────────────────────────────────────┘        │
+  └────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────┘
+                           │
+                           │ taskQueue non-empty → requestHostCallback()
+                           ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ► 06-message-channel                                                                                                │
+  │                                                                                                                      │
+  │ port.postMessage(null) ──► macrotask queued, near-zero delay   (not setTimeout: 4ms clamp · not rAF: 16ms aligned)  │
+  └──────────────────────────────────────────────┬───────────────────────────────────────────────────────────────────────┘
+                                                 │
+                                                 │ browser fires macrotask → performWorkUntilDeadline()
+                                                 ▼
+  ╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+  ║ ► 04-work-loop                                                                                                     ║
+  ║                                                                                                                     ║
+  ║ while (currentTask !== null) {                                                                                      ║
+  ║ ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ ║
+  ║ │                                                                                                                  │ ║
+  ║ │  ┌───────────────────────────────────────────────────────────────────────────────┐                                │ ║
+  ║ │  │ ► 05-yield-mechanism                                                         │                                │ ║
+  ║ │  │                                                                              │                                │ ║
+  ║ │  │ expired (expirationTime <= now)?  → skip check, run immediately              │                                │ ║
+  ║ │  │ elapsed >= 5ms?                   → yield to browser                         │                                │ ║
+  ║ │  │ needsPaint?                       → yield to browser                         │                                │ ║
+  ║ │  └──────────────────────────┬────────────────────────────────────────────────────┘                                │ ║
+  ║ │                        pass │                                                                                    │ ║
+  ║ │                             ▼                                                                                    │ ║
+  ║ │                     run task callback                                                                            │ ║
+  ║ │                             │                                                                                    │ ║
+  ║ │              ┌──────────────┴──────────────┐                                                                     │ ║
+  ║ │              ▼                             ▼                                                                     │ ║
+  ║ │  ┌────────────────────────┐    ┌────────────────────────┐                                                        │ ║
+  ║ │  │ returns fn (more work) │    │ returns null (done)    │                                                        │ ║
+  ║ │  │ keep task in heap      │    │ pop task from heap     │                                                        │ ║
+  ║ │  └───────────┬────────────┘    └───────────┬────────────┘                                                        │ ║
+  ║ │              └──────────┬──────────────────┘                                                                     │ ║
+  ║ │                         │ next iteration                                                                         │ ║
+  ║ └─────────────────────────┘                                                                                        │ ║
+  ║ }                                                                                                                   ║
+  ╚═══════════════════════════════════════════════╤══════════════════════════════════════════════════════════════════════╝
+                                                  │
+                                 ┌────────────────┴────────────────┐
+                                 ▼                                 ▼
+                   ┌───────────────────────┐         ┌───────────────────────┐
+                   │ more work             │         │ no more work          │
+                   │ port.postMessage()    │         │ loop stops            │
+                   │ → schedule next chunk │         │                       │
+                   └───────────┬───────────┘         └───────────────────────┘
+                               │
+                               ▼
+  ╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+  ║ BROWSER TIME             style recalc → layout → paint → handle input → rAF                                       ║
+  ╚═══════════════════════════════════════════════════╤════════════════════════════════════════════════════════════════╝
+                                                      │
+                                                      │ next macrotask fires → back to workLoop ↑
+                                                      │
+   ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+   EMERGENT BEHAVIORS (built from the primitives above)
+   ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+
+  ┌──────────────────────────────────────────────────────┐  ┌──────────────────────────────────────────────────────────┐
+  │ ► 07-continuation-pattern                            │  │ ► 08-preemption                                          │
+  │                                                      │  │                                                          │
+  │ One render, many time slices:                        │  │ Transition rendering ─── user clicks ─── click task      │
+  │                                                      │  │ (Normal, idx=5100)                      (Immediate,      │
+  │ ┌─────────┐   ┌─────────┐   ┌─────────┐             │  │       idx=100)                                            │
+  │ │ slice 1 │──►│ slice 2 │──►│ slice 3 │             │  │       │                                                   │
+  │ │ return  │   │ return  │   │ return  │             │  │       │ shouldYield() → true                               │
+  │ │ self    │   │ self    │   │ null    │──► commit   │  │       │ returns continuation                               │
+  │ └────┬────┘   └────┬────┘   └─────────┘             │  │       ▼                                                   │
+  │      ▼             ▼                                 │  │  heap: [click(100), transition(5100)]                     │
+  │  [browser]     [browser]                             │  │          │                                                │
+  │                                                      │  │          ├──► click runs to completion, commits           │
+  │ task.callback updated each time,                     │  │          └──► transition resumes, tree is stale            │
+  │ task stays in heap until null returned                │  │               → reconciler restarts from scratch          │
+  │                                                      │  │                                                          │
+  │                                                      │  │  Render must be side-effect-free: React can               │
+  │                                                      │  │  abandon a partially-built tree at any time.              │
+  └──────────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────────┘

@@ -1,0 +1,256 @@
+THE SCHEDULER (detailed)
+=========================
+React's cooperative multitasking system. It owns the relationship
+with the browser's event loop.
+
+Source: packages/scheduler/src/forks/Scheduler.js
+        packages/scheduler/src/SchedulerMinHeap.js
+        packages/scheduler/src/SchedulerPriorities.js
+
+
+THE PROBLEM THIS SOLVES:
+=========================
+
+    Browser main thread is single-threaded. It must handle:
+      - JavaScript execution
+      - Style calculation
+      - Layout
+      - Paint
+      - User input events
+      - Animations (rAF)
+
+    If React renders a large tree synchronously (e.g., 10,000 fibers),
+    it blocks ALL of the above for the entire duration.
+
+    The scheduler breaks React's work into ~5ms chunks, yielding
+    between them so the browser can handle input and paint.
+
+
+THE DATA STRUCTURES:
+=====================
+
+    Two min-heaps, ordered by sortIndex (lower = run sooner):
+
+    taskQueue (ready to run now)
+    +---------+---------+---------+---------+
+    | task    | task    | task    | task    |
+    | sortIdx | sortIdx | sortIdx | sortIdx |
+    | = 100   | = 350   | = 5100  | = MAX   |
+    | Immed.  | UserBlk | Normal  | Idle    |
+    +---------+---------+---------+---------+
+       ^ run first                  run last ^
+
+    timerQueue (delayed, waiting for startTime)
+    +---------+---------+
+    | task    | task    |
+    | start:  | start:  |
+    | now+500 | now+2000|
+    +---------+---------+
+    Checked by setTimeout; moved to taskQueue when startTime <= now
+
+
+TASK OBJECT:
+=============
+
+    {
+      id: 42,                     // monotonic counter (insertion order tiebreaker)
+      callback: performWorkOnRoot, // the function to run (from React reconciler)
+      priorityLevel: 3,           // NormalPriority
+      startTime: 1000,            // performance.now() at scheduling
+      expirationTime: 6000,       // startTime + timeout (5000 for Normal)
+      sortIndex: 6000,            // = expirationTime (for taskQueue ordering)
+    }
+
+
+PRIORITY --> TIMEOUT MAPPING:
+==============================
+
+    Priority Level        Timeout        Meaning
+    ---------------------------------------------------------------
+    ImmediatePriority (1)    -1 ms       Already expired. Runs first.
+                                         Used for: SyncLane updates
+                                         (click handlers, discrete events)
+
+    UserBlockingPriority (2) 250 ms      Expires quickly.
+                                         Used for: input, keyboard, focus
+
+    NormalPriority (3)       5,000 ms    Default. 5 seconds to live.
+                                         Used for: most renders,
+                                         setState from useEffect
+
+    LowPriority (4)          10,000 ms   Can wait. 10 seconds.
+                                         Used for: data fetching results
+
+    IdlePriority (5)         1073741823  Effectively never expires.
+                           (~12.4 days)  Used for: offscreen rendering
+
+
+THE WORK LOOP:
+===============
+
+    function workLoop(initialTime) {
+      let currentTime = initialTime;
+      advanceTimers(currentTime);  // move ready timers to taskQueue
+      currentTask = peek(taskQueue);
+
+      while (currentTask !== null) {
+
+        // YIELD CHECK: should we give time back to the browser?
+        if (currentTask.expirationTime > currentTime
+            && shouldYieldToHost()) {
+          break;
+        }
+
+        const callback = currentTask.callback;
+        if (typeof callback === 'function') {
+          currentTask.callback = null;
+          currentPriorityLevel = currentTask.priorityLevel;
+          const didTimeout = currentTask.expirationTime <= currentTime;
+
+          // RUN THE TASK
+          const continuationCallback = callback(didTimeout);
+
+          if (typeof continuationCallback === 'function') {
+            // Task yielded -- it returned a continuation
+            currentTask.callback = continuationCallback;
+          } else {
+            // Task completed
+            if (currentTask === peek(taskQueue)) {
+              pop(taskQueue);
+            }
+          }
+        } else {
+          pop(taskQueue);  // cancelled task
+        }
+
+        advanceTimers(currentTime);
+        currentTask = peek(taskQueue);
+      }
+
+      // Return whether there's more work
+      return currentTask !== null;
+    }
+
+
+THE YIELD MECHANISM:
+=====================
+
+    function shouldYieldToHost() {
+      const timeElapsed = getCurrentTime() - startTime;
+
+      if (timeElapsed < frameInterval) {  // frameInterval = 5ms
+        return false;  // keep working, we have time
+      }
+
+      // We've used our 5ms budget
+      if (enableIsInputPending) {   // experimental
+        if (needsPaint) return true;
+        if (timeElapsed < 300) {
+          // Check if there's pending user input
+          return isInputPending();
+        }
+      }
+
+      return true;  // yield
+    }
+
+    Timeline:
+    |<---- 5ms ---->|<-- browser -->|<---- 5ms ---->|<-- browser -->|
+    | React work    | input, paint  | React work    | input, paint  |
+    | (fiber by     | rAF, layout   | (more fibers) | rAF, layout   |
+    |  fiber)       |               |               |               |
+
+
+HOW THE BROWSER IS NOTIFIED:
+==============================
+
+    The scheduler uses MessageChannel to post work to the event loop.
+    NOT setTimeout (which has a 4ms minimum delay).
+    NOT requestAnimationFrame (which is frame-aligned, not ASAP).
+
+    Setup:
+    +-----------------------------------------------------------+
+    |                                                           |
+    |  const channel = new MessageChannel();                    |
+    |  const port = channel.port2;                              |
+    |                                                           |
+    |  channel.port1.onmessage = performWorkUntilDeadline;      |
+    |                                                           |
+    |  function requestHostCallback() {                         |
+    |    if (!isMessageLoopRunning) {                            |
+    |      isMessageLoopRunning = true;                         |
+    |      port.postMessage(null);  // <-- schedule work        |
+    |    }                                                      |
+    |  }                                                        |
+    |                                                           |
+    +-----------------------------------------------------------+
+
+    Event loop integration:
+
+    +-----------+     +------------------+     +-----------+
+    | User      |     | Macro task:      |     | Browser   |
+    | clicks    |---->| MessageChannel   |---->| Style,    |
+    | button    |     | handler runs     |     | Layout,   |
+    |           |     | performWork-     |     | Paint     |
+    |           |     | UntilDeadline()  |     |           |
+    |           |     |   -> workLoop()  |     |           |
+    |           |     |   -> yields at   |     |           |
+    |           |     |      5ms         |     |           |
+    +-----------+     +------------------+     +-----------+
+                             |
+                             | if more work, post another message
+                             v
+                      +------------------+     +-----------+
+                      | Next macro task: |     | Browser   |
+                      | MessageChannel   |---->| paints    |
+                      | resumes work     |     | again     |
+                      +------------------+     +-----------+
+
+
+CONTINUATION PATTERN:
+======================
+
+    React's reconciler returns a continuation when it yields:
+
+    function performWorkOnRoot(root, lanes, didTimeout) {
+      // ... render some fibers ...
+      if (workInProgress !== null) {
+        // Not done yet -- return self as continuation
+        return performWorkOnRoot.bind(null, root, lanes);
+      }
+      // Done -- commit
+      commitRoot(root);
+      return null;
+    }
+
+    The scheduler sees the returned function and keeps the task alive:
+
+    const continuationCallback = callback(didTimeout);
+    if (typeof continuationCallback === 'function') {
+      currentTask.callback = continuationCallback;
+      // task stays in the heap, runs again next iteration
+    }
+
+
+PREEMPTION:
+============
+
+    Higher-priority work can preempt lower-priority work:
+
+    1. User is in the middle of a transition render (NormalPriority)
+    2. User clicks a button (SyncLane -> ImmediatePriority)
+
+    What happens:
+    a. New task is pushed to taskQueue with lower sortIndex (expires sooner)
+    b. Current workLoop iteration finishes current fiber's beginWork
+    c. shouldYield() returns true (new higher-pri task exists)
+    d. workLoop breaks out
+    e. Reconciler returns a continuation for the transition work
+    f. Scheduler picks up the click task (higher pri) from heap
+    g. Click render runs to completion
+    h. Scheduler picks up the transition continuation
+    i. But the transition's fiber tree is now stale!
+       The reconciler detects this and restarts the transition render
+
+    This is why the render phase must be side-effect-free:
+    React may abandon a partially-built workInProgress tree at any time.

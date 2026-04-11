@@ -1,0 +1,42 @@
+CHILD RECONCILIATION (the "diff")
+====================================
+The algorithm that determines which children can be reused, which are new,
+and which need to be deleted. This is React's core diffing logic.
+
+Source: packages/react-reconciler/src/ReactChildFiber.js
+
+
+    +=====================================================+
+    |                                                     |
+    |  reconcileChildFibers(returnFiber, currentChild,    |
+    |                       newChildren, lanes)           |
+    |                                                     |
+    |  SINGLE ELEMENT:                                    |
+    |    if (current.key === new.key                       |
+    |        && current.type === new.type)                 |
+    |      --> reuse fiber, update props    [UPDATE]       |
+    |    else                                             |
+    |      --> delete old, create new       [REPLACE]      |
+    |                                                     |
+    |  ARRAY OF ELEMENTS (the O(n) algorithm):            |
+    |                                                     |
+    |    Pass 1: Walk old and new lists together.          |
+    |            While keys match, update in place.        |
+    |            Break on first mismatch.                  |
+    |                                                     |
+    |    Pass 2: If new list is done, delete remaining     |
+    |            old fibers.                               |
+    |                                                     |
+    |    Pass 3: If old list is done, create remaining     |
+    |            new fibers.                               |
+    |                                                     |
+    |    Pass 4: Both have remaining -- build a Map of     |
+    |            oldFibers by key. Walk new list,           |
+    |            look up matches, mark moves.              |
+    |                                                     |
+    |  OUTPUT: child fibers with flags:                    |
+    |    Placement  -- new fiber, needs DOM insert         |
+    |    Update     -- props changed, needs DOM update     |
+    |    Deletion   -- removed, needs DOM removal          |
+    |                                                     |
+    +=====================================================+

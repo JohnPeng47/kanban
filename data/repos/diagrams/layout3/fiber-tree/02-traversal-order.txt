@@ -1,0 +1,42 @@
+FIBER TREE TRAVERSAL ORDER
+===========================
+Depth-first traversal via the linked structure.
+performUnitOfWork alternates between beginWork (descend) and completeWork (ascend).
+
+Source: packages/react-reconciler/src/ReactFiberWorkLoop.js
+
+
+    performUnitOfWork walks this path:
+
+    App          beginWork -> descend to child
+     |
+     v
+    Header       beginWork -> descend to child
+     |
+     v
+    Nav          beginWork -> no children -> completeWork
+     |                                       then follow .sibling? no.
+     |                                       follow .return to Header
+     v                                       completeWork(Header)
+    Header       completed, follow .sibling
+     |
+     v
+    Board        beginWork -> descend to child
+     |
+     v
+    Column[0]    beginWork -> descend to child
+     |
+     v
+    Card[0]      beginWork -> leaf -> completeWork -> follow .sibling
+     |
+     v
+    Card[1]      beginWork -> leaf -> completeWork -> no sibling
+     |            follow .return to Column[0], completeWork
+     v            follow .sibling to Column[1]
+    Column[1]    beginWork -> descend to child
+     |
+     v
+    Card[2]      leaf -> completeWork -> .return to Column[1]
+     |            completeWork(Column[1]) -> .return to Board
+     v            completeWork(Board) -> .return to App
+    App          completeWork(App) -> done. Root complete.

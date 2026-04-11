@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>React Scheduler — Better2 (vertical + cardinal)</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .pulse { animation: pulse-glow 2s ease-in-out infinite; }
+    @keyframes pulse-glow { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+    .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
+    @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+  </style>
+</head>
+<body>
+
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 3540"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace" font-size="11">
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .tiny { font-size: 9px; }
+    .nano { font-size: 8px; }
+    .k { font-weight: 600; }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#8B949E" stroke-width="1.2"/>
+    </marker>
+    <marker id="ab" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#4C9AFF" stroke-width="1.2"/>
+    </marker>
+    <marker id="ao" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#D29922" stroke-width="1.2"/>
+    </marker>
+    <marker id="ag" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#3FB950" stroke-width="1.2"/>
+    </marker>
+    <marker id="ar" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#F85149" stroke-width="1.2"/>
+    </marker>
+    <marker id="av" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#A371F7" stroke-width="1.2"/>
+    </marker>
+    <filter id="glow-orange" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feFlood flood-color="#D29922" flood-opacity="0.25"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-red" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feFlood flood-color="#F85149" flood-opacity="0.22"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="12000" height="12000" fill="#1F2428"/>
+
+  <!-- ═══ TITLE ═══ -->
+  <g class="fade-section">
+    <text x="20" y="28" class="white title">REACT SCHEDULER</text>
+    <text x="210" y="28" class="dim">packages/scheduler/src/forks/Scheduler.js · 599 lines</text>
+    <line x1="20" y1="36" x2="200" y2="36" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="52" class="dim subhead">Cooperative time-slicing on the browser main thread. Zero preemption — everything is heap + flags + MessageChannel pump.</text>
+  </g>
+
+  <!-- ═══ BROWSER MAIN THREAD ═══ -->
+  <g class="fade-section" style="animation-delay: 0.05s">
+    <rect x="20" y="75" width="1160" height="44" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1.2"/>
+    <rect x="22" y="77" width="1156" height="40" rx="3" fill="none" stroke="#3FB950" stroke-width="0.4"/>
+    <text x="600" y="94" text-anchor="middle" class="green heading">BROWSER MAIN THREAD — one thread, many competitors</text>
+    <text x="600" y="110" text-anchor="middle" class="dim subhead">JS execution · style calc · layout · paint · input · rAF · microtasks</text>
+  </g>
+
+  <!-- Arrow: browser → problem -->
+  <line x1="600" y1="119" x2="600" y2="135" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+  <!-- ═══ THE PROBLEM ═══ -->
+  <g class="fade-section" style="animation-delay: 0.08s">
+    <rect x="20" y="140" width="1160" height="150" rx="4" fill="#24292E" stroke="#444C56" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="32" y="160" class="white heading">THE PROBLEM — one 200ms render freezes the page</text>
+    <text x="700" y="160" class="dim tiny">scale: 3 px / ms · time →</text>
+
+    <!-- Without -->
+    <text x="32" y="200" class="red subhead k">WITHOUT</text>
+    <rect x="100" y="186" width="600" height="22" fill="#F85149" opacity="0.85" rx="2"/>
+    <text x="400" y="202" text-anchor="middle" class="white tiny k">200 ms render — main thread blocked</text>
+    <rect x="700" y="186" width="48" height="22" fill="#3FB950" opacity="0.55" rx="2"/>
+    <text x="724" y="202" text-anchor="middle" class="white tiny">16 ms</text>
+    <text x="760" y="202" class="dim tiny" font-style="italic">► frozen tab · rage-clicks · bounces</text>
+
+    <!-- With -->
+    <text x="32" y="250" class="green subhead k">WITH</text>
+    <g>
+      <rect x="100" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="115" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="148" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="163" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="196" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="211" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="244" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="259" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="292" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="307" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="340" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="355" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="388" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="403" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="436" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="451" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="484" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="499" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="532" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="547" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="580" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="595" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+      <rect x="628" y="236" width="15" height="22" fill="#D29922" rx="1"/>
+      <rect x="643" y="236" width="33" height="22" fill="#3FB950" opacity="0.55" rx="1"/>
+    </g>
+    <text x="682" y="252" class="dim tiny">…</text>
+    <text x="700" y="252" class="dim tiny" font-style="italic">5 ms render / 11 ms browser interleaved · stays responsive</text>
+
+    <rect x="900" y="264" width="10" height="10" fill="#D29922"/>
+    <text x="915" y="273" class="dim tiny">render (5 ms)</text>
+    <rect x="1000" y="264" width="10" height="10" fill="#3FB950" opacity="0.55"/>
+    <text x="1015" y="273" class="dim tiny">browser (~11 ms)</text>
+
+    <text x="400" y="282" text-anchor="middle" class="red tiny k" font-style="italic">No OS preemption — cooperative yield + heap re-root between macrotasks is how "preemption" happens.</text>
+  </g>
+
+  <!-- Flow arrow: problem → public api -->
+  <g class="fade-section" style="animation-delay: 0.11s">
+    <line x1="600" y1="290" x2="600" y2="308" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="304" class="dim tiny">reconciler calls scheduleCallback(pri, cb)</text>
+  </g>
+
+  <!-- ═══ PUBLIC API — CARDINAL radial (N/S/E/W) ═══ -->
+  <g class="fade-section" style="animation-delay: 0.13s">
+    <rect x="20" y="315" width="1160" height="260" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="0.8"/>
+    <text x="32" y="335" class="violet heading">► Public API — 16 unstable_* exports (L572-588)</text>
+    <text x="290" y="335" class="dim subhead">hub at center · clusters at cardinal points (N / S / E / W)</text>
+
+    <!-- NORTH cluster: SCHEDULING -->
+    <rect x="490" y="350" width="220" height="68" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="0.9"/>
+    <text x="600" y="368" text-anchor="middle" class="blue subhead k">SCHEDULING</text>
+    <text x="502" y="384" class="white tiny">unstable_scheduleCallback</text>
+    <text x="700" y="384" text-anchor="end" class="dim tiny">L327</text>
+    <text x="502" y="398" class="white tiny">unstable_cancelCallback</text>
+    <text x="700" y="398" text-anchor="end" class="dim tiny">L418</text>
+    <text x="502" y="412" class="dim nano" font-style="italic">cancel ≡ task.callback = null (tombstone)</text>
+
+    <!-- Connector N → hub -->
+    <line x1="600" y1="418" x2="600" y2="440" stroke="#444C56" stroke-width="1"/>
+
+    <!-- HUB -->
+    <rect x="510" y="440" width="180" height="64" rx="6" fill="#2D3339" stroke="#A371F7" stroke-width="1.6"/>
+    <text x="600" y="460" text-anchor="middle" class="violet heading">Scheduler.js</text>
+    <text x="600" y="477" text-anchor="middle" class="dim tiny">16 exports · L572-588</text>
+    <text x="600" y="492" text-anchor="middle" class="dim tiny" font-style="italic">zero React knowledge</text>
+
+    <!-- Connector hub → S -->
+    <line x1="600" y1="504" x2="600" y2="520" stroke="#444C56" stroke-width="1"/>
+
+    <!-- SOUTH cluster: CONSTANTS -->
+    <rect x="490" y="520" width="220" height="50" rx="4" fill="#24292E" stroke="#F85149" stroke-width="0.9"/>
+    <text x="600" y="538" text-anchor="middle" class="red subhead k">CONSTANTS · PROFILING</text>
+    <text x="600" y="552" text-anchor="middle" class="white tiny">Imm(1) · UB(2) · Nor(3) · Low(4) · Idle(5)</text>
+    <text x="600" y="564" text-anchor="middle" class="dim nano">NoPri(0) sentinel · unstable_Profiling</text>
+
+    <!-- WEST cluster: PRIORITY CONTEXT -->
+    <rect x="40" y="440" width="240" height="82" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="0.9"/>
+    <text x="52" y="458" class="green subhead k">PRIORITY CTX (ambient)</text>
+    <text x="52" y="474" class="white tiny">unstable_runWithPriority</text>
+    <text x="270" y="474" text-anchor="end" class="dim tiny">L260</text>
+    <text x="52" y="488" class="white tiny">unstable_next</text>
+    <text x="270" y="488" text-anchor="end" class="dim tiny">L285</text>
+    <text x="52" y="502" class="white tiny">unstable_wrapCallback</text>
+    <text x="270" y="502" text-anchor="end" class="dim tiny">L310</text>
+    <text x="52" y="516" class="white tiny">unstable_getCurrentPriorityLevel</text>
+    <text x="270" y="516" text-anchor="end" class="dim tiny">L433</text>
+
+    <!-- Connector W → hub -->
+    <line x1="280" y1="472" x2="510" y2="472" stroke="#444C56" stroke-width="1"/>
+
+    <!-- EAST cluster: YIELD/PAINT/CLOCK -->
+    <rect x="920" y="440" width="240" height="82" rx="4" fill="#24292E" stroke="#D29922" stroke-width="0.9"/>
+    <text x="932" y="458" class="orange subhead k">YIELD · PAINT · CLOCK</text>
+    <text x="932" y="474" class="white tiny">unstable_shouldYield</text>
+    <text x="1148" y="474" text-anchor="end" class="dim tiny">L447</text>
+    <text x="932" y="488" class="white tiny">unstable_requestPaint</text>
+    <text x="1148" y="488" text-anchor="end" class="dim tiny">L462</text>
+    <text x="932" y="502" class="white tiny">unstable_forceFrameRate</text>
+    <text x="1148" y="502" text-anchor="end" class="dim tiny">L468</text>
+    <text x="932" y="516" class="white tiny">unstable_now</text>
+    <text x="1148" y="516" text-anchor="end" class="dim tiny">L59</text>
+
+    <!-- Connector hub → E -->
+    <line x1="690" y1="472" x2="920" y2="472" stroke="#444C56" stroke-width="1"/>
+  </g>
+
+  <!-- Flow arrow: pubAPI → priority -->
+  <g class="fade-section" style="animation-delay: 0.16s">
+    <line x1="600" y1="575" x2="600" y2="593" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="589" class="dim tiny">priority → timeout → expirationTime</text>
+  </g>
+
+  <!-- ═══ PRIORITY → TIMEOUT LOG-SCALE AXIS ═══ -->
+  <g class="fade-section" style="animation-delay: 0.19s">
+    <rect x="20" y="600" width="1160" height="130" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="0.8"/>
+    <text x="32" y="620" class="blue heading">► Priority → timeout → expirationTime</text>
+    <text x="335" y="620" class="dim subhead">Scheduler.js:346-369 · expirationTime = startTime + timeout</text>
+
+    <!-- Immediate (off-axis, left) -->
+    <rect x="52" y="665" width="6" height="22" fill="#F85149"/>
+    <text x="55" y="698" text-anchor="middle" class="red subhead k">Imm</text>
+    <text x="55" y="710" text-anchor="middle" class="dim tiny">−1 ms</text>
+    <text x="55" y="720" text-anchor="middle" class="red nano" font-style="italic">always expired</text>
+
+    <line x1="75" y1="676" x2="82" y2="676" stroke="#6E7681" stroke-width="0.8" stroke-dasharray="2,2"/>
+
+    <!-- AXIS: 1 ms → 1 Gs, 9 decades, 1140-90=1050 px / 9 = 116.67 px per decade -->
+    <line x1="90" y1="676" x2="1140" y2="676" stroke="#8B949E" stroke-width="1.2" marker-end="url(#a)"/>
+
+    <!-- decade ticks -->
+    <g stroke="#444C56" stroke-width="0.8">
+      <line x1="90"   y1="671" x2="90"   y2="681"/>
+      <line x1="207"  y1="671" x2="207"  y2="681"/>
+      <line x1="323"  y1="671" x2="323"  y2="681"/>
+      <line x1="440"  y1="671" x2="440"  y2="681"/>
+      <line x1="557"  y1="671" x2="557"  y2="681"/>
+      <line x1="673"  y1="671" x2="673"  y2="681"/>
+      <line x1="790"  y1="671" x2="790"  y2="681"/>
+      <line x1="907"  y1="671" x2="907"  y2="681"/>
+      <line x1="1023" y1="671" x2="1023" y2="681"/>
+      <line x1="1140" y1="671" x2="1140" y2="681"/>
+    </g>
+    <g class="dim tiny">
+      <text x="90"   y="663" text-anchor="middle">1 ms</text>
+      <text x="207"  y="663" text-anchor="middle">10 ms</text>
+      <text x="323"  y="663" text-anchor="middle">100 ms</text>
+      <text x="440"  y="663" text-anchor="middle">1 s</text>
+      <text x="557"  y="663" text-anchor="middle">10 s</text>
+      <text x="673"  y="663" text-anchor="middle">100 s</text>
+      <text x="790"  y="663" text-anchor="middle">1 ks</text>
+      <text x="907"  y="663" text-anchor="middle">10 ks</text>
+      <text x="1023" y="663" text-anchor="middle">100 ks</text>
+      <text x="1140" y="663" text-anchor="middle">1 Gs</text>
+    </g>
+
+    <!-- UserBlocking 250 ms → log10=2.398, x = 90 + 2.398*116.67 = 90 + 280 = 370 -->
+    <circle cx="370" cy="676" r="6" fill="#D29922" stroke="#1F2428" stroke-width="1.5"/>
+    <line x1="370" y1="682" x2="370" y2="696" stroke="#D29922" stroke-width="1"/>
+    <text x="370" y="708" text-anchor="middle" class="orange subhead k">UserBlocking</text>
+    <text x="370" y="720" text-anchor="middle" class="dim tiny">250 ms · clicks</text>
+
+    <!-- Normal 5000 ms → log10=3.699, x = 90 + 431 = 521 -->
+    <circle cx="521" cy="676" r="6" fill="#4C9AFF" stroke="#1F2428" stroke-width="1.5"/>
+    <line x1="521" y1="682" x2="521" y2="696" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="521" y="708" text-anchor="middle" class="blue subhead k">Normal</text>
+    <text x="521" y="720" text-anchor="middle" class="dim tiny">5 s</text>
+
+    <!-- Low 10000 ms → log10=4, x = 90 + 467 = 557 -->
+    <circle cx="557" cy="676" r="6" fill="#8B949E" stroke="#1F2428" stroke-width="1.5"/>
+    <line x1="557" y1="670" x2="557" y2="645" stroke="#8B949E" stroke-width="1"/>
+    <text x="557" y="640" text-anchor="middle" class="dim subhead k">Low</text>
+    <text x="595" y="640" class="dim tiny">(10 s · unused)</text>
+
+    <!-- Idle MAX → log10≈9.03, x ≈ 1144 -->
+    <circle cx="1144" cy="676" r="6" fill="#A371F7" stroke="#1F2428" stroke-width="1.5"/>
+    <line x1="1144" y1="682" x2="1144" y2="696" stroke="#A371F7" stroke-width="1"/>
+    <text x="1144" y="708" text-anchor="middle" class="violet subhead k">Idle</text>
+    <text x="1144" y="720" text-anchor="middle" class="dim tiny">≈12.43 d</text>
+
+    <text x="800" y="645" class="dim tiny">Idle = maxSigned31BitInt = 2³⁰−1 = 1 073 741 823 ms ≈ 12.43 d (V8 SMI)</text>
+  </g>
+
+  <!-- Flow arrow: priority → module state -->
+  <g class="fade-section" style="animation-delay: 0.22s">
+    <line x1="600" y1="730" x2="600" y2="748" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="744" class="dim tiny">creates Task { id, cb, pri, startTime, expTime, sortIdx }</text>
+  </g>
+
+  <!-- ═══ MODULE STATE — single container with labeled rows ═══ -->
+  <g class="fade-section" style="animation-delay: 0.25s">
+    <rect x="20" y="755" width="1160" height="238" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="0.8"/>
+    <text x="32" y="775" class="blue heading">► Scheduler.js module scope</text>
+    <text x="260" y="775" class="dim subhead">L59-101, L437-445 · all moving parts are globals + flags</text>
+
+    <!-- Icon legend right side of header -->
+    <g transform="translate(820, 768)">
+      <circle cx="6" cy="6" r="4" fill="#4C9AFF"/>
+      <text x="16" y="9" class="dim nano">data / const</text>
+      <circle cx="104" cy="6" r="4" fill="none" stroke="#D29922" stroke-width="1.5"/>
+      <text x="114" y="9" class="dim nano">pointer</text>
+      <rect x="174" y="2" width="8" height="8" rx="1" fill="#3FB950"/>
+      <text x="187" y="9" class="dim nano">flag</text>
+      <path d="M249,2 L256,9 L242,9 Z" fill="#F85149"/>
+      <text x="262" y="9" class="dim nano">time</text>
+    </g>
+
+    <!-- DATA row -->
+    <text x="40" y="810" class="blue subhead k">DATA</text>
+    <g transform="translate(170, 798)">
+      <circle cx="6" cy="10" r="4" fill="#4C9AFF"/>
+      <text x="18" y="13" class="white tiny">taskQueue</text>
+      <text x="210" y="13" text-anchor="end" class="dim tiny">L79</text>
+      <circle cx="6" cy="26" r="4" fill="#4C9AFF"/>
+      <text x="18" y="29" class="white tiny">taskIdCounter</text>
+      <text x="210" y="29" text-anchor="end" class="dim tiny">L83</text>
+      <circle cx="6" cy="42" r="4" fill="#4C9AFF"/>
+      <text x="18" y="45" class="white tiny">getCurrentTime</text>
+      <text x="210" y="45" text-anchor="end" class="dim tiny">L59</text>
+    </g>
+    <g transform="translate(460, 798)">
+      <circle cx="6" cy="10" r="4" fill="#4C9AFF"/>
+      <text x="18" y="13" class="white tiny">timerQueue</text>
+      <text x="210" y="13" text-anchor="end" class="dim tiny">L80</text>
+      <circle cx="6" cy="26" r="4" fill="#4C9AFF"/>
+      <text x="18" y="29" class="white tiny">maxSigned31BitInt</text>
+      <text x="210" y="29" text-anchor="end" class="dim tiny">L76</text>
+    </g>
+    <line x1="40" y1="848" x2="1160" y2="848" stroke="#30363D" stroke-width="0.5" stroke-dasharray="2,3"/>
+
+    <!-- EXECUTION row -->
+    <text x="40" y="870" class="orange subhead k">EXECUTION</text>
+    <g transform="translate(170, 858)">
+      <circle cx="6" cy="10" r="4" fill="none" stroke="#D29922" stroke-width="1.5"/>
+      <text x="18" y="13" class="white tiny">currentTask</text>
+      <text x="335" y="13" text-anchor="end" class="dim tiny">L85 · module-level pointer</text>
+      <circle cx="6" cy="26" r="4" fill="none" stroke="#D29922" stroke-width="1.5"/>
+      <text x="18" y="29" class="white tiny">currentPriorityLevel</text>
+      <text x="335" y="29" text-anchor="end" class="dim tiny">L86 · leaks mid-loop</text>
+    </g>
+    <g transform="translate(570, 858)">
+      <rect x="2" y="5" width="10" height="10" rx="1" fill="#3FB950"/>
+      <text x="18" y="13" class="white tiny">isPerformingWork</text>
+      <text x="495" y="13" text-anchor="end" class="dim tiny">L89 · re-entrance guard</text>
+    </g>
+    <line x1="40" y1="898" x2="1160" y2="898" stroke="#30363D" stroke-width="0.5" stroke-dasharray="2,3"/>
+
+    <!-- PUMP row -->
+    <text x="40" y="920" class="green subhead k">PUMP</text>
+    <g transform="translate(170, 908)">
+      <rect x="2" y="5" width="10" height="10" rx="1" fill="#3FB950"/>
+      <text x="18" y="13" class="white tiny">isHostCallbackScheduled</text>
+      <text x="335" y="13" text-anchor="end" class="dim tiny">L91</text>
+      <rect x="2" y="21" width="10" height="10" rx="1" fill="#3FB950"/>
+      <text x="18" y="29" class="white tiny">isHostTimeoutScheduled</text>
+      <text x="335" y="29" text-anchor="end" class="dim tiny">L92</text>
+    </g>
+    <g transform="translate(570, 908)">
+      <rect x="2" y="5" width="10" height="10" rx="1" fill="#3FB950"/>
+      <text x="18" y="13" class="white tiny">isMessageLoopRunning</text>
+      <text x="495" y="13" text-anchor="end" class="dim tiny">L437 · "cancel" = flip false</text>
+      <circle cx="6" cy="26" r="4" fill="#4C9AFF"/>
+      <text x="18" y="29" class="white tiny">taskTimeoutID</text>
+      <text x="495" y="29" text-anchor="end" class="dim tiny">L438 · single-slot handle · −1 = none</text>
+    </g>
+    <line x1="40" y1="948" x2="1160" y2="948" stroke="#30363D" stroke-width="0.5" stroke-dasharray="2,3"/>
+
+    <!-- SLICE row -->
+    <text x="40" y="970" class="red subhead k">SLICE</text>
+    <g transform="translate(170, 958)">
+      <path d="M8,5 L15,18 L1,18 Z" fill="#F85149"/>
+      <text x="22" y="17" class="white tiny">startTime</text>
+      <text x="335" y="17" text-anchor="end" class="red tiny k">⚠ NOT Task.startTime · L445</text>
+    </g>
+    <g transform="translate(570, 958)">
+      <path d="M8,5 L15,18 L1,18 Z" fill="#F85149"/>
+      <text x="22" y="17" class="white tiny">frameInterval</text>
+      <text x="495" y="17" text-anchor="end" class="dim tiny">L444 · = frameYieldMs (5 ms)</text>
+    </g>
+    <g transform="translate(170, 973)">
+      <rect x="2" y="5" width="10" height="10" rx="1" fill="#3FB950"/>
+      <text x="18" y="13" class="white tiny">needsPaint</text>
+      <text x="335" y="13" text-anchor="end" class="dim tiny">L94 · cleared L487 · set L464</text>
+    </g>
+  </g>
+
+  <!-- Flow arrow: module → heaps -->
+  <g class="fade-section" style="animation-delay: 0.28s">
+    <line x1="600" y1="993" x2="600" y2="1011" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="1007" class="dim tiny">heaps store Tasks; taskQueue keyed by expirationTime</text>
+  </g>
+
+  <!-- ═══ DATA STRUCTURES — heap trees + formulas ═══ -->
+  <g class="fade-section" style="animation-delay: 0.31s">
+    <rect x="20" y="1018" width="1160" height="278" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="0.8"/>
+    <text x="32" y="1038" class="blue heading">► Min-heaps — SchedulerMinHeap.js</text>
+    <text x="310" y="1038" class="dim subhead">two flat-array binary heaps · only root is popable · cancellation is lazy</text>
+
+    <!-- TASK QUEUE TREE (left) -->
+    <text x="200" y="1060" text-anchor="middle" class="blue subhead k">taskQueue (min-heap)</text>
+    <text x="200" y="1074" text-anchor="middle" class="dim tiny">sortIndex = expirationTime</text>
+
+    <!-- tree edges -->
+    <line x1="200" y1="1108" x2="130" y2="1148" stroke="#4C9AFF" stroke-width="1"/>
+    <line x1="200" y1="1108" x2="270" y2="1148" stroke="#4C9AFF" stroke-width="1"/>
+    <line x1="130" y1="1163" x2="80"  y2="1195" stroke="#4C9AFF" stroke-width="1"/>
+    <line x1="130" y1="1163" x2="180" y2="1195" stroke="#4C9AFF" stroke-width="1"/>
+    <line x1="270" y1="1163" x2="230" y2="1195" stroke="#4C9AFF" stroke-width="1"/>
+
+    <!-- nodes -->
+    <circle cx="200" cy="1093" r="20" fill="#2D3339" stroke="#4C9AFF" stroke-width="1.5"/>
+    <text x="200" y="1097" text-anchor="middle" class="blue tiny k">100</text>
+    <circle cx="130" cy="1158" r="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="130" y="1162" text-anchor="middle" class="blue tiny">350</text>
+    <circle cx="270" cy="1158" r="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="270" y="1162" text-anchor="middle" class="blue tiny">5000</text>
+    <circle cx="80" cy="1210" r="16" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="80" y="1214" text-anchor="middle" class="blue tiny">5200</text>
+    <circle cx="180" cy="1210" r="16" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="180" y="1214" text-anchor="middle" class="blue tiny">5250</text>
+    <circle cx="230" cy="1210" r="16" fill="#2D3339" stroke="#A371F7" stroke-width="1"/>
+    <text x="230" y="1214" text-anchor="middle" class="violet tiny">MAX</text>
+
+    <!-- flat array left -->
+    <text x="40" y="1252" class="dim tiny">flat:</text>
+    <g transform="translate(78, 1240)">
+      <rect x="0"   y="0" width="36" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.8"/>
+      <text x="18" y="13" text-anchor="middle" class="blue tiny k">100</text>
+      <text x="18" y="28" text-anchor="middle" class="dim nano">0</text>
+      <rect x="36"  y="0" width="36" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="54" y="13" text-anchor="middle" class="blue tiny">350</text>
+      <text x="54" y="28" text-anchor="middle" class="dim nano">1</text>
+      <rect x="72"  y="0" width="36" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="90" y="13" text-anchor="middle" class="blue tiny">5000</text>
+      <text x="90" y="28" text-anchor="middle" class="dim nano">2</text>
+      <rect x="108" y="0" width="36" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="126" y="13" text-anchor="middle" class="blue tiny">5200</text>
+      <text x="126" y="28" text-anchor="middle" class="dim nano">3</text>
+      <rect x="144" y="0" width="36" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="162" y="13" text-anchor="middle" class="blue tiny">5250</text>
+      <text x="162" y="28" text-anchor="middle" class="dim nano">4</text>
+      <rect x="180" y="0" width="36" height="18" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="198" y="13" text-anchor="middle" class="violet tiny">MAX</text>
+      <text x="198" y="28" text-anchor="middle" class="dim nano">5</text>
+    </g>
+
+    <!-- TIMER QUEUE TREE (right) -->
+    <text x="1000" y="1060" text-anchor="middle" class="blue subhead k">timerQueue (min-heap)</text>
+    <text x="1000" y="1074" text-anchor="middle" class="dim tiny">sortIndex = startTime</text>
+
+    <line x1="1000" y1="1108" x2="930"  y2="1148" stroke="#4C9AFF" stroke-width="1"/>
+    <line x1="1000" y1="1108" x2="1070" y2="1148" stroke="#4C9AFF" stroke-width="1"/>
+    <line x1="930"  y1="1163" x2="880"  y2="1195" stroke="#4C9AFF" stroke-width="1"/>
+    <line x1="930"  y1="1163" x2="980"  y2="1195" stroke="#4C9AFF" stroke-width="1"/>
+
+    <circle cx="1000" cy="1093" r="20" fill="#2D3339" stroke="#4C9AFF" stroke-width="1.5"/>
+    <text x="1000" y="1097" text-anchor="middle" class="blue tiny k">t+100</text>
+    <circle cx="930" cy="1158" r="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="930" y="1162" text-anchor="middle" class="blue tiny">t+500</text>
+    <circle cx="1070" cy="1158" r="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="1070" y="1162" text-anchor="middle" class="blue tiny">t+1k</text>
+    <circle cx="880" cy="1210" r="16" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="880" y="1214" text-anchor="middle" class="blue tiny">t+2s</text>
+    <circle cx="980" cy="1210" r="16" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="980" y="1214" text-anchor="middle" class="blue tiny">t+3s</text>
+
+    <!-- flat array right -->
+    <text x="840" y="1252" class="dim tiny">flat:</text>
+    <g transform="translate(878, 1240)">
+      <rect x="0"   y="0" width="44" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.8"/>
+      <text x="22" y="13" text-anchor="middle" class="blue tiny k">t+100</text>
+      <text x="22" y="28" text-anchor="middle" class="dim nano">0</text>
+      <rect x="44"  y="0" width="44" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="66" y="13" text-anchor="middle" class="blue tiny">t+500</text>
+      <text x="66" y="28" text-anchor="middle" class="dim nano">1</text>
+      <rect x="88"  y="0" width="44" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="110" y="13" text-anchor="middle" class="blue tiny">t+1k</text>
+      <text x="110" y="28" text-anchor="middle" class="dim nano">2</text>
+      <rect x="132" y="0" width="44" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="154" y="13" text-anchor="middle" class="blue tiny">t+2s</text>
+      <text x="154" y="28" text-anchor="middle" class="dim nano">3</text>
+      <rect x="176" y="0" width="44" height="18" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="198" y="13" text-anchor="middle" class="blue tiny">t+3s</text>
+      <text x="198" y="28" text-anchor="middle" class="dim nano">4</text>
+    </g>
+
+    <!-- INDEXING FORMULAS (middle) -->
+    <rect x="370" y="1082" width="460" height="60" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="600" y="1098" text-anchor="middle" class="blue subhead k">indexing formulas (SchedulerMinHeap.js)</text>
+    <text x="600" y="1114" text-anchor="middle" class="white tiny">parent(i) = (i − 1) >>> 1</text>
+    <text x="600" y="1126" text-anchor="middle" class="white tiny">left(i)   = 2 * i + 1</text>
+    <text x="600" y="1138" text-anchor="middle" class="white tiny">right(i)  = 2 * i + 2</text>
+
+    <!-- COMPARE (middle) -->
+    <rect x="370" y="1150" width="460" height="44" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="600" y="1166" text-anchor="middle" class="blue subhead k">compare(a, b) · SchedulerMinHeap.js:91</text>
+    <text x="600" y="1180" text-anchor="middle" class="white tiny">(a.sortIndex − b.sortIndex)  ||  (a.id − b.id)</text>
+    <text x="600" y="1190" text-anchor="middle" class="dim nano">primary key ◀ · FIFO tiebreaker (taskIdCounter) ▶</text>
+
+    <!-- advanceTimers big box at bottom -->
+    <rect x="32" y="1205" width="1136" height="50" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="1" stroke-dasharray="0"/>
+    <rect x="35" y="1208" width="1130" height="44" rx="2" fill="none" stroke="#4C9AFF" stroke-width="0.4"/>
+    <text x="44" y="1224" class="blue subhead k">advanceTimers · L103-125 (the timerQueue → taskQueue migration loop)</text>
+    <text x="44" y="1240" class="white tiny">loop peek timerQueue:   cb null? → pop (cancelled sweep)   ·   fired? → pop + rewrite sortIndex + push(taskQueue)   ·   future? → return</text>
+
+    <text x="32" y="1280" class="dim tiny">peek O(1) · push O(log n) · pop O(log n) · cancelCb O(1) (tombstone only)</text>
+  </g>
+
+  <!-- Flow arrow: data → host pump -->
+  <g class="fade-section" style="animation-delay: 0.34s">
+    <line x1="600" y1="1296" x2="600" y2="1314" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="1310" class="dim tiny">non-empty taskQueue → requestHostCallback</text>
+  </g>
+
+  <!-- ═══ HOST PUMP — cycle box properly enclosed ═══ -->
+  <g class="fade-section" style="animation-delay: 0.37s">
+    <rect x="20" y="1320" width="1160" height="450" rx="4" fill="#24292E" stroke="#D29922" stroke-width="0.8"/>
+    <text x="32" y="1340" class="orange heading">► Host pump</text>
+    <text x="150" y="1340" class="dim subhead">user-land scheduleCallback feeds the pump · loop cycles ONLY inside the double-bordered box</text>
+
+    <!-- User caller (OUTSIDE the cycle) -->
+    <rect x="480" y="1355" width="240" height="30" rx="3" fill="#2D3339" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <text x="600" y="1374" text-anchor="middle" class="dim tiny" font-style="italic">user-land caller: reconciler, etc.</text>
+
+    <line x1="600" y1="1385" x2="600" y2="1400" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="1397" class="dim nano">scheduleCallback(pri, cb)</text>
+
+    <!-- Diamond: re-entrance guard · full L409 condition -->
+    <polygon points="600,1402 740,1430 600,1458 460,1430" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="600" y="1424" text-anchor="middle" class="white tiny">isHostCallbackScheduled</text>
+    <text x="600" y="1436" text-anchor="middle" class="white tiny">|| isPerformingWork?</text>
+    <text x="600" y="1448" text-anchor="middle" class="dim nano">L409 re-entrance guard</text>
+
+    <!-- yes: no-op -->
+    <line x1="720" y1="1430" x2="800" y2="1430" stroke="#8B949E" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <text x="745" y="1422" class="dim nano">yes</text>
+    <rect x="800" y="1415" width="180" height="30" rx="3" fill="#2D3339" stroke="#6E7681" stroke-width="0.6"/>
+    <text x="890" y="1433" text-anchor="middle" class="dim tiny">no-op · already armed</text>
+
+    <!-- no: down to requestHC -->
+    <line x1="600" y1="1458" x2="600" y2="1478" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="1472" class="dim nano">no</text>
+
+    <rect x="470" y="1478" width="260" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="600" y="1497" text-anchor="middle" class="white tiny k">requestHostCallback · L549</text>
+
+    <line x1="600" y1="1508" x2="600" y2="1530" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="1525" class="dim nano">isMessageLoopRunning = true</text>
+
+    <!-- ═══ THE PUMP CYCLE — double-bordered box ═══ -->
+    <rect x="60" y="1535" width="1080" height="220" rx="4" fill="#1F2428" stroke="#D29922" stroke-width="1.6"/>
+    <rect x="65" y="1540" width="1070" height="210" rx="3" fill="none" stroke="#D29922" stroke-width="0.6"/>
+    <text x="600" y="1558" text-anchor="middle" class="orange subhead k">THE PUMP CYCLE — all loops happen here</text>
+
+    <!-- Vertical pipeline inside cycle box -->
+    <!-- 1: schedulePerformWorkUntilDeadline -->
+    <rect x="420" y="1572" width="360" height="26" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.9"/>
+    <text x="600" y="1589" text-anchor="middle" class="white tiny">schedulePerformWorkUntilDeadline</text>
+
+    <line x1="600" y1="1598" x2="600" y2="1612" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <!-- 2: postMessage -->
+    <rect x="420" y="1612" width="360" height="24" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.9"/>
+    <text x="600" y="1628" text-anchor="middle" class="white tiny">port2.postMessage(null)</text>
+
+    <line x1="600" y1="1636" x2="600" y2="1648" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <!-- 3: macrotask queue -->
+    <rect x="420" y="1648" width="360" height="24" rx="3" fill="#2D3339" stroke="#8B949E" stroke-width="0.7" stroke-dasharray="2,2"/>
+    <text x="600" y="1664" text-anchor="middle" class="dim tiny" font-style="italic">[ browser macrotask queue ]</text>
+
+    <line x1="600" y1="1672" x2="600" y2="1684" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <!-- 4: onmessage -->
+    <rect x="420" y="1684" width="360" height="24" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.9"/>
+    <text x="600" y="1700" text-anchor="middle" class="white tiny">port1.onmessage</text>
+
+    <line x1="600" y1="1708" x2="600" y2="1720" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <!-- 5: performWork → flushWork → workLoop -->
+    <rect x="420" y="1720" width="360" height="26" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="1"/>
+    <text x="600" y="1737" text-anchor="middle" class="green tiny k">performWorkUntilDeadline → flushWork → workLoop</text>
+
+    <!-- Branches after loop -->
+    <line x1="600" y1="1746" x2="480" y2="1766" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <line x1="600" y1="1746" x2="720" y2="1766" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="3,2"/>
+
+    <!-- YES: reschedule (loop back to schedulePerformWork) -->
+    <path d="M 480 1766 Q 100 1766 100 1585 Q 100 1585 420 1585" fill="none" stroke="#3FB950" stroke-width="1.4" class="flow-dash" marker-end="url(#ag)"/>
+    <text x="115" y="1670" class="green tiny k">hasMoreWork</text>
+    <text x="115" y="1684" class="green nano">= true</text>
+    <text x="115" y="1698" class="dim nano">loop back ▲</text>
+
+    <!-- NO: exit -->
+    <line x1="720" y1="1766" x2="1060" y2="1766" stroke="#F85149" stroke-width="1"/>
+    <text x="735" y="1762" class="red nano k">hasMoreWork = false</text>
+    <rect x="940" y="1770" width="180" height="24" rx="3" fill="none" stroke="#F85149" stroke-width="0"/>
+  </g>
+
+  <!-- Notes below the cycle (still inside the host-pump outer box) -->
+  <g class="fade-section" style="animation-delay: 0.40s">
+    <text x="40" y="1800" class="dim nano k">INIT-TIME tier selection (runs once at module load, captures native refs to defeat polyfills):</text>
+    <text x="40" y="1813" class="dim nano">  Tier 1  setImmediate (Node/IE)   →   Tier 2  MessageChannel (DOM/Workers)   →   Tier 3  setTimeout(,0) (exotic hosts)</text>
+    <text x="40" y="1830" class="dim nano k">TIMER PUMP (separate pump, for delayed tasks only):</text>
+    <text x="40" y="1843" class="dim nano">  scheduleCallback(..., {delay:N}) → requestHostTimeout → localSetTimeout → handleTimeout → advanceTimers → requestHostCallback (if any ready)</text>
+  </g>
+
+  <!-- Flow arrow: pump → work loop -->
+  <g class="fade-section" style="animation-delay: 0.42s">
+    <line x1="600" y1="1862" x2="600" y2="1880" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="1876" class="dim tiny">macrotask fires</text>
+  </g>
+
+  <!-- ═══ WORK LOOP ═══ -->
+  <g class="fade-section" style="animation-delay: 0.45s">
+    <rect x="20" y="1887" width="1160" height="780" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1.5" filter="url(#glow-orange)"/>
+    <rect x="23" y="1890" width="1154" height="774" rx="3" fill="none" stroke="#D29922" stroke-width="0.5"/>
+    <text x="32" y="1908" class="orange heading">► Work loop — the execution engine (Scheduler.js L144-258, 485-514)</text>
+
+    <!-- ═ performWorkUntilDeadline flowchart ═ -->
+    <text x="32" y="1934" class="orange subhead k">performWorkUntilDeadline · L485-514 — macrotask entry (horizontal flowchart)</text>
+
+    <rect x="32" y="1944" width="150" height="40" rx="4" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="107" y="1960" text-anchor="middle" class="white tiny">macrotask fires</text>
+    <text x="107" y="1973" text-anchor="middle" class="dim nano">port1.onmessage</text>
+
+    <line x1="182" y1="1964" x2="202" y2="1964" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <rect x="202" y="1944" width="170" height="40" rx="4" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="287" y="1960" text-anchor="middle" class="white tiny">needsPaint = false</text>
+    <text x="287" y="1974" text-anchor="middle" class="white tiny">startTime = now()</text>
+
+    <line x1="372" y1="1964" x2="392" y2="1964" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <rect x="392" y="1944" width="180" height="40" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1.4"/>
+    <text x="482" y="1960" text-anchor="middle" class="red tiny k">hasMoreWork = true</text>
+    <text x="482" y="1974" text-anchor="middle" class="red nano">init BEFORE try · self-heal</text>
+
+    <line x1="572" y1="1964" x2="592" y2="1964" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <rect x="592" y="1944" width="170" height="40" rx="4" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="677" y="1960" text-anchor="middle" class="white tiny">try {</text>
+    <text x="677" y="1974" text-anchor="middle" class="white tiny">hasMoreWork = flushWork()</text>
+
+    <line x1="762" y1="1964" x2="782" y2="1964" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <rect x="782" y="1944" width="170" height="40" rx="4" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="867" y="1960" text-anchor="middle" class="white tiny">finally {</text>
+    <text x="867" y="1974" text-anchor="middle" class="white tiny">reschedule / idle }</text>
+
+    <!-- throw callout -->
+    <text x="32" y="2003" class="red tiny" font-style="italic">⚠ if flushWork throws → hasMoreWork stays true → reschedule next slice · error escapes to onerror</text>
+
+    <!-- ═ flushWork bar ═ -->
+    <text x="32" y="2028" class="orange subhead k">flushWork · L144-186 — re-entry guard + try/finally</text>
+    <rect x="32" y="2038" width="1136" height="32" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.9"/>
+    <text x="44" y="2055" class="white tiny">isHostCallbackScheduled=false · cancel pending timeout · isPerformingWork=true · save currentPriorityLevel → workLoop(t)</text>
+    <text x="44" y="2066" class="dim nano">finally: currentTask=null · restore priority · isPerformingWork=false</text>
+
+    <!-- ═ workLoop state machine — VERTICAL ═ -->
+    <text x="32" y="2094" class="orange subhead k">workLoop · L188-258 — state machine (vertical)</text>
+
+    <!-- SHOULD-YIELD panel (right side, inset) -->
+    <g>
+      <rect x="970" y="2100" width="200" height="180" rx="4" fill="#2D3339" stroke="#D29922" stroke-width="0.9"/>
+      <text x="1070" y="2118" text-anchor="middle" class="orange tiny k">shouldYieldToHost · L447-460</text>
+      <text x="1070" y="2130" text-anchor="middle" class="dim nano">called by the ◇ in the spine</text>
+
+      <!-- Diamond 1: needsPaint? -->
+      <rect x="998" y="2142" width="144" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+      <text x="1070" y="2160" text-anchor="middle" class="white tiny">needsPaint? · L448</text>
+      <line x1="1142" y1="2157" x2="1160" y2="2157" stroke="#3FB950" stroke-width="1" marker-end="url(#ag)"/>
+      <text x="1151" y="2152" class="green nano k">yes</text>
+      <text x="1145" y="2145" class="green nano">→ true</text>
+      <line x1="1070" y1="2172" x2="1070" y2="2188" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+      <text x="1077" y="2183" class="dim nano">no</text>
+
+      <!-- Diamond 2: elapsed &lt; frameInterval? -->
+      <rect x="990" y="2188" width="160" height="38" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+      <text x="1070" y="2203" text-anchor="middle" class="white tiny">now - startTime</text>
+      <text x="1070" y="2217" text-anchor="middle" class="white tiny">&lt; frameInterval?</text>
+      <line x1="1150" y1="2207" x2="1165" y2="2207" stroke="#F85149" stroke-width="1" marker-end="url(#ar)"/>
+      <text x="1155" y="2202" class="red nano k">yes</text>
+      <text x="1150" y="2195" class="red nano">→ false</text>
+      <line x1="1070" y1="2226" x2="1070" y2="2242" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+      <text x="1077" y="2237" class="dim nano">no</text>
+
+      <rect x="1020" y="2242" width="100" height="22" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.9"/>
+      <text x="1070" y="2258" text-anchor="middle" class="orange tiny k">return true</text>
+
+      <text x="1070" y="2276" text-anchor="middle" class="dim nano" font-style="italic">startTime is module var</text>
+    </g>
+
+    <!-- ENTRY box — centered x=600 · advanceTimers runs ONCE (L190), peek is re-entered each iteration (L191/L240) -->
+    <rect x="500" y="2098" width="200" height="54" rx="4" fill="#2D3339" stroke="#3FB950" stroke-width="1.4"/>
+    <text x="600" y="2113" text-anchor="middle" class="green tiny k">ENTRY</text>
+    <line x1="515" y1="2118" x2="685" y2="2118" stroke="#30363D" stroke-width="0.5" stroke-dasharray="2,2"/>
+    <text x="600" y="2131" text-anchor="middle" class="dim nano">L190 advanceTimers (once per call)</text>
+    <text x="600" y="2145" text-anchor="middle" class="white tiny k">curTask = peek · L191 / L240</text>
+
+    <!-- Loop-back arrow: routes back to the peek line inside ENTRY, NOT to advanceTimers -->
+    <path d="M 600 2632 Q 600 2648 380 2648 Q 40 2648 40 2140 Q 40 2140 498 2140" fill="none" stroke="#8B949E" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#a)"/>
+    <text x="50" y="2400" class="dim nano" font-style="italic">loop back to peek · L240</text>
+    <text x="50" y="2412" class="dim nano" font-style="italic">(advanceTimers NOT re-run)</text>
+
+    <!-- arrow ENTRY → null? -->
+    <line x1="600" y1="2152" x2="600" y2="2163" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <!-- Diamond: curTask null? -->
+    <polygon points="600,2163 700,2188 600,2213 500,2188" fill="#2D3339" stroke="#8B949E" stroke-width="1"/>
+    <text x="600" y="2185" text-anchor="middle" class="white tiny">curTask null?</text>
+    <text x="600" y="2198" text-anchor="middle" class="dim nano">L192</text>
+
+    <!-- yes → DRAINED (exit LEFT) -->
+    <line x1="500" y1="2188" x2="380" y2="2188" stroke="#A371F7" stroke-width="1" marker-end="url(#av)"/>
+    <text x="436" y="2182" class="violet nano k">yes</text>
+    <rect x="200" y="2163" width="180" height="50" rx="4" fill="#2D3339" stroke="#A371F7" stroke-width="1.2"/>
+    <text x="290" y="2180" text-anchor="middle" class="violet tiny k">DRAINED</text>
+    <text x="290" y="2193" text-anchor="middle" class="white nano">peek timerQueue</text>
+    <text x="290" y="2204" text-anchor="middle" class="white nano">requestHostTimeout</text>
+    <text x="290" y="2215" text-anchor="middle" class="violet nano k">return false</text>
+
+    <!-- no → down to yield diamond -->
+    <line x1="600" y1="2213" x2="600" y2="2230" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="2225" class="dim nano">no</text>
+
+    <!-- Diamond: not expired AND shouldYield? -->
+    <polygon points="600,2230 720,2258 600,2286 480,2258" fill="#2D3339" stroke="#8B949E" stroke-width="1"/>
+    <text x="600" y="2253" text-anchor="middle" class="white tiny">not expired AND</text>
+    <text x="600" y="2265" text-anchor="middle" class="white tiny">shouldYield? · L194</text>
+
+    <!-- yes → BREAK (exit RIGHT) -->
+    <line x1="720" y1="2258" x2="810" y2="2258" stroke="#A371F7" stroke-width="1" marker-end="url(#av)"/>
+    <text x="745" y="2252" class="violet nano k">yes</text>
+    <rect x="810" y="2238" width="150" height="40" rx="4" fill="#2D3339" stroke="#A371F7" stroke-width="1.2"/>
+    <text x="885" y="2255" text-anchor="middle" class="violet tiny k">BREAK</text>
+    <text x="885" y="2268" text-anchor="middle" class="violet nano">return true · L250</text>
+
+    <!-- no → down to cb fn diamond -->
+    <line x1="600" y1="2286" x2="600" y2="2302" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="2297" class="dim nano">no</text>
+
+    <!-- Diamond: cb fn? -->
+    <polygon points="600,2302 700,2328 600,2354 500,2328" fill="#2D3339" stroke="#8B949E" stroke-width="1"/>
+    <text x="600" y="2325" text-anchor="middle" class="white tiny">cb === function?</text>
+    <text x="600" y="2338" text-anchor="middle" class="dim nano">L201</text>
+
+    <!-- no → pop tomb (exit LEFT) -->
+    <line x1="500" y1="2328" x2="400" y2="2328" stroke="#F85149" stroke-width="1" marker-end="url(#ar)"/>
+    <text x="436" y="2322" class="red nano k">no</text>
+    <rect x="260" y="2305" width="140" height="46" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1.1"/>
+    <text x="330" y="2321" text-anchor="middle" class="red tiny k">pop (tombstone)</text>
+    <text x="330" y="2335" text-anchor="middle" class="white nano">cancelled sweep</text>
+    <text x="330" y="2346" text-anchor="middle" class="dim nano">L238</text>
+
+    <!-- "no" branch loops back from pop box -->
+    <line x1="260" y1="2328" x2="200" y2="2328" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <text x="215" y="2322" class="dim nano">loop</text>
+
+    <!-- yes → TOMBSTONE down -->
+    <line x1="600" y1="2354" x2="600" y2="2372" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="608" y="2367" class="dim nano">yes</text>
+
+    <rect x="490" y="2372" width="220" height="42" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1.4"/>
+    <text x="600" y="2388" text-anchor="middle" class="red tiny k">TOMBSTONE · L203 (BEFORE invoke)</text>
+    <text x="600" y="2402" text-anchor="middle" class="white tiny">currentTask.callback = null</text>
+
+    <line x1="600" y1="2414" x2="600" y2="2420" stroke="#8B949E" stroke-width="1"/>
+    <text x="720" y="2418" class="dim nano">L205  currentPriorityLevel = currentTask.priorityLevel</text>
+    <text x="720" y="2430" class="dim nano">L207  didTimeout = (expirationTime ≤ currentTime)</text>
+    <line x1="600" y1="2420" x2="600" y2="2436" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <rect x="490" y="2436" width="220" height="42" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1.4"/>
+    <text x="600" y="2452" text-anchor="middle" class="red tiny k">INVOKE · L212 (no try/catch)</text>
+    <text x="600" y="2466" text-anchor="middle" class="white tiny">result = cb(didTimeout)</text>
+
+    <line x1="600" y1="2478" x2="600" y2="2494" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <rect x="490" y="2494" width="220" height="36" rx="4" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="600" y="2509" text-anchor="middle" class="orange tiny k">REFRESH CLOCK · L213</text>
+    <text x="600" y="2522" text-anchor="middle" class="white tiny">currentTime = getCurrentTime()</text>
+
+    <line x1="600" y1="2530" x2="600" y2="2548" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <!-- Diamond: r === fn? -->
+    <polygon points="600,2548 720,2574 600,2600 480,2574" fill="#2D3339" stroke="#8B949E" stroke-width="1"/>
+    <text x="600" y="2569" text-anchor="middle" class="white tiny">result === function?</text>
+    <text x="600" y="2583" text-anchor="middle" class="dim nano">L214</text>
+
+    <!-- no → COMPLETION (LEFT) -->
+    <line x1="480" y1="2574" x2="400" y2="2574" stroke="#F85149" stroke-width="1" marker-end="url(#ar)"/>
+    <text x="428" y="2568" class="red nano k">no</text>
+    <rect x="230" y="2548" width="170" height="60" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1.1"/>
+    <text x="315" y="2562" text-anchor="middle" class="red tiny k">COMPLETION</text>
+    <text x="315" y="2575" text-anchor="middle" class="white nano">if (curTask===peek)</text>
+    <text x="315" y="2585" text-anchor="middle" class="white nano">  pop  · L232 (guarded)</text>
+    <text x="315" y="2598" text-anchor="middle" class="orange nano k">advanceTimers · L235</text>
+
+    <!-- COMPLETION loops back -->
+    <line x1="230" y1="2578" x2="170" y2="2578" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="3,2"/>
+
+    <!-- yes → CONTINUATION (RIGHT) -->
+    <line x1="720" y1="2574" x2="810" y2="2574" stroke="#3FB950" stroke-width="1" marker-end="url(#ag)"/>
+    <text x="745" y="2568" class="green nano k">yes</text>
+    <rect x="810" y="2548" width="170" height="60" rx="4" fill="#2D3339" stroke="#3FB950" stroke-width="1.2"/>
+    <text x="895" y="2562" text-anchor="middle" class="green tiny k">CONTINUATION</text>
+    <text x="895" y="2575" text-anchor="middle" class="white nano">cb = result · L218</text>
+    <text x="895" y="2585" text-anchor="middle" class="orange nano k">advanceTimers · L223</text>
+    <text x="895" y="2598" text-anchor="middle" class="green nano">return true · L224</text>
+
+    <!-- CONTINUATION → YIELDED -->
+    <line x1="895" y1="2608" x2="895" y2="2620" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <rect x="830" y="2620" width="130" height="22" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="1"/>
+    <text x="895" y="2635" text-anchor="middle" class="violet tiny k">YIELDED (cont)</text>
+
+    <!-- Return-path legend -->
+    <text x="600" y="2658" text-anchor="middle" class="dim nano" font-style="italic">return paths → hasMoreWork:  DRAINED L256 → false (pump dormant)  ·  BREAK L250 → true (task stays at root)  ·  CONTINUATION L224 → true (task mutated in place)</text>
+  </g>
+
+  <!-- Flow arrow: work loop → error -->
+  <g class="fade-section" style="animation-delay: 0.48s">
+    <line x1="600" y1="2670" x2="600" y2="2688" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══ ERROR RESILIENCE — propagation chain ═══ -->
+  <g class="fade-section" style="animation-delay: 0.51s">
+    <rect x="20" y="2695" width="1160" height="155" rx="4" fill="#24292E" stroke="#F85149" stroke-width="1" filter="url(#glow-red)"/>
+    <text x="32" y="2715" class="red heading">► Error resilience — never swallows, never re-invokes a thrower</text>
+    <text x="32" y="2730" class="dim tiny">Scheduler.js:495-500 — the only code comment explaining the philosophy</text>
+
+    <rect x="40" y="2748" width="140" height="56" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1.2"/>
+    <text x="110" y="2765" text-anchor="middle" class="red tiny k">callback throws</text>
+    <text x="110" y="2778" text-anchor="middle" class="dim nano">L212</text>
+    <text x="110" y="2791" text-anchor="middle" class="dim nano">no try/catch</text>
+
+    <line x1="180" y1="2776" x2="215" y2="2776" stroke="#F85149" stroke-width="1.2" marker-end="url(#ar)"/>
+
+    <rect x="215" y="2748" width="170" height="56" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1"/>
+    <text x="300" y="2765" text-anchor="middle" class="white tiny k">workLoop propagates</text>
+    <text x="300" y="2778" text-anchor="middle" class="dim nano">PROD has no catch</text>
+    <text x="300" y="2791" text-anchor="middle" class="dim nano">(profiling = TAP only)</text>
+
+    <line x1="385" y1="2776" x2="420" y2="2776" stroke="#F85149" stroke-width="1.2" marker-end="url(#ar)"/>
+
+    <rect x="420" y="2748" width="170" height="56" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1"/>
+    <text x="505" y="2765" text-anchor="middle" class="white tiny k">flushWork finally</text>
+    <text x="505" y="2778" text-anchor="middle" class="dim nano">currentTask = null</text>
+    <text x="505" y="2791" text-anchor="middle" class="dim nano">restore pri · unlock</text>
+
+    <line x1="590" y1="2776" x2="625" y2="2776" stroke="#F85149" stroke-width="1.2" marker-end="url(#ar)"/>
+
+    <rect x="625" y="2748" width="210" height="56" rx="4" fill="#2D3339" stroke="#F85149" stroke-width="1.4"/>
+    <text x="730" y="2765" text-anchor="middle" class="red tiny k">performWork... finally</text>
+    <text x="730" y="2778" text-anchor="middle" class="white nano">hasMoreWork STILL true</text>
+    <text x="730" y="2791" text-anchor="middle" class="dim nano">(init=true · never reassigned)</text>
+
+    <line x1="835" y1="2776" x2="870" y2="2776" stroke="#3FB950" stroke-width="1.2" marker-end="url(#ag)"/>
+
+    <rect x="870" y="2748" width="200" height="56" rx="4" fill="#2D3339" stroke="#3FB950" stroke-width="1.4"/>
+    <text x="970" y="2765" text-anchor="middle" class="green tiny k">reschedule next slice</text>
+    <text x="970" y="2778" text-anchor="middle" class="white nano">pump stays alive</text>
+    <text x="970" y="2791" text-anchor="middle" class="dim nano">error → browser onerror</text>
+
+    <!-- Tombstone trick callout -->
+    <rect x="40" y="2815" width="1120" height="28" rx="3" fill="#2D3339" stroke="#F85149" stroke-width="0.7" stroke-dasharray="3,2"/>
+    <text x="600" y="2833" text-anchor="middle" class="red tiny k" font-style="italic">PRE-TOMBSTONE TRICK: cb was nulled at L203 BEFORE the throw · task is already a corpse · next peek pops it via cancelled branch L238 · never re-invoked</text>
+  </g>
+
+  <!-- Flow arrow: error → reconciler -->
+  <g class="fade-section" style="animation-delay: 0.54s">
+    <line x1="600" y1="2850" x2="600" y2="2868" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══ RECONCILER BRIDGE — mapping + 4-actor sequence ═══ -->
+  <g class="fade-section" style="animation-delay: 0.57s">
+    <rect x="20" y="2875" width="1160" height="380" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="0.9"/>
+    <text x="32" y="2895" class="green heading">► Reconciler bridge · ReactFiberRootScheduler.js</text>
+
+    <!-- Lane mapping table -->
+    <text x="40" y="2918" class="green subhead k">LANE → EVENT PRIORITY → SCHEDULER PRIORITY</text>
+    <text x="60" y="2940" class="dim tiny k">LANE</text>
+    <text x="220" y="2940" class="dim tiny k">EVENT</text>
+    <text x="380" y="2940" class="dim tiny k">SCHEDULER</text>
+
+    <rect x="40" y="2945" width="130" height="22" rx="3" fill="#2D3339" stroke="#F85149" stroke-width="0.8"/>
+    <text x="105" y="2959" text-anchor="middle" class="white tiny">SyncLane</text>
+    <line x1="170" y1="2956" x2="200" y2="2956" stroke="#F85149" stroke-width="1" marker-end="url(#ar)"/>
+    <rect x="200" y="2945" width="130" height="22" rx="3" fill="#2D3339" stroke="#F85149" stroke-width="0.8"/>
+    <text x="265" y="2959" text-anchor="middle" class="white tiny">Discrete</text>
+    <line x1="330" y1="2956" x2="360" y2="2956" stroke="#F85149" stroke-width="1" marker-end="url(#ar)"/>
+    <rect x="360" y="2945" width="220" height="22" rx="3" fill="#2D3339" stroke="#F85149" stroke-width="1.3"/>
+    <text x="470" y="2959" text-anchor="middle" class="red tiny k">MICROTASK (bypass!)</text>
+
+    <rect x="40" y="2973" width="130" height="22" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="105" y="2987" text-anchor="middle" class="white tiny">InputContinuous</text>
+    <line x1="170" y1="2984" x2="200" y2="2984" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <rect x="200" y="2973" width="130" height="22" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="265" y="2987" text-anchor="middle" class="white tiny">Continuous</text>
+    <line x1="330" y1="2984" x2="360" y2="2984" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <rect x="360" y="2973" width="220" height="22" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="470" y="2987" text-anchor="middle" class="orange tiny k">UserBlocking (250 ms)</text>
+
+    <rect x="40" y="3001" width="130" height="22" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="105" y="3015" text-anchor="middle" class="white tiny">DefaultLane</text>
+    <line x1="170" y1="3012" x2="200" y2="3012" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <rect x="200" y="3001" width="130" height="22" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="265" y="3015" text-anchor="middle" class="white tiny">Default</text>
+    <line x1="330" y1="3012" x2="360" y2="3012" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <rect x="360" y="3001" width="220" height="22" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="470" y="3015" text-anchor="middle" class="blue tiny k">Normal (5 000 ms)</text>
+
+    <rect x="40" y="3029" width="130" height="22" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="105" y="3043" text-anchor="middle" class="white tiny">IdleLane</text>
+    <line x1="170" y1="3040" x2="200" y2="3040" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <rect x="200" y="3029" width="130" height="22" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="265" y="3043" text-anchor="middle" class="white tiny">Idle</text>
+    <line x1="330" y1="3040" x2="360" y2="3040" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <rect x="360" y="3029" width="220" height="22" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="1"/>
+    <text x="470" y="3043" text-anchor="middle" class="violet tiny k">Idle (≈12.43 d)</text>
+
+    <text x="40" y="3070" class="red nano k">⚠ SyncLane bypasses Scheduler entirely (microtask) · ImmediatePriority only used by Safari iframe workaround &amp; no-microtask fallback (L680-693)</text>
+    <text x="40" y="3082" class="dim nano">(Some Discrete work can still reach UserBlocking through prerendering paths; row 1 shows the common sync case.)</text>
+
+    <!-- divider between mapping and sequence -->
+    <line x1="620" y1="2910" x2="620" y2="3245" stroke="#444C56" stroke-width="0.8" stroke-dasharray="3,3"/>
+
+    <!-- Sequence diagram: 4 actors -->
+    <text x="640" y="2918" class="green subhead k">CALLBACK DANCE — sequence diagram (4 actors)</text>
+
+    <!-- Actor headers -->
+    <text x="700" y="2942" text-anchor="middle" class="white tiny k">reconciler</text>
+    <line x1="700" y1="2948" x2="700" y2="3240" stroke="#444C56" stroke-width="0.8" stroke-dasharray="2,3"/>
+
+    <text x="830" y="2942" text-anchor="middle" class="orange tiny k">Scheduler</text>
+    <line x1="830" y1="2948" x2="830" y2="3240" stroke="#444C56" stroke-width="0.8" stroke-dasharray="2,3"/>
+
+    <text x="970" y="2942" text-anchor="middle" class="red tiny k">workLoop</text>
+    <line x1="970" y1="2948" x2="970" y2="3240" stroke="#444C56" stroke-width="0.8" stroke-dasharray="2,3"/>
+
+    <text x="1110" y="2942" text-anchor="middle" class="violet tiny k">callback(root)</text>
+    <line x1="1110" y1="2948" x2="1110" y2="3240" stroke="#444C56" stroke-width="0.8" stroke-dasharray="2,3"/>
+
+    <!-- Msg 1: scheduleCb -->
+    <line x1="700" y1="2962" x2="830" y2="2962" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <text x="765" y="2957" text-anchor="middle" class="blue nano">scheduleCallback(p, performWork…)</text>
+
+    <!-- Scheduler work box -->
+    <rect x="820" y="2968" width="20" height="38" fill="#D29922" opacity="0.3"/>
+    <text x="765" y="2982" text-anchor="end" class="dim nano">push(taskQ)</text>
+    <text x="765" y="2994" text-anchor="end" class="dim nano">requestHC</text>
+    <text x="765" y="3006" text-anchor="end" class="dim nano">postMessage</text>
+
+    <!-- Msg 2: return taskNode -->
+    <line x1="830" y1="3015" x2="700" y2="3015" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <text x="765" y="3010" text-anchor="middle" class="dim nano">← taskNode</text>
+
+    <!-- Reconciler stores -->
+    <text x="635" y="3028" class="white nano">root.callbackNode = taskNode</text>
+    <rect x="690" y="3018" width="20" height="14" fill="#4C9AFF" opacity="0.3"/>
+
+    <!-- time passes -->
+    <text x="905" y="3048" text-anchor="middle" class="dim nano" font-style="italic">— time passes: macrotask fires —</text>
+    <line x1="645" y1="3055" x2="1155" y2="3055" stroke="#444C56" stroke-width="0.3"/>
+
+    <!-- Msg 3: performWork → flushWork → workLoop -->
+    <line x1="830" y1="3070" x2="970" y2="3070" stroke="#D29922" stroke-width="1" marker-end="url(#ao)"/>
+    <text x="900" y="3062" text-anchor="middle" class="orange nano">performWorkUntilDeadline</text>
+    <text x="900" y="3072" text-anchor="middle" class="dim nano">→ flushWork → workLoop</text>
+
+    <!-- workLoop working -->
+    <rect x="960" y="3076" width="20" height="50" fill="#F85149" opacity="0.3"/>
+
+    <!-- Msg 4: callback(didT) -->
+    <line x1="970" y1="3090" x2="1110" y2="3090" stroke="#F85149" stroke-width="1" marker-end="url(#ar)"/>
+    <text x="1040" y="3085" text-anchor="middle" class="red nano">peek · tomb · callback(didT)</text>
+
+    <!-- callback running -->
+    <rect x="1100" y="3096" width="20" height="40" fill="#A371F7" opacity="0.3"/>
+    <text x="1133" y="3108" class="dim nano">renderRoot…</text>
+    <text x="1133" y="3120" class="dim nano">shouldYield?</text>
+
+    <!-- Msg 5: ← cont fn -->
+    <line x1="1110" y1="3140" x2="970" y2="3140" stroke="#3FB950" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#ag)"/>
+    <text x="1040" y="3135" text-anchor="middle" class="green nano">← continuation fn</text>
+
+    <!-- workLoop stores cont -->
+    <text x="905" y="3153" text-anchor="middle" class="dim nano">task.cb = cont · advTmrs</text>
+
+    <!-- Msg 6: return true -->
+    <line x1="970" y1="3170" x2="830" y2="3170" stroke="#D29922" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#ao)"/>
+    <text x="900" y="3165" text-anchor="middle" class="orange nano">return true</text>
+
+    <!-- Scheduler reschedules -->
+    <text x="830" y="3186" text-anchor="middle" class="dim nano">hasMoreWork=T</text>
+    <text x="830" y="3197" text-anchor="middle" class="dim nano">schedulePerfo…</text>
+
+    <text x="905" y="3225" text-anchor="middle" class="dim nano" font-style="italic">next slice: same Task, same heap position</text>
+  </g>
+
+  <!-- ═══ SEPARATOR ═══ -->
+  <g class="fade-section" style="animation-delay: 0.60s">
+    <line x1="20" y1="3275" x2="1180" y2="3275" stroke="#444C56" stroke-width="1" stroke-dasharray="3,4"/>
+    <text x="20" y="3295" class="white title">EMERGENT BEHAVIORS</text>
+    <text x="250" y="3295" class="dim subhead">(built from the primitives above)</text>
+    <line x1="20" y1="3303" x2="1180" y2="3303" stroke="#444C56" stroke-width="1" stroke-dasharray="3,4"/>
+  </g>
+
+  <!-- ═══ PREEMPTION TIMELINE (left) ═══ -->
+  <g class="fade-section" style="animation-delay: 0.63s">
+    <rect x="20" y="3315" width="580" height="210" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="32" y="3334" class="orange heading">► Preemption — wall-clock timeline</text>
+    <text x="32" y="3348" class="red tiny k" font-style="italic">heap re-root between macrotasks, not during one</text>
+
+    <!-- Timeline axis -->
+    <line x1="60" y1="3395" x2="560" y2="3395" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <g stroke="#444C56" stroke-width="0.6">
+      <line x1="60"  y1="3390" x2="60"  y2="3400"/>
+      <line x1="160" y1="3390" x2="160" y2="3400"/>
+      <line x1="260" y1="3390" x2="260" y2="3400"/>
+      <line x1="360" y1="3390" x2="360" y2="3400"/>
+      <line x1="460" y1="3390" x2="460" y2="3400"/>
+    </g>
+    <g class="dim nano" text-anchor="middle">
+      <text x="60" y="3414">t=0</text>
+      <text x="160" y="3414">5 ms</text>
+      <text x="260" y="3414">7 ms</text>
+      <text x="360" y="3414">8 ms</text>
+      <text x="460" y="3414">45 ms</text>
+    </g>
+
+    <!-- slice rects -->
+    <rect x="60" y="3368" width="100" height="22" fill="#4C9AFF" opacity="0.85" rx="2"/>
+    <text x="110" y="3383" text-anchor="middle" class="white nano k">render 5ms</text>
+
+    <rect x="160" y="3368" width="100" height="22" fill="#3FB950" opacity="0.4" rx="2"/>
+    <text x="210" y="3383" text-anchor="middle" class="dim nano">browser · scroll event</text>
+
+    <rect x="260" y="3368" width="100" height="22" fill="#D29922" opacity="0.9" rx="2"/>
+    <text x="310" y="3383" text-anchor="middle" class="white nano k">scroll cb runs</text>
+
+    <rect x="360" y="3368" width="100" height="22" fill="#3FB950" opacity="0.4" rx="2"/>
+    <text x="410" y="3383" text-anchor="middle" class="dim nano">browser · paint</text>
+
+    <rect x="460" y="3368" width="100" height="22" fill="#4C9AFF" opacity="0.85" rx="2"/>
+    <text x="510" y="3383" text-anchor="middle" class="white nano">trans RESTART</text>
+
+    <!-- heap snapshots — sortIndex = startTime + timeout (NOT raw timeout!) -->
+    <text x="32" y="3438" class="dim subhead k">Heap snapshots · sortIndex = startTime + timeout</text>
+
+    <rect x="36" y="3444" width="124" height="30" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+    <text x="98" y="3458" text-anchor="middle" class="dim nano">t=5 ms</text>
+    <text x="98" y="3470" text-anchor="middle" class="blue nano k">[5000: trans]</text>
+
+    <line x1="160" y1="3459" x2="180" y2="3459" stroke="#D29922" stroke-width="1" marker-end="url(#ao)"/>
+
+    <rect x="184" y="3444" width="162" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="1.2"/>
+    <text x="265" y="3458" text-anchor="middle" class="dim nano">t=6 · scroll pushed</text>
+    <text x="265" y="3470" text-anchor="middle" class="orange nano k">[256: scroll, 5000: trans]</text>
+
+    <line x1="346" y1="3459" x2="366" y2="3459" stroke="#D29922" stroke-width="1" marker-end="url(#ao)"/>
+
+    <rect x="368" y="3444" width="120" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="1.2"/>
+    <text x="428" y="3458" text-anchor="middle" class="dim nano">t=8 · peek → 256</text>
+    <text x="428" y="3470" text-anchor="middle" class="orange nano k">scroll runs</text>
+
+    <line x1="490" y1="3459" x2="508" y2="3459" stroke="#F85149" stroke-width="1" marker-end="url(#ar)"/>
+
+    <rect x="510" y="3444" width="80" height="30" rx="3" fill="#2D3339" stroke="#F85149" stroke-width="1"/>
+    <text x="550" y="3458" text-anchor="middle" class="dim nano">t=45 ms</text>
+    <text x="550" y="3470" text-anchor="middle" class="red nano k">restart</text>
+
+    <text x="32" y="3486" class="dim nano">trans sortIdx = 0 + 5000 · scroll sortIdx = 6 + 250 = 256   →   256 &lt; 5000   →   siftUp → scroll at root</text>
+    <text x="32" y="3498" class="dim nano">1. trans yields via shouldYield · 2. scroll (Continuous, UB) scheduleCb fires between slices · 3. re-root · 4. next peek finds scroll</text>
+    <text x="32" y="3510" class="red nano k">⚠ render must be side-effect-free — lanes changed at restart, WIP tree thrown away (prepareFreshStack)</text>
+  </g>
+
+  <!-- ═══ CONTINUATION PATTERN (right) ═══ -->
+  <g class="fade-section" style="animation-delay: 0.66s">
+    <rect x="610" y="3315" width="570" height="210" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="622" y="3334" class="orange heading">► Continuation — in-place Task mutation</text>
+    <text x="622" y="3348" class="dim tiny">one render, many slices · zero serialized state</text>
+
+    <!-- slice chain -->
+    <rect x="625" y="3368" width="95" height="48" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="672" y="3383" text-anchor="middle" class="orange tiny k">slice 1</text>
+    <text x="672" y="3395" text-anchor="middle" class="white nano">render 5ms</text>
+    <text x="672" y="3407" text-anchor="middle" class="green nano k">return self</text>
+
+    <rect x="720" y="3378" width="28" height="28" fill="#3FB950" opacity="0.35" rx="2"/>
+    <text x="734" y="3395" text-anchor="middle" class="dim nano">br</text>
+
+    <rect x="748" y="3368" width="95" height="48" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="1"/>
+    <text x="795" y="3383" text-anchor="middle" class="orange tiny k">slice 2</text>
+    <text x="795" y="3395" text-anchor="middle" class="white nano">render 5ms</text>
+    <text x="795" y="3407" text-anchor="middle" class="green nano k">return self</text>
+
+    <rect x="843" y="3378" width="28" height="28" fill="#3FB950" opacity="0.35" rx="2"/>
+    <text x="857" y="3395" text-anchor="middle" class="dim nano">br</text>
+
+    <text x="895" y="3396" class="dim subhead">…</text>
+
+    <rect x="935" y="3368" width="95" height="48" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="1.2"/>
+    <text x="982" y="3383" text-anchor="middle" class="orange tiny k">slice N</text>
+    <text x="982" y="3395" text-anchor="middle" class="white nano">wIP === null</text>
+    <text x="982" y="3407" text-anchor="middle" class="green nano k">return null</text>
+
+    <line x1="1030" y1="3392" x2="1070" y2="3392" stroke="#3FB950" stroke-width="1.2" marker-end="url(#ag)"/>
+    <text x="1095" y="3396" class="green tiny k">commit</text>
+
+    <!-- invariant callout -->
+    <rect x="622" y="3435" width="548" height="72" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.8"/>
+    <text x="634" y="3452" class="orange subhead k">INVARIANT — same Task object mutated in place</text>
+    <text x="634" y="3466" class="white nano">sortIndex · expirationTime · id · heap position  ALL unchanged across slices</text>
+    <text x="634" y="3478" class="dim nano">→ no siftUp/siftDown on re-arm · O(1) re-queue of continuation</text>
+    <text x="634" y="3490" class="red nano k">→ root.callbackNode === originalCallbackNode holds for entire render</text>
+    <text x="634" y="3503" class="dim nano">per-pause state lives in reconciler (workInProgress, etc), Scheduler holds only a function pointer</text>
+  </g>
+
+</svg>
+</body>
+</html>

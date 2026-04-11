@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>MessageChannel Detail</title></head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 340"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Consolas',monospace" font-size="11">
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; } .blue { fill: #4C9AFF; } .green { fill: #3FB950; }
+    .orange { fill: #D29922; } .red { fill: #F85149; } .dim { fill: #6E7681; }
+    .heading { font-size: 13px; font-weight: 600; } .subhead { font-size: 10px; }
+  </style>
+  <defs>
+    <marker id="arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1060" height="340" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1.2"/>
+  <text x="14" y="20" class="orange heading"
+    data-tt="Scheduler.js:550 — MessageChannel for zero-delay scheduling">BROWSER NOTIFICATION — MessageChannel</text>
+  <text x="14" y="36" class="dim subhead">How the scheduler integrates with the browser event loop.</text>
+  <text x="14" y="50" class="dim subhead">Source: packages/scheduler/src/forks/Scheduler.js</text>
+
+  <!-- WHY NOT alternatives -->
+  <text x="14" y="74" class="white" font-size="10" font-weight="600">WHY MessageChannel?</text>
+
+  <rect x="14" y="82" width="310" height="26" rx="3" fill="#2D3339" stroke="#F85149" stroke-width="0.6"/>
+  <text x="22" y="99" class="red" font-size="10"
+    data-tt="setTimeout — 4ms minimum delay per HTML spec">setTimeout: 4ms minimum delay (wastes time)</text>
+
+  <rect x="340" y="82" width="340" height="26" rx="3" fill="#2D3339" stroke="#F85149" stroke-width="0.6"/>
+  <text x="348" y="99" class="red" font-size="10"
+    data-tt="requestAnimationFrame — frame-aligned, ~16ms between calls">requestAnimationFrame: frame-aligned ~16ms (too slow)</text>
+
+  <rect x="696" y="82" width="350" height="26" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.8"/>
+  <text x="704" y="99" class="green" font-size="10"
+    data-tt="MessageChannel — macrotask with near-zero delay, ideal for scheduler">MessageChannel: macrotask, near-zero delay ✓</text>
+
+  <!-- Setup code -->
+  <text x="14" y="130" class="white" font-size="10" font-weight="600">SETUP:</text>
+  <rect x="14" y="138" width="480" height="80" rx="3" fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
+  <text x="22" y="156" class="blue" font-size="10"
+    data-tt="Scheduler.js:556 — Create MessageChannel instance">const channel = new MessageChannel();</text>
+  <text x="22" y="172" class="blue" font-size="10"
+    data-tt="Scheduler.js:557 — port2 is used to post messages">const port = channel.port2;</text>
+  <text x="22" y="188" class="blue" font-size="10"
+    data-tt="Scheduler.js:558 — port1.onmessage triggers the work loop">channel.port1.onmessage = performWorkUntilDeadline;</text>
+  <text x="22" y="206" class="white" font-size="10"
+    data-tt="Scheduler.js:575 — requestHostCallback posts a message to trigger work">requestHostCallback = () => port.postMessage(null);</text>
+
+  <!-- Event loop diagram -->
+  <text x="520" y="130" class="white" font-size="10" font-weight="600">EVENT LOOP INTEGRATION:</text>
+
+  <rect x="520" y="144" width="140" height="40" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+  <text x="532" y="162" class="orange" font-size="10"
+    data-tt="User interaction — triggers synchronous event handlers">User clicks</text>
+  <text x="532" y="176" font-size="10">button</text>
+
+  <line x1="660" y1="164" x2="690" y2="164" stroke="#8B949E" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="695" y="144" width="170" height="40" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+  <text x="707" y="159" class="blue" font-size="9"
+    data-tt="Scheduler.js:530 — performWorkUntilDeadline runs as macrotask">Macrotask:</text>
+  <text x="707" y="172" font-size="9">performWorkUntilDeadline</text>
+  <text x="707" y="183" font-size="9">→ workLoop()</text>
+
+  <line x1="865" y1="164" x2="895" y2="164" stroke="#8B949E" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="900" y="144" width="140" height="40" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+  <text x="912" y="162" class="green" font-size="10"
+    data-tt="Browser gets control — style recalc, layout, paint, input">Browser</text>
+  <text x="912" y="176" font-size="10">style, layout, paint</text>
+
+  <line x1="780" y1="184" x2="780" y2="210" stroke="#8B949E" stroke-width="1" marker-end="url(#arr)"/>
+  <text x="790" y="204" class="dim subhead">if more work, post another message</text>
+
+  <rect x="695" y="216" width="170" height="32" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+  <text x="707" y="234" class="blue" font-size="9"
+    data-tt="Scheduler.js:530 — Next macrotask resumes where it left off">Next macrotask: resumes</text>
+
+  <line x1="865" y1="232" x2="895" y2="232" stroke="#8B949E" stroke-width="1" marker-end="url(#arr)"/>
+  <rect x="900" y="216" width="140" height="32" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+  <text x="912" y="236" class="green" font-size="10">Browser paints again</text>
+
+  <!-- Timeline -->
+  <text x="14" y="272" class="white" font-size="10" font-weight="600">INTERLEAVED TIMELINE:</text>
+
+  <rect x="14" y="280" width="120" height="22" rx="0" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+  <text x="28" y="295" class="blue" font-size="9">React ~5ms</text>
+  <rect x="134" y="280" width="80" height="22" rx="0" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+  <text x="142" y="295" class="green" font-size="9">browser</text>
+  <rect x="214" y="280" width="120" height="22" rx="0" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+  <text x="228" y="295" class="blue" font-size="9">React ~5ms</text>
+  <rect x="334" y="280" width="80" height="22" rx="0" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+  <text x="342" y="295" class="green" font-size="9">browser</text>
+  <rect x="414" y="280" width="120" height="22" rx="0" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+  <text x="428" y="295" class="blue" font-size="9">React ~5ms</text>
+  <rect x="534" y="280" width="80" height="22" rx="0" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+  <text x="542" y="295" class="green" font-size="9">browser</text>
+  <text x="630" y="295" class="dim">... interleaved until render complete</text>
+
+  <text x="14" y="326" class="dim subhead"
+    data-tt="SchedulerFeatureFlags.js:12 — frameYieldMs = 5">At 5ms yields, React gives ~200 opportunities per second for the browser to handle input and paint.</text>
+</svg>
+</body>
+</html>

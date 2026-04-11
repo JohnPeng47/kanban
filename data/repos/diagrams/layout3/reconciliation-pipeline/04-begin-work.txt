@@ -1,0 +1,40 @@
+BEGIN WORK (downward pass)
+===========================
+For each fiber, render the component and reconcile its children.
+Giant switch statement on fiber.tag — each component type has its own path.
+
+Source: packages/react-reconciler/src/ReactFiberBeginWork.js
+
+
+    +=====================================================+
+    |                                                     |
+    |  beginWork(current, workInProgress, renderLanes)    |
+    |                                                     |
+    |  Switch on fiber.tag:                               |
+    |                                                     |
+    |    FunctionComponent (tag 0):                       |
+    |      renderWithHooks(wip, Component, props)         |
+    |        --> set dispatcher to Mount or Update        |
+    |        --> children = Component(props)  // call it  |
+    |        --> hooks execute, state resolved            |
+    |      reconcileChildren(current, wip, children)      |
+    |                                                     |
+    |    ClassComponent (tag 1):                           |
+    |      call render(), getDerivedStateFromProps, etc   |
+    |      reconcileChildren(current, wip, children)      |
+    |                                                     |
+    |    HostComponent (tag 5, e.g. "div"):               |
+    |      reconcileChildren(current, wip, nextChildren)  |
+    |                                                     |
+    |    SuspenseComponent (tag 13):                       |
+    |      check if content threw a promise               |
+    |      show fallback or content                       |
+    |                                                     |
+    |  BAILOUT: if oldProps === newProps                   |
+    |    && !hasScheduledUpdate(fiber, renderLanes)        |
+    |    --> skip this subtree entirely                    |
+    |    --> clone children from current tree              |
+    |                                                     |
+    |  Returns: child fiber (descend) or null (leaf)      |
+    |                                                     |
+    +=====================================================+

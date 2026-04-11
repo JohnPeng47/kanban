@@ -1,0 +1,49 @@
+SCHEDULER WORK LOOP
+=====================
+The core loop that pulls tasks from the heap and runs them.
+
+Source: packages/scheduler/src/forks/Scheduler.js
+
+
+    function workLoop(initialTime) {
+      let currentTime = initialTime;
+      advanceTimers(currentTime);  // move ready timers to taskQueue
+      currentTask = peek(taskQueue);
+
+      while (currentTask !== null) {
+
+        // YIELD CHECK: should we give time back to the browser?
+        if (currentTask.expirationTime > currentTime
+            && shouldYieldToHost()) {
+          break;
+        }
+
+        const callback = currentTask.callback;
+        if (typeof callback === 'function') {
+          currentTask.callback = null;
+          currentPriorityLevel = currentTask.priorityLevel;
+          const didTimeout = currentTask.expirationTime <= currentTime;
+
+          // RUN THE TASK
+          const continuationCallback = callback(didTimeout);
+
+          if (typeof continuationCallback === 'function') {
+            // Task yielded -- it returned a continuation
+            currentTask.callback = continuationCallback;
+          } else {
+            // Task completed
+            if (currentTask === peek(taskQueue)) {
+              pop(taskQueue);
+            }
+          }
+        } else {
+          pop(taskQueue);  // cancelled task
+        }
+
+        advanceTimers(currentTime);
+        currentTask = peek(taskQueue);
+      }
+
+      // Return whether there's more work
+      return currentTask !== null;
+    }

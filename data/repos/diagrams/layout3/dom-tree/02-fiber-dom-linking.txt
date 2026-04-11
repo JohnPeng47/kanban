@@ -1,0 +1,44 @@
+FIBER <-> DOM LINKING
+======================
+Every DOM element React creates gets hidden properties linking it back to its fiber.
+This enables the event system to find React components from DOM events.
+
+Source: packages/react-dom-bindings/src/client/ReactDOMComponentTree.js
+
+
+    HIDDEN PROPERTIES (keyed with random suffix to avoid collisions):
+
+    domElement.__reactFiber$a1b2c3   = fiber     // reverse lookup: DOM -> Fiber
+    domElement.__reactProps$a1b2c3   = props      // current props for event handling
+
+
+    HOW THE EVENT SYSTEM USES THIS:
+
+    +-----------+      +------------------+      +------------------+
+    | User      |      | <div id="root">  |      | React event      |
+    | clicks    |----->| (delegated       |----->| dispatch          |
+    | a card    |      |  listener)       |      |                  |
+    +-----------+      +------------------+      +------------------+
+                              |                         |
+                              v                         v
+                       event.target              __reactFiber$
+                       = <div.card>              gives us the
+                                                 Card fiber
+                                                      |
+                                                      v
+                                                 Walk fiber.return
+                                                 up the tree to
+                                                 collect all
+                                                 onClick handlers
+                                                      |
+                                                      v
+                                                 Call them in order
+                                                 (synthetic event
+                                                  dispatch)
+
+
+    THE FORWARD LINK (Fiber -> DOM):
+
+    fiber.stateNode = domElement     // set during completeWork
+                                     // only for HostComponent (tag 5)
+                                     // and HostText (tag 6)

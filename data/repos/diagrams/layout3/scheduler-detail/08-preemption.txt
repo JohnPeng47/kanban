@@ -1,0 +1,73 @@
+PREEMPTION
+============
+Higher-priority work can interrupt and replace lower-priority work.
+
+Source: packages/scheduler/src/forks/Scheduler.js (workLoop, shouldYieldToHost)
+        packages/react-reconciler/src/ReactFiberWorkLoop.js
+
+
+    SCENARIO:
+
+    1. User is in the middle of a transition render (NormalPriority)
+    2. User clicks a button (SyncLane -> ImmediatePriority)
+
+
+    WHAT HAPPENS:
+
+    +------------------+
+    | Transition task  |     taskQueue:
+    | rendering fiber  |     [transition (sortIdx=5100)]
+    | #437 of ~2000    |
+    +------------------+
+           |
+           | USER CLICKS (new ImmediatePriority task pushed)
+           |
+           | taskQueue:
+           | [click (sortIdx=100), transition (sortIdx=5100)]
+           v
+    +------------------+
+    | shouldYield()    |     timeElapsed >= 5ms? possibly.
+    | returns true     |     but also: higher-pri task exists
+    +------------------+
+           |
+           | workLoopConcurrent breaks
+           | reconciler returns continuation
+           v
+    +------------------+
+    | Scheduler picks  |     click task has lower sortIndex
+    | click task from  |     (higher priority) from heap
+    | heap (higher pri)|
+    +------------------+
+           |
+           v
+    +------------------+
+    | Click render     |     runs to completion
+    | executes         |     (SyncLane = no yielding)
+    | commits to DOM   |
+    +------------------+
+           |
+           v
+    +------------------+
+    | Scheduler picks  |     transition task still in heap
+    | transition       |     with its continuation callback
+    | continuation     |
+    +------------------+
+           |
+           | BUT: the click render changed state!
+           | The transition's partially-built WIP tree is stale.
+           v
+    +------------------+
+    | Reconciler       |     prepareFreshStack() called again
+    | detects stale    |     new WIP tree started from scratch
+    | tree, restarts   |
+    | transition from  |
+    | beginning        |
+    +------------------+
+
+
+    THIS IS WHY THE RENDER PHASE MUST BE SIDE-EFFECT-FREE:
+
+    React may abandon a partially-built workInProgress tree at any time.
+    If your component wrote to a database during render, that write
+    happened for a tree that was thrown away. Effects (useEffect,
+    useLayoutEffect) only run during COMMIT, which is never abandoned.

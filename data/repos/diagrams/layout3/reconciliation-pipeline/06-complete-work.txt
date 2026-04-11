@@ -1,0 +1,35 @@
+COMPLETE WORK (upward pass)
+============================
+After all children are processed, finalize this fiber:
+create DOM instances, mark updates, bubble flags up to parent.
+
+Source: packages/react-reconciler/src/ReactFiberCompleteWork.js
+
+
+    +=====================================================+
+    |                                                     |
+    |  completeWork(current, wip, renderLanes)            |
+    |                                                     |
+    |  For HostComponent ("div", "span"):                 |
+    |                                                     |
+    |    MOUNT (current === null):                         |
+    |      instance = createInstance(type, props)          |
+    |      appendAllChildren(instance, wip)               |
+    |      wip.stateNode = instance                       |
+    |      finalizeInitialChildren(instance, props)       |
+    |                                                     |
+    |    UPDATE (current !== null):                        |
+    |      if props changed:                              |
+    |        markUpdate(wip)  // set Update flag          |
+    |                                                     |
+    |  For all types:                                     |
+    |    bubbleProperties(wip)                            |
+    |      --> wip.subtreeFlags |= child.flags            |
+    |      --> wip.subtreeFlags |= child.subtreeFlags     |
+    |      // flags bubble up so commit phase can          |
+    |      // skip entire subtrees with no work           |
+    |                                                     |
+    |  Then: move to sibling (beginWork) or               |
+    |        move to parent (completeWork again)           |
+    |                                                     |
+    +=====================================================+

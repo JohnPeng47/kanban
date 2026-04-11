@@ -1,0 +1,212 @@
+THE COMMIT PHASE (detailed)
+============================
+After the render phase builds the workInProgress tree with flags marking
+what changed, the commit phase walks the tree and applies those changes.
+
+This phase is SYNCHRONOUS and NOT interruptible -- once it starts,
+it runs to completion. The user sees an atomic update.
+
+Source: packages/react-reconciler/src/ReactFiberCommitWork.js
+        packages/react-reconciler/src/ReactFiberCommitEffects.js
+
+
+    finishedWork (the completed workInProgress tree)
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  PHASE A: BEFORE MUTATION                           |
+    |  commitBeforeMutationEffects()                      |
+    |                                                     |
+    |  Walk fibers with BeforeMutationMask flags.         |
+    |  The DOM has NOT been touched yet.                   |
+    |                                                     |
+    |  What runs here:                                    |
+    |    - getSnapshotBeforeUpdate() for class components  |
+    |      (read DOM state before it changes)              |
+    |                                                     |
+    |  Rarely used. Most apps never trigger this phase.   |
+    |                                                     |
+    +=====================================================+
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  PHASE B: MUTATION                                  |
+    |  commitMutationEffects()                            |
+    |                                                     |
+    |  Walk fibers with MutationMask flags.               |
+    |  THIS IS WHERE THE DOM CHANGES.                     |
+    |                                                     |
+    |  For each fiber, check flags:                       |
+    |                                                     |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  Placement (new node):                        |  |
+    |  |    commitPlacement(fiber)                     |  |
+    |  |      find parent DOM node                     |  |
+    |  |      find sibling DOM node (for insertBefore) |  |
+    |  |      --> parent.appendChild(child)            |  |
+    |  |      or  parent.insertBefore(child, sibling)  |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  Update (props changed):                      |  |
+    |  |    commitWork(fiber)                          |  |
+    |  |      HostComponent:                           |  |
+    |  |        --> commitUpdate(dom, type, old, new)  |  |
+    |  |        --> updateProperties(dom, old, new)    |  |
+    |  |            - diff style objects               |  |
+    |  |            - update className                 |  |
+    |  |            - add/remove event listeners       |  |
+    |  |            - update data- attributes          |  |
+    |  |      HostText:                                |  |
+    |  |        --> textNode.nodeValue = newText        |  |
+    |  |      FunctionComponent:                       |  |
+    |  |        --> run useInsertionEffect cleanup      |  |
+    |  |        --> run useInsertionEffect create       |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  ChildDeletion (removed nodes):               |  |
+    |  |    commitDeletionEffects(fiber)               |  |
+    |  |      recursively walk deleted subtree:         |  |
+    |  |        --> run useInsertionEffect cleanup      |  |
+    |  |        --> run useLayoutEffect cleanup         |  |
+    |  |        --> componentWillUnmount()              |  |
+    |  |        --> detach refs                         |  |
+    |  |        --> parent.removeChild(dom)             |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  ContentReset:                                |  |
+    |  |    --> dom.textContent = ""                    |  |
+    |  |                                               |  |
+    |  |  Ref (detach old ref):                        |  |
+    |  |    --> oldRef.current = null                   |  |
+    |  |    or  oldRef(null)                            |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    +=====================================================+
+          |
+          |  root.current = finishedWork
+          |  ^^^ THE SWAP ^^^
+          |  workInProgress becomes the new "current" tree
+          |  (this is the double-buffer flip)
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  PHASE C: LAYOUT                                    |
+    |  commitLayoutEffects()                              |
+    |                                                     |
+    |  Walk fibers with LayoutMask flags.                 |
+    |  DOM has been updated. Reads will see new state.    |
+    |  But browser has NOT painted yet.                   |
+    |                                                     |
+    |  What runs here:                                    |
+    |                                                     |
+    |    FunctionComponent:                               |
+    |      useLayoutEffect CREATE functions               |
+    |      (synchronous, before paint -- use for           |
+    |       measuring DOM, scroll position, etc.)          |
+    |                                                     |
+    |    ClassComponent:                                   |
+    |      componentDidMount()    (on mount)               |
+    |      componentDidUpdate()   (on update)              |
+    |      setState callbacks                              |
+    |                                                     |
+    |    Ref attachments:                                  |
+    |      ref.current = domElement                        |
+    |      or ref(domElement)   (callback refs)            |
+    |                                                     |
+    |  NOTE: This runs synchronously before browser paint. |
+    |  If you do expensive work here, it blocks painting.  |
+    |  That's why useLayoutEffect docs say "prefer         |
+    |  useEffect unless you need to read layout."          |
+    |                                                     |
+    +=====================================================+
+          |
+          |  Browser paints here
+          |  (React yields, browser runs style/layout/paint/composite)
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  PHASE D: PASSIVE EFFECTS  (asynchronous)           |
+    |  flushPassiveEffects()                              |
+    |                                                     |
+    |  Scheduled via Scheduler (not synchronous).          |
+    |  Runs after the browser has painted.                 |
+    |  This is the normal useEffect.                       |
+    |                                                     |
+    |  Two sub-passes:                                    |
+    |                                                     |
+    |  D1: UNMOUNT (cleanup from previous render)          |
+    |  +-----------------------------------------------+  |
+    |  | commitPassiveUnmountEffects()                  |  |
+    |  |                                               |  |
+    |  | Walk fibers with Passive flag.                 |  |
+    |  | For each useEffect whose deps changed:         |  |
+    |  |   if (effect.inst.destroy !== undefined)       |  |
+    |  |     effect.inst.destroy()  // run cleanup      |  |
+    |  |                                               |  |
+    |  | Order: parent before child (top-down)          |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    |  D2: MOUNT (run new effects)                        |
+    |  +-----------------------------------------------+  |
+    |  | commitPassiveMountEffects()                    |  |
+    |  |                                               |  |
+    |  | Walk fibers with Passive flag.                 |  |
+    |  | For each useEffect with HookHasEffect tag:     |  |
+    |  |   const cleanup = effect.create()  // run it   |  |
+    |  |   effect.inst.destroy = cleanup    // store    |  |
+    |  |                                               |  |
+    |  | Order: child before parent (bottom-up)         |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    |  TIMING:                                            |
+    |  +-----------------------------------------------+  |
+    |  |                                               |  |
+    |  |  setState()                                   |  |
+    |  |    |                                          |  |
+    |  |    v                                          |  |
+    |  |  [render phase - interruptible]               |  |
+    |  |    |                                          |  |
+    |  |    v                                          |  |
+    |  |  Phase A: beforeMutation                      |  |
+    |  |  Phase B: mutation          <-- DOM changes   |  |
+    |  |  *** root.current swap ***                    |  |
+    |  |  Phase C: layout            <-- sync effects  |  |
+    |  |    |                                          |  |
+    |  |    v                                          |  |
+    |  |  [browser paints]                             |  |
+    |  |    |                                          |  |
+    |  |    v                                          |  |
+    |  |  Phase D: passive           <-- async effects |  |
+    |  |                                               |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    +=====================================================+
+
+
+SUBTREE OPTIMIZATION:
+======================
+
+    The commit phase does NOT walk the entire tree.
+    It uses subtreeFlags (bubbled up during completeWork):
+
+    if (fiber.subtreeFlags & MutationMask) {
+      // some descendant has work -- descend
+      commitMutationEffects_begin(child);
+    }
+    if (fiber.flags & MutationMask) {
+      // this fiber has work -- do it
+      commitMutationEffectsOnFiber(fiber);
+    }
+
+    If a subtree has no flags at all, the entire branch is skipped.
+    This is why bubbleProperties() in completeWork is critical --
+    it enables O(affected nodes) commit instead of O(tree size).

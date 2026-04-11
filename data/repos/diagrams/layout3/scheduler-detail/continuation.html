@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Continuation Pattern Detail</title></head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 440"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Consolas',monospace" font-size="11">
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; } .blue { fill: #4C9AFF; } .green { fill: #3FB950; }
+    .orange { fill: #D29922; } .dim { fill: #6E7681; }
+    .heading { font-size: 13px; font-weight: 600; } .subhead { font-size: 10px; }
+    .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
+    @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+  </style>
+  <defs>
+    <marker id="arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ao" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#D29922" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="520" height="440" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1.2"/>
+  <text x="14" y="20" class="orange heading"
+    data-tt="Scheduler.js:400 — Continuation pattern across time slices">CONTINUATION PATTERN</text>
+  <text x="14" y="36" class="dim subhead">How React pauses and resumes work across scheduler time slices.</text>
+  <text x="14" y="50" class="dim subhead">Source: Scheduler.js (workLoop) · ReactFiberWorkLoop.js (performWorkOnRoot)</text>
+
+  <!-- Code block -->
+  <rect x="14" y="62" width="492" height="72" rx="3" fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
+  <text x="22" y="78" class="white" font-size="10"
+    data-tt="ReactFiberWorkLoop.js — performWorkOnRoot entry point">performWorkOnRoot(root, lanes, didTimeout) {</text>
+  <text x="22" y="93" font-size="10">  if (workInProgress !== null)</text>
+  <text x="22" y="106" class="orange" font-size="10"
+    data-tt="ReactFiberWorkLoop.js — Returns bound function as continuation">    return performWorkOnRoot.bind(null, root, lanes); <tspan class="dim">// continuation</tspan></text>
+  <text x="22" y="119" font-size="10"
+    data-tt="ReactFiberWorkLoop.js — Commit when all fibers processed">  commitRoot(root); return null; <tspan class="dim">// done</tspan></text>
+  <text x="22" y="129" class="white" font-size="10">}</text>
+
+  <text x="14" y="156" class="orange" font-size="12" font-weight="600">THE CYCLE:</text>
+
+  <!-- Step 1 -->
+  <rect x="40" y="168" width="200" height="44" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+  <text x="52" y="186" class="orange" font-size="10"
+    data-tt="Scheduler.js:400 — Scheduler invokes the task callback">Scheduler calls</text>
+  <text x="52" y="200" class="white" font-size="10">performWorkOnRoot()</text>
+  <text x="250" y="192" class="dim" font-size="9">renders fibers for ~5ms</text>
+
+  <line x1="140" y1="212" x2="140" y2="238" stroke="#8B949E" stroke-width="1" marker-end="url(#arr)"/>
+  <text x="150" y="228" class="dim subhead"
+    data-tt="Scheduler.js:480 — shouldYieldToHost() checks 5ms budget">shouldYield() → true</text>
+
+  <!-- Step 2 -->
+  <rect x="40" y="244" width="200" height="44" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+  <text x="52" y="262" class="orange" font-size="10"
+    data-tt="Scheduler.js:450 — task.callback = continuation, task stays in heap">Scheduler keeps task</text>
+  <text x="52" y="276" class="white" font-size="10">in heap, new callback</text>
+  <text x="250" y="262" class="green" font-size="9">→ posts MessageChannel</text>
+  <text x="250" y="276" class="green" font-size="9">→ browser gets time</text>
+
+  <line x1="140" y1="288" x2="140" y2="314" stroke="#8B949E" stroke-width="1" marker-end="url(#arr)"/>
+  <text x="150" y="306" class="dim subhead">next macrotask</text>
+
+  <!-- Step 3 -->
+  <rect x="40" y="320" width="200" height="44" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+  <text x="52" y="338" class="orange" font-size="10"
+    data-tt="Scheduler.js:400 — workLoop picks up the continuation">Scheduler calls</text>
+  <text x="52" y="352" class="white" font-size="10">the continuation</text>
+  <text x="250" y="342" class="dim" font-size="9">renders more fibers</text>
+
+  <line x1="140" y1="364" x2="140" y2="386" stroke="#8B949E" stroke-width="1" marker-end="url(#arr)"/>
+  <text x="150" y="380" class="dim subhead">repeats until wip === null</text>
+
+  <!-- Step 4 -->
+  <rect x="40" y="392" width="220" height="30" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.8"/>
+  <text x="52" y="412" class="green" font-size="10"
+    data-tt="Scheduler.js:455 — Returns null, task popped from heap, commitRoot called">returns null → commitRoot()</text>
+  <text x="270" y="410" class="dim" font-size="9">task removed from heap</text>
+
+  <!-- Loop-back arrow -->
+  <polyline points="40,342 20,342 20,188 40,188" fill="none" stroke="#D29922" stroke-width="0.8" class="flow-dash" marker-end="url(#ao)"/>
+</svg>
+</body>
+</html>

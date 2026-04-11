@@ -1,0 +1,74 @@
+HOOK LINKED LIST
+=================
+Hooks are stored as a singly-linked list on fiber.memoizedState.
+Each hook call (useState, useEffect, etc.) appends one node to the list.
+This is why hooks must be called in the same order every render —
+the reconciler walks the list by POSITION, not by name.
+
+Source: packages/react-reconciler/src/ReactFiberHooks.js
+
+
+EXAMPLE COMPONENT:
+
+    function Card({ title }) {
+      const [count, setCount] = useState(0);          // Hook 1
+      const [name, setName] = useState("untitled");    // Hook 2
+      const doubled = useMemo(() => count * 2, [count]); // Hook 3
+      useEffect(() => { log(count); }, [count]);       // Hook 4
+      const ref = useRef(null);                        // Hook 5
+      return <div ref={ref}>{title}: {count}</div>;
+    }
+
+
+FIBER.MEMOIZEDSTATE (linked list of Hook objects):
+
+    fiber.memoizedState
+          |
+          v
+    +------------------+      +------------------+      +------------------+
+    | Hook 1: useState |      | Hook 2: useState |      | Hook 3: useMemo  |
+    |                  | next  |                  | next  |                  |
+    | memoizedState: 0 |----->| memoizedState:   |----->| memoizedState:   |
+    |                  |      |   "untitled"     |      |   [0, [0]]       |
+    | baseState: 0     |      |                  |      |   [value, deps]  |
+    |                  |      | baseState:       |      |                  |
+    | queue: {         |      |   "untitled"     |      | queue: null      |
+    |   pending: null  |      |                  |      |                  |
+    |   dispatch:      |      | queue: {         |      | baseState: null  |
+    |     setCount     |      |   pending: null  |      | baseQueue: null  |
+    |   lastRendered   |      |   dispatch:      |      |                  |
+    |     Reducer:     |      |     setName      |      |                  |
+    |     basicState   |      |   lastRendered   |      |                  |
+    |     Reducer()    |      |     Reducer:     |      |                  |
+    |   lastRendered   |      |     basicState   |      |                  |
+    |     State: 0     |      |     Reducer()    |      |                  |
+    | }                |      |   lastRendered   |      |                  |
+    |                  |      |     State:       |      |                  |
+    | baseQueue: null  |      |     "untitled"   |      |                  |
+    +------------------+      | }                |      +------------------+
+                              |                  |             |
+                              | baseQueue: null  |             | next
+                              +------------------+             v
+                                                        +------------------+      +------------------+
+                                                        | Hook 4: useEffect|      | Hook 5: useRef   |
+                                                        |                  | next  |                  |
+                                                        | memoizedState:   |----->| memoizedState:   |
+                                                        |   Effect {       |      |   { current:     |
+                                                        |     tag: 0b1001  |      |       null }     |
+                                                        |     (HasEffect   |      |                  |
+                                                        |      | Passive)  |      | queue: null      |
+                                                        |     create:      |      | baseState: null  |
+                                                        |       () => {    |      | baseQueue: null  |
+                                                        |         log(..)  |      |                  |
+                                                        |       }          |      | next: null       |
+                                                        |     inst: {      |      +------------------+
+                                                        |       destroy:   |
+                                                        |         undefined|
+                                                        |     }            |
+                                                        |     deps: [0]    |
+                                                        |     next: -->    |  (circular, points to
+                                                        |   }              |   first effect in
+                                                        |                  |   fiber.updateQueue)
+                                                        | queue: null      |
+                                                        | baseState: null  |
+                                                        +------------------+

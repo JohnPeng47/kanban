@@ -1,0 +1,248 @@
+THE RECONCILIATION PIPELINE (Center Column)
+=============================================
+This is the machinery that keeps the fiber tree and DOM tree in sync.
+Data flows top-to-bottom. Each stage can be expanded independently.
+
+Source files listed at each stage.
+
+
+    PROGRAMMER ACTION
+    =================
+    setState(newVal)  |  <div onClick={fn}>  |  useEffect(fn, [deps])
+          |
+          | dispatchSetState() creates an Update object,
+          | enqueues it on the fiber's hook queue
+          | [ReactFiberHooks.js:3598]
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  1. LANE ASSIGNMENT                                 |
+    |     ReactFiberLane.js                               |
+    |                                                     |
+    |  requestUpdateLane(fiber) examines the context:     |
+    |                                                     |
+    |    click handler?  --> SyncLane          (highest)   |
+    |    setTimeout?     --> DefaultLane                   |
+    |    startTransition --> TransitionLane    (lowest)    |
+    |    useEffect?      --> DefaultLane                   |
+    |                                                     |
+    |  Lanes are bitmasks: SyncLane = 0b0000000000001     |
+    |  Multiple lanes can be worked on simultaneously     |
+    |                                                     |
+    +=====================================================+
+          |
+          | scheduleUpdateOnFiber(root, fiber, lane)
+          | [ReactFiberWorkLoop.js]
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  2. SCHEDULER                                       |
+    |     packages/scheduler/src/forks/Scheduler.js       |
+    |     ReactFiberRootScheduler.js                      |
+    |                                                     |
+    |  ensureRootIsScheduled(root)                        |
+    |    |                                                |
+    |    +--> lane --> schedulerPriority mapping:          |
+    |    |     SyncLane ---------> ImmediatePriority      |
+    |    |     DefaultLane ------> NormalPriority          |
+    |    |     TransitionLane ---> NormalPriority          |
+    |    |     IdleLane ---------> IdlePriority           |
+    |    |                                                |
+    |    +--> Scheduler.scheduleCallback(priority, fn)    |
+    |           |                                         |
+    |           +--> push task onto min-heap              |
+    |           +--> post MessageChannel message          |
+    |           +--> browser runs performWorkUntil-       |
+    |                Deadline on next event loop tick     |
+    |                                                     |
+    |  THE YIELD CONTRACT:                                |
+    |  Scheduler runs tasks from the heap, but checks     |
+    |  shouldYieldToHost() between each unit of work:     |
+    |                                                     |
+    |    elapsed >= 5ms?  --> yield (let browser paint)   |
+    |    needsPaint?      --> yield                       |
+    |    higher-pri task? --> yield (preemption)           |
+    |                                                     |
+    +=====================================================+
+          |
+          | performWorkOnRoot(root, lanes)
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  3. RENDER PHASE  (interruptible, no side effects)  |
+    |     ReactFiberWorkLoop.js                           |
+    |                                                     |
+    |  prepareFreshStack(root, lanes)                     |
+    |    --> workInProgress = createWorkInProgress(       |
+    |            root.current, null)                      |
+    |                                                     |
+    |  workLoopConcurrent():                              |
+    |  +-----------------------------------------------+  |
+    |  | while (workInProgress !== null) {              |  |
+    |  |                                               |  |
+    |  |   if (shouldYield()) break; // <-- time slice |  |
+    |  |                                               |  |
+    |  |   performUnitOfWork(workInProgress);           |  |
+    |  | }                                             |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    |  (or workLoopSync for SyncLane -- no yield checks)  |
+    |                                                     |
+    +=====================================================+
+          |
+          | performUnitOfWork(fiber)
+          |   calls beginWork, then completeUnitOfWork
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  3a. BEGIN WORK  (downward pass)                    |
+    |      ReactFiberBeginWork.js                         |
+    |                                                     |
+    |  beginWork(current, workInProgress, renderLanes)    |
+    |                                                     |
+    |  Switch on fiber.tag:                               |
+    |                                                     |
+    |    FunctionComponent (tag 0):                       |
+    |      renderWithHooks(wip, Component, props)         |
+    |        --> set dispatcher to Mount or Update        |
+    |        --> children = Component(props)  // call it  |
+    |        --> hooks execute, state resolved            |
+    |      reconcileChildren(current, wip, children)      |
+    |                                                     |
+    |    ClassComponent (tag 1):                           |
+    |      call render(), getDerivedStateFromProps, etc   |
+    |      reconcileChildren(current, wip, children)      |
+    |                                                     |
+    |    HostComponent (tag 5, e.g. "div"):               |
+    |      reconcileChildren(current, wip, nextChildren)  |
+    |                                                     |
+    |    SuspenseComponent (tag 13):                       |
+    |      check if content threw a promise               |
+    |      show fallback or content                       |
+    |                                                     |
+    |  BAILOUT: if oldProps === newProps                   |
+    |    && !hasScheduledUpdate(fiber, renderLanes)        |
+    |    --> skip this subtree entirely                    |
+    |    --> clone children from current tree              |
+    |                                                     |
+    |  Returns: child fiber (descend) or null (leaf)      |
+    |                                                     |
+    +=====================================================+
+          |
+          | reconcileChildren calls into:
+          v
+    +=====================================================+
+    |                                                     |
+    |  3b. CHILD RECONCILIATION (the "diff")              |
+    |      ReactChildFiber.js                             |
+    |                                                     |
+    |  reconcileChildFibers(returnFiber, currentChild,    |
+    |                       newChildren, lanes)           |
+    |                                                     |
+    |  SINGLE ELEMENT:                                    |
+    |    if (current.key === new.key                       |
+    |        && current.type === new.type)                 |
+    |      --> reuse fiber, update props    [UPDATE]       |
+    |    else                                             |
+    |      --> delete old, create new       [REPLACE]      |
+    |                                                     |
+    |  ARRAY OF ELEMENTS (the O(n) algorithm):            |
+    |                                                     |
+    |    Pass 1: Walk old and new lists together.          |
+    |            While keys match, update in place.        |
+    |            Break on first mismatch.                  |
+    |                                                     |
+    |    Pass 2: If new list is done, delete remaining     |
+    |            old fibers.                               |
+    |                                                     |
+    |    Pass 3: If old list is done, create remaining     |
+    |            new fibers.                               |
+    |                                                     |
+    |    Pass 4: Both have remaining -- build a Map of     |
+    |            oldFibers by key. Walk new list,           |
+    |            look up matches, mark moves.              |
+    |                                                     |
+    |  OUTPUT: child fibers with flags:                    |
+    |    Placement  -- new fiber, needs DOM insert         |
+    |    Update     -- props changed, needs DOM update     |
+    |    Deletion   -- removed, needs DOM removal          |
+    |                                                     |
+    +=====================================================+
+          |
+          | when beginWork returns null (leaf node),
+          | completeUnitOfWork walks back up:
+          v
+    +=====================================================+
+    |                                                     |
+    |  3c. COMPLETE WORK  (upward pass)                   |
+    |      ReactFiberCompleteWork.js                      |
+    |                                                     |
+    |  completeWork(current, wip, renderLanes)            |
+    |                                                     |
+    |  For HostComponent ("div", "span"):                 |
+    |                                                     |
+    |    MOUNT (current === null):                         |
+    |      instance = createInstance(type, props)          |
+    |      appendAllChildren(instance, wip)               |
+    |      wip.stateNode = instance                       |
+    |      finalizeInitialChildren(instance, props)       |
+    |                                                     |
+    |    UPDATE (current !== null):                        |
+    |      if props changed:                              |
+    |        markUpdate(wip)  // set Update flag          |
+    |                                                     |
+    |  For all types:                                     |
+    |    bubbleProperties(wip)                            |
+    |      --> wip.subtreeFlags |= child.flags            |
+    |      --> wip.subtreeFlags |= child.subtreeFlags     |
+    |      // flags bubble up so commit phase can          |
+    |      // skip entire subtrees with no work           |
+    |                                                     |
+    |  Then: move to sibling (beginWork) or               |
+    |        move to parent (completeWork again)           |
+    |                                                     |
+    +=====================================================+
+          |
+          | render phase complete.
+          | workInProgress tree is fully built.
+          | root.finishedWork = workInProgress root
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  4. COMMIT PHASE  (synchronous, not interruptible)  |
+    |     ReactFiberCommitWork.js                         |
+    |     ReactFiberCommitEffects.js                      |
+    |                                                     |
+    |  See: commit-phases.txt for detailed breakdown      |
+    |                                                     |
+    |  Phase A: beforeMutation                            |
+    |    getSnapshotBeforeUpdate (class components)        |
+    |                                                     |
+    |  Phase B: mutation                                  |
+    |    Walk fibers with Placement/Update/Deletion flags  |
+    |    Call host config: appendChild, commitUpdate,      |
+    |    removeChild --> actual DOM writes happen here     |
+    |                                                     |
+    |  Phase C: layout                                    |
+    |    root.current = finishedWork  // swap trees        |
+    |    useLayoutEffect callbacks run                     |
+    |    componentDidMount/Update run                      |
+    |    ref attachments                                  |
+    |                                                     |
+    |  Phase D: passive (async, scheduled)                |
+    |    useEffect cleanup from previous render            |
+    |    useEffect callbacks from this render              |
+    |                                                     |
+    +=====================================================+
+          |
+          v
+    BROWSER
+    =======
+    DOM mutations are applied.
+    Browser runs its own pipeline:
+      Style recalc --> Layout --> Paint --> Composite

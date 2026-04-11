@@ -1,0 +1,38 @@
+PRIORITY --> TIMEOUT MAPPING
+==============================
+Each priority level gets a timeout that determines when tasks expire.
+Expired tasks run immediately regardless of yielding.
+
+Source: packages/scheduler/src/SchedulerPriorities.js
+        packages/scheduler/src/SchedulerFeatureFlags.js
+
+
+    Priority Level        Timeout        Meaning
+    ---------------------------------------------------------------
+    ImmediatePriority (1)    -1 ms       Already expired. Runs first.
+                                         Used for: SyncLane updates
+                                         (click handlers, discrete events)
+
+    UserBlockingPriority (2) 250 ms      Expires quickly.
+                                         Used for: input, keyboard, focus
+
+    NormalPriority (3)       5,000 ms    Default. 5 seconds to live.
+                                         Used for: most renders,
+                                         setState from useEffect
+
+    LowPriority (4)          10,000 ms   Can wait. 10 seconds.
+                                         Used for: data fetching results
+
+    IdlePriority (5)         1073741823  Effectively never expires.
+                           (~12.4 days)  Used for: offscreen rendering
+
+
+    HOW EXPIRATION CREATES URGENCY:
+
+    expirationTime = startTime + timeout
+
+    In workLoop:
+      if (task.expirationTime <= currentTime)
+        --> task has expired, run it NOW (even if shouldYield)
+      if (task.expirationTime > currentTime && shouldYield())
+        --> task can wait, yield to browser

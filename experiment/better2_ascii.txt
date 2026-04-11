@@ -1,0 +1,436 @@
+╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  REACT SCHEDULER                                    packages/scheduler/src/forks/Scheduler.js · 599 lines       ║
+║  ─────────────                                                                                                  ║
+║  Cooperative time-slicing on the browser main thread.                                                           ║
+║  Zero preemption — everything is heap + flags + MessageChannel pump.                                            ║
+╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+  ┌─ BROWSER MAIN THREAD ─────────────────────────────────────────────────────────────────────────────────────┐
+  │                 JS · style · layout · paint · input · rAF · microtasks — all compete for one thread        │
+  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     │
+                                                     ▼
+
+  THE PROBLEM — one 200ms render freezes the page                                           (1 char ≈ 3 ms)
+
+    WITHOUT:  ████████████████████████████████████████████████████████████████████░░░░▓
+              ◀─────────────── 200 ms render blocks thread ───────────────────────▶ br ·
+              → frozen tab · rage-clicks · bounces
+
+    WITH:     ██░░░░██░░░░██░░░░██░░░░██░░░░██░░░░██░░░░██░░░░██░░░░██░░░░██░░░░ · · · · · ▓
+              5 ms render / 11 ms browser — alternating                                   commit
+
+                                                     │
+                                                     │  reconciler calls scheduleCallback(pri, cb)
+                                                     ▼
+
+  ┌─ PUBLIC API · L572-588 ───────────────────────────────────────────────────────────────────────────────────┐
+  │                                                                                                            │
+  │                                    ┌──────────────────┐                                                    │
+  │                                    │   SCHEDULING     │                                                    │
+  │                                    │ scheduleCb  L327 │                                                    │
+  │                                    │ cancelCb    L418 │                                                    │
+  │                                    └────────┬─────────┘                                                    │
+  │                                             │                                                              │
+  │                                             │                                                              │
+  │      ┌──────────────────┐             ┌─────┴─────┐             ┌──────────────────┐                       │
+  │      │ PRIORITY CTX     │             │           │             │ YIELD · PAINT ·  │                       │
+  │      │                  │             │ Scheduler │             │      CLOCK       │                       │
+  │      │ runWithPri  L260 │────────────▶│   .js     │◀────────────│ shouldYield L447 │                       │
+  │      │ next        L285 │             │ 16 exp    │             │ requestPaint L462│                       │
+  │      │ wrapCb      L310 │             │ L572-588  │             │ forceFrmRate L468│                       │
+  │      │ getCurPri   L433 │             │           │             │ now         L59  │                       │
+  │      └──────────────────┘             └─────┬─────┘             └──────────────────┘                       │
+  │                                             │                                                              │
+  │                                             │                                                              │
+  │                                    ┌────────┴─────────┐                                                    │
+  │                                    │   CONSTANTS      │                                                    │
+  │                                    │ Imm(1) UB(2)     │                                                    │
+  │                                    │ Nor(3) Low(4)    │                                                    │
+  │                                    │ Idle(5) NoPri(0) │                                                    │
+  │                                    │ + Profiling      │                                                    │
+  │                                    └──────────────────┘                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     │
+                                                     │  scheduleCallback resolves priority → timeout
+                                                     ▼
+
+  ┌─ PRIORITY → TIMEOUT → EXPIRATION TIME · Scheduler.js:346-369 ─────────────────────────────────────────────┐
+  │                                                                                                            │
+  │           1 ms     10 ms    100 ms    1 s      10 s     100 s    1 ks     10 ks   100 ks    1 Gs           │
+  │            │         │        │        │        │        │        │        │        │        │            │
+  │   ●────────┼─────────┼────────┼────────┼────────┼────────┼────────┼────────┼────────┼────────┼────▶ log ms │
+  │            │                                ●          ●●                                         ●        │
+  │   Imm                                    UBlocking    Nor Low                                    Idle      │
+  │  (-1 ms)                                    250        5   10 s                                12.43 d     │
+  │   always                                    ms         s   (unused                            (maxSigned   │
+  │   expired                                (clicks)          by recon)                             31BitInt) │
+  │                                                                                                            │
+  │   expirationTime = startTime + timeout   ·   taskQueue sortIndex = expirationTime                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     │
+                                                     │  creates Task { id, cb, pri, startTime, expTime, sortIdx }
+                                                     ▼
+
+  ┌─ Scheduler.js module scope · L59-101, L437-445 ───────────────────────────────────────────────────────────┐
+  │                                                                                                            │
+  │   DATA       ● taskQueue            (L79)   ● timerQueue         (L80)                                     │
+  │              ● taskIdCounter        (L83)   ● maxSigned31BitInt  (L76)                                     │
+  │              ● getCurrentTime       (L59)                                                                  │
+  │                                                                                                            │
+  │   EXECUTION  ⊙ currentTask          (L85)   module-level pointer                                           │
+  │              ⊙ currentPriorityLevel (L86)   leaks mid-loop; saved/restored by flushWork                    │
+  │              ◉ isPerformingWork     (L89)   re-entrance guard                                              │
+  │                                                                                                            │
+  │   PUMP       ◉ isHostCallbackScheduled (L91)                                                               │
+  │              ◉ isHostTimeoutScheduled  (L92)                                                               │
+  │              ◉ isMessageLoopRunning    (L437)                                                              │
+  │              ● taskTimeoutID           (L438)  single-slot, -1 = none armed                                │
+  │                                                                                                            │
+  │   SLICE      ▲ startTime    (L445)          ⚠ NOT Task.startTime (naming collision)                        │
+  │              ▲ frameInterval(L444)          = frameYieldMs (default 5 ms)                                  │
+  │              ◉ needsPaint   (L94)           cleared L487 · set L464                                        │
+  │                                                                                                            │
+  │   LEGEND     ● data / heap    ⊙ pointer    ◉ flag    ▲ time                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     │
+                                                     │  heaps store Tasks; taskQueue keyed by expTime
+                                                     ▼
+
+  ┌─ MIN-HEAPS · SchedulerMinHeap.js ─────────────────────────────────────────────────────────────────────────┐
+  │                                                                                                            │
+  │     taskQueue (min-heap)                         timerQueue (min-heap)                                     │
+  │     sortIndex = expirationTime                   sortIndex = startTime                                     │
+  │                                                                                                            │
+  │              (100)                                        (t+100)                                          │
+  │             /     \                                      /       \                                         │
+  │          (350)   (5000)                              (t+500)    (t+1000)                                   │
+  │          /  \      │                                 /   \                                                 │
+  │       (5200)(5250)(MAX)                           (t+2s)(t+3s)                                             │
+  │                                                                                                            │
+  │     flat: [100|350|5000|5200|5250|MAX]           flat: [t+100|t+500|t+1000|t+2s|t+3s]                      │
+  │            0   1    2    3    4    5                    0     1      2      3     4                       │
+  │                                                                                                            │
+  │                          ┌─── indexing formulas (SchedulerMinHeap.js) ────┐                                │
+  │                          │   parent(i) = (i - 1) >>> 1                    │                                │
+  │                          │   left(i)   = 2*i + 1                          │                                │
+  │                          │   right(i)  = 2*i + 2                          │                                │
+  │                          └────────────────────────────────────────────────┘                                │
+  │                                                                                                            │
+  │       compare(a, b) = (a.sortIndex - b.sortIndex)          ◀ primary key                                   │
+  │                       || (a.id - b.id)                     ◀ FIFO tiebreaker (taskIdCounter)               │
+  │                                                                                                            │
+  │   ╔═══ advanceTimers · L103-125 ═══════════════════════════════════════════════════╗                       │
+  │   ║   loop: peek timerQueue                                                         ║                       │
+  │   ║     ├─ cb null?  → pop       (cancelled, lazy sweep)                            ║                       │
+  │   ║     ├─ fired?    → pop · rewrite sortIndex = expirationTime · push(taskQueue)   ║                       │
+  │   ║     └─ future?   → return                                                       ║                       │
+  │   ╚═════════════════════════════════════════════════════════════════════════════════╝                       │
+  │                                                                                                            │
+  │   peek O(1)  ·  push O(log n)  ·  pop O(log n)  ·  cancelCb O(1) (tombstone only)                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     │
+                                                     │  non-empty taskQueue → requestHostCallback
+                                                     ▼
+
+  ┌─ HOST PUMP ───────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                                                                                            │
+  │                                    (user-land caller: reconciler, etc.)                                    │
+  │                                                 │                                                          │
+  │                                                 │  scheduleCallback(pri, cb)                               │
+  │                                                 ▼                                                          │
+  │                                     ◇ isHostCallbackScheduled?  ── yes ── (no-op · cycle already armed)    │
+  │                                      │ no                                                                  │
+  │                                      ▼                                                                     │
+  │                                  requestHostCallback                                                       │
+  │                                      │  sets isMessageLoopRunning = true                                   │
+  │                                      ▼                                                                     │
+  │      ╔════════ THE PUMP CYCLE ═════════════════════════════════════════════════════════════╗               │
+  │      ║                                                                                      ║               │
+  │      ║        schedulePerformWorkUntilDeadline                                               ║               │
+  │      ║                       │                                                               ║               │
+  │      ║                       ▼                                                               ║               │
+  │      ║        port2.postMessage(null)                                                        ║               │
+  │      ║                       │                                                               ║               │
+  │      ║                       ▼                                                               ║               │
+  │      ║        [browser macrotask queue]                                                      ║               │
+  │      ║                       │                                                               ║               │
+  │      ║                       ▼                                                               ║               │
+  │      ║        port1.onmessage                                                                ║               │
+  │      ║                       │                                                               ║               │
+  │      ║                       ▼                                                               ║               │
+  │      ║        performWorkUntilDeadline                                                       ║               │
+  │      ║                       │                                                               ║               │
+  │      ║                       ▼                                                               ║               │
+  │      ║        flushWork → workLoop                                                           ║               │
+  │      ║                       │                                                               ║               │
+  │      ║                       ▼                                                               ║               │
+  │      ║                hasMoreWork?                                                           ║               │
+  │      ║                 │          │                                                          ║               │
+  │      ║              yes│          │no                                                        ║               │
+  │      ║                 │          ▼                                                          ║               │
+  │      ║                 │   isMessageLoopRunning = false                                      ║               │
+  │      ║                 │   (pump dormant · exit cycle)                                       ║               │
+  │      ║                 │                                                                     ║               │
+  │      ║                 └──▶ (loop back to schedulePerformWorkUntilDeadline ▲)                ║               │
+  │      ║                                                                                      ║               │
+  │      ╚══════════════════════════════════════════════════════════════════════════════════════╝               │
+  │                                                                                                            │
+  │   INIT-TIME tier selection (runs once at module load · captures native refs to defeat polyfills):          │
+  │     setImmediate (Node/IE) → MessageChannel (DOM/Workers, preferred) → setTimeout(,0) (exotic)              │
+  │                                                                                                            │
+  │   TIMER PUMP (separate, for delayed tasks):                                                                │
+  │     scheduleCallback(..., {delay:N}) → requestHostTimeout → localSetTimeout → handleTimeout → advanceTimers │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     │
+                                                     │  macrotask fires
+                                                     ▼
+
+  ┌─ WORK LOOP · L144-258, 485-514 ────────────────────────────────────────────────────────────────────────────┐
+  │                                                                                                             │
+  │   performWorkUntilDeadline · L485-514 — the macrotask entry                                                 │
+  │   ───────────────────────────────────────────────────────                                                   │
+  │                                                                                                             │
+  │   ┌────────────┐   ┌──────────────────┐   ┌────────────────────┐   ┌─────────────┐   ┌──────────────────┐   │
+  │   │ macrotask  │──▶│ needsPaint=false │──▶│ hasMoreWork = true │──▶│ try {       │──▶│ finally {        │   │
+  │   │ fires      │   │ startTime = now()│   │ (init BEFORE try · │   │ hasMoreWork=│   │ reschedule or    │   │
+  │   │(onmessage) │   │   ← slice anchor │   │  self-heal trick)  │   │ flushWork() │   │ isMsgLoop=false }│   │
+  │   └────────────┘   └──────────────────┘   └────────────────────┘   └─────────────┘   └──────────────────┘   │
+  │                                                                                                             │
+  │     ⚠ if flushWork throws → hasMoreWork stays true → reschedule next slice (error escapes to onerror)      │
+  │                                                                                                             │
+  │   flushWork · L144-186 — re-entry guard + try/finally                                                       │
+  │   ───────────────────────────────────────────────────                                                       │
+  │   isHostCallbackScheduled=false · cancel pending timeout · isPerformingWork=true · save currentPriorityLevel│
+  │   → workLoop(initialTime)                                                                                   │
+  │   finally: currentTask=null · restore priority · isPerformingWork=false                                     │
+  │                                                                                                             │
+  │   workLoop · L188-258 — state machine (top-down vertical flow)                                              │
+  │   ──────────────────────────────────────────────────────────                                                │
+  │                                                                                                             │
+  │                            ┌──────────────────┐                                                             │
+  │                            │ ENTRY  L189-191  │  ◀──── next iteration: curTask = peek · L240 ────┐          │
+  │                            │ advanceTimers    │                                                   │          │
+  │                            │ curTask = peek   │                                                   │          │
+  │                            └────────┬─────────┘                                                   │          │
+  │                                     │                                                             │          │
+  │                                     ▼                                                             │          │
+  │                              ◇ curTask null? · L192                                               │          │
+  │                               │              │                                                   │          │
+  │                            yes│              │no                                                 │          │
+  │                               ▼              ▼                                                   │          │
+  │                         ┌──────────┐   ◇ not expired AND shouldYield? · L194                     │          │
+  │                         │ DRAINED  │     │                         │                             │          │
+  │                         │ peek tmr │  yes│                         │no                           │          │
+  │                         │ req HT   │     ▼                         │                             │          │
+  │                         │ return F │   ┌─────────┐                 │                             │          │
+  │                         └──────────┘   │ BREAK   │                 │                             │          │
+  │                                        │ ret T   │                 │                             │          │
+  │                                        └─────────┘                 │                             │          │
+  │                                                                    ▼                             │          │
+  │                                                              ◇ cb fn? · L201                     │          │
+  │                                                               │            │                     │          │
+  │                                                             no│            │yes                  │          │
+  │                                                               ▼            ▼                     │          │
+  │                                                         ┌───────┐   ┌──────────────┐             │          │
+  │                                                         │ pop   │   │ TOMBSTONE    │             │          │
+  │                                                         │(tomb) │   │ cb = null    │             │          │
+  │                                                         │ L238  │   │ L203 BEFORE  │             │          │
+  │                                                         └───┬───┘   └──────┬───────┘             │          │
+  │                                                             │              ▼                     │          │
+  │                                                             │       ┌──────────────┐             │          │
+  │                                                             │       │ INVOKE L212  │             │          │
+  │                                                             │       │ r=cb(didTm)  │             │          │
+  │                                                             │       │ no try/catch │             │          │
+  │                                                             │       └──────┬───────┘             │          │
+  │                                                             │              ▼                     │          │
+  │                                                             │       ┌──────────────┐             │          │
+  │                                                             │       │ REFRESH L213 │             │          │
+  │                                                             │       │ now=getCur() │             │          │
+  │                                                             │       └──────┬───────┘             │          │
+  │                                                             │              ▼                     │          │
+  │                                                             │       ◇ r === fn? · L214           │          │
+  │                                                             │        │            │              │          │
+  │                                                             │      no│            │yes           │          │
+  │                                                             │        ▼            ▼              │          │
+  │                                                             │  ┌─────────┐   ┌────────────┐      │          │
+  │                                                             │  │ COMPL.  │   │ CONT.      │      │          │
+  │                                                             │  │guarded  │   │ cb = r     │      │          │
+  │                                                             │  │pop L232 │   │ advTimers  │      │          │
+  │                                                             │  │advTimers│   │ return T   │      │          │
+  │                                                             │  └────┬────┘   └─────┬──────┘      │          │
+  │                                                             │       │              │             │          │
+  │                                                             │       │              ▼             │          │
+  │                                                             │       │       ┌──────────┐         │          │
+  │                                                             │       │       │ YIELDED  │         │          │
+  │                                                             │       │       │ (cont)   │         │          │
+  │                                                             │       │       └──────────┘         │          │
+  │                                                             │       │                            │          │
+  │                                                             └───────┴────────────────────────────┘          │
+  │                                                                   (loop back to ENTRY ▲)                    │
+  │                                                                                                             │
+  │   shouldYieldToHost · L447-460 — called by the ◇ above                                                      │
+  │   ──────────────────────────────────────────────────                                                        │
+  │                                                                                                             │
+  │     ┌────────────────────┐                                                                                  │
+  │     │  needsPaint?       │── yes ──▶ return true                                                            │
+  │     │     L448           │                                                                                  │
+  │     └────────┬───────────┘                                                                                  │
+  │              │ no                                                                                           │
+  │              ▼                                                                                              │
+  │     ┌────────────────────┐                                                                                  │
+  │     │ now() - startTime  │── yes ──▶ return false                                                           │
+  │     │   < frameInterval? │                                                                                  │
+  │     │     L452-453       │                                                                                  │
+  │     └────────┬───────────┘                                                                                  │
+  │              │ no                                                                                           │
+  │              ▼                                                                                              │
+  │         return true                                                                                         │
+  │                                                                                                             │
+  │     ⓘ startTime here is the module var anchored at L493, NOT Task.startTime                                 │
+  │                                                                                                             │
+  │   RETURN VALUES                                                                                             │
+  │   ─────────────                                                                                             │
+  │   ┌── CONTINUATION yield ──┐  ┌── DEADLINE yield ─────┐  ┌── DRAINED ───────────────────┐                   │
+  │   │ return true · L224     │  │ return true · L250    │  │ return false · L256          │                   │
+  │   │ cb returned a function │  │ broke out of loop     │  │ taskQueue empty              │                   │
+  │   │ task stays in heap     │  │ task did NOT run this │  │ peek timerQueue              │                   │
+  │   │ (same sortIdx, pos)    │  │ slice (cb intact)     │  │ requestHostTimeout if any    │                   │
+  │   │ root.callbackNode      │  │ next slice peeks same │  │ pump dormant until next      │                   │
+  │   │ identity preserved     │  │ task (still at root)  │  │ scheduleCallback or timer    │                   │
+  │   └────────────────────────┘  └───────────────────────┘  └──────────────────────────────┘                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     │
+                                                     ▼
+
+  ┌─ ERROR RESILIENCE · Scheduler.js:495-500 ─────────────────────────────────────────────────────────────────┐
+  │                                                                                                            │
+  │   callback        workLoop         flushWork           performWork...      reschedule                      │
+  │   throws ──────▶ (no catch) ─────▶ finally:      ────▶ finally:        ──▶ next slice                      │
+  │   (L212)          propagates       curTask=null        hasMoreWork still    (pump stays                    │
+  │                                    restore priority    == true (init!)      alive)                         │
+  │                                    unlock              ...error escapes     error visible                  │
+  │                                                        to browser onerror   to onerror                     │
+  │                                                                                                            │
+  │   ┌────────────────────────────────────────────────────────────────────────────────────────────┐           │
+  │   │  PRE-TOMBSTONE TRICK: cb was nulled at L203 BEFORE the throw                                │           │
+  │   │  → task is already a corpse → next peek hits cancelled branch (L238)                        │           │
+  │   │  → popped, never re-invoked · no double-call hazard                                         │           │
+  │   └────────────────────────────────────────────────────────────────────────────────────────────┘           │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     │
+                                                     ▼
+
+  ┌─ RECONCILER BRIDGE · ReactFiberRootScheduler.js ──────────────────────────────────────────────────────────┐
+  │                                                                                                            │
+  │   LANE → EVENT PRIORITY → SCHEDULER PRIORITY                                                               │
+  │   ──────────────────────────────────────────                                                               │
+  │                                                                                                            │
+  │     SyncLane               ──▶  Discrete    ──▶  MICROTASK  (bypasses Scheduler entirely!)                 │
+  │     InputContinuousLane    ──▶  Continuous  ──▶  UserBlocking   (250 ms)                                   │
+  │     DefaultLane            ──▶  Default     ──▶  Normal         (5 000 ms)                                 │
+  │     IdleLane               ──▶  Idle        ──▶  Idle           (~12.43 days)                              │
+  │                                                                                                            │
+  │     ⚠ Scheduler's ImmediatePriority is effectively unreachable — SyncLane bypasses to microtask            │
+  │                                                                                                            │
+  │   CALLBACK DANCE — sequence diagram                                                                        │
+  │   ─────────────────────────────────                                                                        │
+  │                                                                                                            │
+  │    reconciler      Scheduler         workLoop         callback(root)                                       │
+  │        │               │                 │                  │                                              │
+  │        │ scheduleCb(p, │                 │                  │                                              │
+  │        │  performWork…)│                 │                  │                                              │
+  │        ├──────────────▶│                 │                  │                                              │
+  │        │               │ push(taskQ)     │                  │                                              │
+  │        │               │ requestHC       │                  │                                              │
+  │        │               │ postMessage     │                  │                                              │
+  │        │◀── taskNode ──┤                 │                  │                                              │
+  │        │               │                 │                  │                                              │
+  │        │ root.callbackNode = taskNode                       │                                              │
+  │        │               │                 │                  │                                              │
+  │        ~  ~  ~  ~  ~  ~  time passes: macrotask fires  ~  ~  ~                                             │
+  │        │               │                 │                  │                                              │
+  │        │               │ performWork     │                  │                                              │
+  │        │               │  UntilDeadline  │                  │                                              │
+  │        │               ├────────────────▶│                  │                                              │
+  │        │               │                 │ peek → task      │                                              │
+  │        │               │                 │ cb = null        │                                              │
+  │        │               │                 │   (tombstone)    │                                              │
+  │        │               │                 │ callback(didT)   │                                              │
+  │        │               │                 ├─────────────────▶│                                              │
+  │        │               │                 │                  │ renderRoot…                                  │
+  │        │               │                 │                  │ shouldYield()?                               │
+  │        │               │                 │◀── cont fn ──────┤                                              │
+  │        │               │                 │                  │                                              │
+  │        │               │                 │ task.cb=cont     │                                              │
+  │        │               │                 │ advanceTimers    │                                              │
+  │        │               │                 │ return true      │                                              │
+  │        │               │◀────────────────┤                  │                                              │
+  │        │               │ hasMoreWork=T   │                  │                                              │
+  │        │               │ schedulePerfo   │                  │                                              │
+  │        │               │    rmWork…      │                  │                                              │
+  │        │               │                 │                  │                                              │
+  │        ~  ~  ~  ~  ~  next slice: same Task, same heap pos  ~  ~                                           │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  EMERGENT BEHAVIORS                                                               (built from primitives above)
+  ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+  ┌─ PREEMPTION — wall-clock timeline (heap re-root between macrotasks) ──────────────────────────────────────┐
+  │                                                                                                            │
+  │    t (ms):    0         5         7         8                                    45                       │
+  │               │         │         │         │                                    │                        │
+  │               ├─────────┼─────────┼─────────┼────────────────────────────────────┼──▶                     │
+  │                                                                                                            │
+  │    slice:   ┌──render──┐┌─browser─┐┌──click──┐┌──browser──┐                   ┌─trans──┐                   │
+  │             │  trans   ││ click   ││  runs   ││   paint   │    ...            │RESTART │                   │
+  │             │   5 ms   ││ arrives ││ to done ││           │                   │        │                   │
+  │             └──────────┘└────┬────┘└─────────┘└───────────┘                   └────────┘                   │
+  │                              │                                                                             │
+  │                              ▼ click handler fires scheduleCallback(UB, ...)                               │
+  │                                                                                                            │
+  │    heap snapshots:                                                                                         │
+  │                                                                                                            │
+  │      t=5      [ 5000:trans ]                                                                               │
+  │                    │                                                                                       │
+  │                    │ push(click) · siftUp                                                                  │
+  │                    ▼                                                                                       │
+  │      t=6      [ 250:click , 5000:trans ]       ◀── re-root!                                                │
+  │                    │                                                                                       │
+  │                    │ next macrotask peek → click                                                           │
+  │                    ▼                                                                                       │
+  │      t=7      click runs to completion, commits                                                            │
+  │                    │                                                                                       │
+  │                    │ transition resumes later                                                              │
+  │                    ▼                                                                                       │
+  │      t=45     lanes changed → prepareFreshStack → restart fresh                                            │
+  │                                                                                                            │
+  │    ⚠ Render must be side-effect-free — restart requires throwing WIP tree away.                            │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ CONTINUATION — in-place Task mutation (one render, many slices) ─────────────────────────────────────────┐
+  │                                                                                                            │
+  │   ┌─slice 1─┐    ┌─slice 2─┐    ┌─slice 3─┐                         ┌─slice N─┐                            │
+  │   │ render  │ br │ render  │ br │ render  │  ...  ─────────────▶    │ render  │ ──▶ commit                 │
+  │   │  5 ms   │    │  5 ms   │    │  5 ms   │                         │  5 ms   │                            │
+  │   │ ret SELF│    │ ret SELF│    │ ret SELF│                         │ ret NULL│                            │
+  │   └─────────┘    └─────────┘    └─────────┘                         └─────────┘                            │
+  │                                                                                                            │
+  │   INVARIANT — same Task object mutated in place:                                                           │
+  │     sortIndex · expirationTime · id · heap position ·  ALL unchanged                                       │
+  │     → no siftUp / siftDown on re-arm · O(1) to re-queue continuation                                       │
+  │     → root.callbackNode === originalCallbackNode holds for entire render                                   │
+  │                                                                                                            │
+  │   Per-pause state lives in RECONCILER globals, NOT Scheduler:                                              │
+  │     workInProgress · workInProgressRoot · workInProgressRootRenderLanes · ...                              │
+  │     Scheduler holds only a function pointer (task.callback = continuationCallback · L218)                  │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘

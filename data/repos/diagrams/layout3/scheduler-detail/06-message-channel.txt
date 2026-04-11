@@ -1,0 +1,57 @@
+BROWSER NOTIFICATION (MessageChannel)
+========================================
+How the scheduler integrates with the browser's event loop.
+
+Source: packages/scheduler/src/forks/Scheduler.js
+
+
+    WHY NOT setTimeout?
+      setTimeout has a 4ms minimum delay (clamped by browsers).
+      React would waste 4ms of idle time between every 5ms chunk.
+
+    WHY NOT requestAnimationFrame?
+      rAF is frame-aligned (~16ms). React wants to run ASAP,
+      not wait for the next animation frame.
+
+    MessageChannel fires as a macrotask with near-zero delay.
+
+
+    SETUP:
+
+    +-----------------------------------------------------------+
+    |                                                           |
+    |  const channel = new MessageChannel();                    |
+    |  const port = channel.port2;                              |
+    |                                                           |
+    |  channel.port1.onmessage = performWorkUntilDeadline;      |
+    |                                                           |
+    |  function requestHostCallback() {                         |
+    |    if (!isMessageLoopRunning) {                            |
+    |      isMessageLoopRunning = true;                         |
+    |      port.postMessage(null);  // <-- schedule work        |
+    |    }                                                      |
+    |  }                                                        |
+    |                                                           |
+    +-----------------------------------------------------------+
+
+
+    EVENT LOOP INTEGRATION:
+
+    +-----------+     +------------------+     +-----------+
+    | User      |     | Macro task:      |     | Browser   |
+    | clicks    |---->| MessageChannel   |---->| Style,    |
+    | button    |     | handler runs     |     | Layout,   |
+    |           |     | performWork-     |     | Paint     |
+    |           |     | UntilDeadline()  |     |           |
+    |           |     |   -> workLoop()  |     |           |
+    |           |     |   -> yields at   |     |           |
+    |           |     |      5ms         |     |           |
+    +-----------+     +------------------+     +-----------+
+                             |
+                             | if more work, post another message
+                             v
+                      +------------------+     +-----------+
+                      | Next macro task: |     | Browser   |
+                      | MessageChannel   |---->| paints    |
+                      | resumes work     |     | again     |
+                      +------------------+     +-----------+

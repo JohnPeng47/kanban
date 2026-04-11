@@ -1,0 +1,76 @@
+DISPATCHER SWITCHING
+=====================
+Hooks are called through a dispatcher that changes per render phase.
+This is how React gives different behavior to the same useState() call
+on first render vs re-render vs outside render.
+
+Source: packages/react-reconciler/src/ReactFiberHooks.js (renderWithHooks, lines 502-564)
+        packages/react/src/ReactHooks.js (resolveDispatcher)
+        packages/react/src/ReactSharedInternalsClient.js
+
+
+    THE INDIRECTION:
+
+    // You write:
+    useState(0)
+
+    // react/src/ReactHooks.js does:
+    resolveDispatcher().useState(0)
+
+    // resolveDispatcher() returns:
+    ReactSharedInternals.H    // <-- set by the reconciler
+
+
+    THREE DISPATCHERS:
+
+    MOUNT (first render):
+    +-------------------------------------------------------+
+    |  ReactSharedInternals.H = HooksDispatcherOnMount       |
+    |                                                       |
+    |  useState  --> mountState()                            |
+    |    1. mountWorkInProgressHook() creates new Hook node  |
+    |    2. Appends to linked list                          |
+    |    3. Sets memoizedState = initialState                |
+    |    4. Creates queue with dispatch = dispatchSetState   |
+    |    5. Returns [initialState, dispatch]                 |
+    +-------------------------------------------------------+
+
+    UPDATE (re-render):
+    +-------------------------------------------------------+
+    |  ReactSharedInternals.H = HooksDispatcherOnUpdate      |
+    |                                                       |
+    |  useState  --> updateState() --> updateReducer()       |
+    |    1. updateWorkInProgressHook() walks to NEXT hook    |
+    |       in the existing linked list (by position!)      |
+    |    2. Processes all pending updates in queue            |
+    |    3. Computes new state via reducer                    |
+    |    4. Returns [newState, sameDispatch]                  |
+    +-------------------------------------------------------+
+
+    OUTSIDE RENDER (guard):
+    +-------------------------------------------------------+
+    |  ReactSharedInternals.H = ContextOnlyDispatcher        |
+    |                                                       |
+    |  Calling any hook outside render throws:               |
+    |  "Invalid hook call. Hooks can only be called inside   |
+    |   the body of a function component."                   |
+    +-------------------------------------------------------+
+
+
+    WHEN THE SWAP HAPPENS (in renderWithHooks):
+
+    renderWithHooks(current, wip, Component, props) {
+      // 1. Choose dispatcher
+      if (current === null || current.memoizedState === null)
+        ReactSharedInternals.H = HooksDispatcherOnMount;
+      else
+        ReactSharedInternals.H = HooksDispatcherOnUpdate;
+
+      // 2. Call the component (hooks execute with chosen dispatcher)
+      children = Component(props);
+
+      // 3. Lock hooks out
+      ReactSharedInternals.H = ContextOnlyDispatcher;
+
+      return children;
+    }

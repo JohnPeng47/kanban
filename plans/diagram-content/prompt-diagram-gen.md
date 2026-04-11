@@ -177,6 +177,82 @@ Arrows are siblings of the groups they connect, never children:
 
 ---
 
+## Cross-Diagram Navigation Attributes
+
+Two optional attributes on `[data-interactive]` elements that create connections between diagrams. These enable click-to-navigate between related diagram files.
+
+### `data-modal` — pop-up overlay
+
+Clicking this element opens another diagram as a pop-up overlay drawn over the current diagram. The overlay is fully interactive (expand, select, code-jump, and nested modals all work). Use this when the target diagram provides contextual detail about the clicked element — e.g., clicking a type reference to see its anatomy.
+
+```
+data-modal="<relative-path-to-diagram.html>"
+data-modal-position="below-right"          (optional, default "auto")
+```
+
+Position values: `above-left`, `above-right`, `below-left`, `below-right`, `left`, `right`, `auto`.
+
+**Example — clicking Geometry2d opens its anatomy diagram as a pop-up:**
+
+```xml
+<g data-interactive="geometry-overview"
+   data-ref="packages/editor/src/lib/primitives/geometry/Geometry2d.ts"
+   data-category="type"
+   data-label="Geometry2d"
+   data-modal="geometry-anatomy.html"
+   data-modal-position="below-right"
+   data-tt="Geometry2d.ts — click to expand anatomy">
+  <rect x="40" y="290" width="480" height="50" rx="3"
+        fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+  <text x="52" y="315" class="violet">Geometry2d</text>
+</g>
+```
+
+### `data-link` — jump to another diagram
+
+Clicking this element navigates to a specific element on another diagram (or a different location on the same diagram), centering the viewport on the target. Use this when two diagrams reference the same code and the user should be able to follow that reference — e.g., jumping from a hit-test flow to the reactive-primitives anatomy where Atom is defined.
+
+```
+data-link="<relative-path-to-diagram.html>#<target-element-id>"
+data-link="<relative-path-to-diagram.html>"
+```
+
+- Path is relative to the current diagram's directory (same convention as `data-expand-src`).
+- `#elementId` is the `data-interactive` ID on the target diagram. The viewer loads the target, finds the element, and centers the viewport on it.
+- If `#elementId` is omitted, the viewport centers on the target diagram's root.
+
+**Example — clicking Atom jumps to the reactive-primitives diagram, centered on the atom-detail element:**
+
+```xml
+<g data-interactive="atom-ref"
+   data-ref="packages/state/src/lib/Atom.ts:75"
+   data-category="type"
+   data-label="Atom"
+   data-link="reactive-primitives.html#atom-detail"
+   data-tt="Atom.ts:75 — jump to reactive primitives">
+  <text x="52" y="315" class="blue">Atom</text>
+</g>
+```
+
+### When to use which
+
+| Use | When |
+|---|---|
+| `data-modal` | The target is a compact, contextual detail view. The user wants to peek at it without losing their place. |
+| `data-link` | The target is a full diagram the user should navigate to. The current view is left behind (browser back returns). |
+| Neither | The element only references source code. Normal click jumps to the editor (or alt+click when modal/link is present). |
+
+### Click behavior with navigation attributes
+
+- **Normal click** on an element with `data-modal`: opens the overlay
+- **Normal click** on an element with `data-link`: executes the jump
+- **Normal click** on an element with neither: jumps to source code in editor
+- **Alt+click** on any interactive element: always jumps to source code in editor (bypasses modal/link)
+
+An element can carry `data-modal` or `data-link` alongside all other interactive attributes (`data-ref`, `data-category`, `data-label`, `data-tt`). The navigation attribute adds a click behavior; it does not replace the element's code reference or tooltip.
+
+---
+
 ## Visual Conventions
 
 ### Box styles

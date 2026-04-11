@@ -77,7 +77,7 @@ src/
       constraints.ts    — Constraint resolution (containment + adjacency)
     interactive/
       registry.ts       — InteractiveElementRegistry
-    loader.ts           — Parses HTML diagram files, produces LoadedDiagram
+    loader.ts           — Parses HTML diagram files, produ ces LoadedDiagram
     types.ts            — Shared types (Rect, ParsedRef, Point, etc.)
 ```
 

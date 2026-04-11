@@ -1,0 +1,38 @@
+FIBER NODE: STATE & PROPS
+==========================
+How each fiber carries its props and state. Note the overloaded fields —
+memoizedState and updateQueue mean different things for different fiber types.
+
+Source: packages/react-reconciler/src/ReactFiber.js
+        packages/react-reconciler/src/ReactFiberHooks.js
+        packages/react-reconciler/src/ReactFiberClassUpdateQueue.js
+
+
++------------------------------------------------------------------------+
+|                                                                        |
+|  pendingProps: any        props passed in this render                  |
+|  memoizedProps: any       props from last completed render             |
+|                                                                        |
+|  memoizedState: any       OVERLOADED FIELD:                            |
+|    FunctionComponent --> head of Hook linked list                     |
+|                          (see hooks-on-fiber/ for detail)             |
+|    ClassComponent    --> this.state object                            |
+|    HostRoot          --> { element: <App /> }                         |
+|                                                                        |
+|  updateQueue: any         OVERLOADED FIELD:                            |
+|    FunctionComponent --> circular linked list of Effects              |
+|                          (useEffect, useLayoutEffect)                 |
+|    ClassComponent    --> queue of setState updates                    |
+|    HostRoot          --> queue of render() calls                      |
+|                                                                        |
++------------------------------------------------------------------------+
+
+    BAILOUT OPTIMIZATION:
+
+    In beginWork, React checks:
+      if (oldProps === newProps && !hasScheduledUpdate(fiber, renderLanes))
+        --> skip this entire subtree (bailout)
+
+    This is why referential equality matters:
+      <Child obj={{a:1}} />   // new object every render = no bailout
+      <Child obj={memoized} /> // same reference = bailout possible

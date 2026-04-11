@@ -1,0 +1,42 @@
+RENDER PHASE: THE WORK LOOP
+==============================
+The interruptible loop that processes fibers one at a time.
+No side effects allowed — React may abandon and restart this at any time.
+
+Source: packages/react-reconciler/src/ReactFiberWorkLoop.js
+
+
+    performWorkOnRoot(root, lanes)
+          |
+          v
+    +=====================================================+
+    |                                                     |
+    |  RENDER PHASE  (interruptible, no side effects)     |
+    |                                                     |
+    |  prepareFreshStack(root, lanes)                     |
+    |    --> workInProgress = createWorkInProgress(       |
+    |            root.current, null)                      |
+    |                                                     |
+    |  workLoopConcurrent():                              |
+    |  +-----------------------------------------------+  |
+    |  | while (workInProgress !== null) {              |  |
+    |  |                                               |  |
+    |  |   if (shouldYield()) break; // <-- time slice |  |
+    |  |                                               |  |
+    |  |   performUnitOfWork(workInProgress);           |  |
+    |  | }                                             |  |
+    |  +-----------------------------------------------+  |
+    |                                                     |
+    |  (or workLoopSync for SyncLane -- no yield checks)  |
+    |                                                     |
+    |  performUnitOfWork(fiber):                          |
+    |    next = beginWork(current, fiber, renderLanes)     |
+    |    if (next === null)                                |
+    |      completeUnitOfWork(fiber)  // ascend            |
+    |    else                                             |
+    |      workInProgress = next     // descend            |
+    |                                                     |
+    +=====================================================+
+          |
+          | calls beginWork for each fiber
+          v

@@ -1,0 +1,50 @@
+FIBER TREE STRUCTURE
+====================
+The internal shadow tree React maintains. Each node is a "Fiber" — a plain JS object.
+Fibers link via .child (first child), .sibling (next sibling), .return (parent).
+This is NOT a typical tree — it's a linked structure optimized for depth-first traversal.
+
+Source: packages/react-reconciler/src/ReactFiber.js
+
+
+                                  .return
+                         .- - - - - - - - - - - -.
+                         |                       |
+                    FiberRoot                     |
+                    tag: HostRoot                 |
+                    stateNode: DOM root           |
+                         |                       |
+                         | .child                |
+                         v                       |
+                  +-------------+                |
+                  |  <App />    |  .- - - - - - -'
+                  |  tag: 0     |  .return
+                  |  (Function  |
+                  |  Component) |
+                  +-------------+
+                         |
+                         | .child
+                         v
+                  +-------------+       .sibling      +-------------+
+                  | <Header />  | ------------------> | <Board />   |
+                  | tag: 0      |                     | tag: 0      |
+                  +-------------+                     +-------------+
+                         |                                   |
+                         | .child                            | .child
+                         v                                   v
+                  +-------------+                     +-------------+       .sibling      +-------------+
+                  |  <Nav />    |                     | <Column />  | ------------------> | <Column />  |
+                  |  tag: 0     |                     | tag: 0      |                     | tag: 0      |
+                  +-------------+                     +-------------+                     +-------------+
+                                                             |                                   |
+                                                             | .child                            | .child
+                                                             v                                   v
+                                                      +-------------+    .sibling         +-------------+
+                                                      | <Card />    | --------.           | <Card />    |
+                                                      | tag: 0      |        |           | tag: 0      |
+                                                      +-------------+        |           +-------------+
+                                                                             v
+                                                                      +-------------+
+                                                                      | <Card />    |
+                                                                      | tag: 0      |
+                                                                      +-------------+

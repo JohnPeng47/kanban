@@ -1,0 +1,26 @@
+FIBER NODE: HOST INSTANCE (stateNode)
+=======================================
+The link from a fiber to the "real" thing it represents.
+
+Source: packages/react-reconciler/src/ReactFiber.js
+
+
++------------------------------------------------------------------------+
+|                                                                        |
+|  stateNode: any           link to the "real" thing                    |
+|                                                                        |
+|    HostComponent (tag 5)     --> the DOM element (div, span, etc.)    |
+|    HostText (tag 6)          --> the DOM text node                    |
+|    HostRoot (tag 3)          --> the FiberRoot container              |
+|    ClassComponent (tag 1)    --> the class instance (this)            |
+|    FunctionComponent (tag 0) --> null (no instance)                   |
+|                                                                        |
++------------------------------------------------------------------------+
+
+    This is how the commit phase finds the DOM node to mutate:
+
+    commitPlacement(fiber):
+      find nearest ancestor with stateNode (HostComponent)
+      --> parent = ancestorFiber.stateNode   // the DOM parent
+      --> child = fiber.stateNode            // the DOM child
+      --> parent.appendChild(child)

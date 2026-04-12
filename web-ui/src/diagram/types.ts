@@ -23,24 +23,50 @@ export interface Transform {
 
 export const IDENTITY_TRANSFORM: Transform = { tx: 0, ty: 0, scale: 1 };
 
-/** Pre-computed reflow animation script embedded in a diagram file. */
-export interface ReflowScript {
-	trigger: string;
-	deltaH: number;
-	deltaW?: number;
-	translations: Array<{
-		id: string;
-		dx?: number;
-		dy: number;
-	}>;
-	growths: Array<{
-		id: string;
-		dw?: number;
-		dh: number;
-	}>;
+export type InteractiveCategory = "module" | "function" | "type" | "data" | "flow" | "call" | "concept" | "annotation";
+
+export type OverlayPosition = "above-left" | "above-right" | "below-left" | "below-right" | "left" | "right" | "auto";
+
+/** A modal connection: source element → overlay diagram. */
+export interface DiagramModal {
+	source: {
+		elementId: string;
+		ref: string | null;
+	};
+	target: {
+		path: string;
+		position: OverlayPosition;
+	};
 }
 
-export type InteractiveCategory = "module" | "function" | "type" | "data" | "flow" | "call" | "concept" | "annotation";
+/** A link connection: source element → target element on another diagram. */
+export interface DiagramLink {
+	source: {
+		elementId: string;
+		ref: string | null;
+	};
+	target: {
+		path: string;
+		elementId: string | null;
+	};
+}
+
+/** Parsed interactive metadata for a SceneElement. */
+export interface InteractiveData {
+	ref: string;
+	parsedRef: ParsedRef;
+	category: InteractiveCategory;
+	label: string;
+	tooltip: string | null;
+	navTarget: ParsedRef;
+	modal: DiagramModal | null;
+	link: DiagramLink | null;
+}
+
+/** Reflow participation marker for a SceneElement. */
+export interface ReflowState {
+	originalBounds: Rect;
+}
 
 /** Parsed source code reference from data-ref. */
 export interface ParsedRef {
@@ -69,6 +95,69 @@ export function parseRef(ref: string): ParsedRef {
 		startLine: Number.isFinite(startLine) ? startLine : 1,
 		endLine: Number.isFinite(endLine) ? endLine : null,
 	};
+}
+
+/** Parse a data-modal attribute into a DiagramModal. */
+export function parseModal(elementId: string, ref: string | null, raw: string, position?: string): DiagramModal {
+	return {
+		source: { elementId, ref },
+		target: {
+			path: raw,
+			position: (position as OverlayPosition) ?? "auto",
+		},
+	};
+}
+
+/** Parse a data-link attribute ("path" or "path#elementId") into a DiagramLink. */
+export function parseLink(elementId: string, ref: string | null, raw: string): DiagramLink {
+	const hashIndex = raw.indexOf("#");
+	return {
+		source: { elementId, ref },
+		target:
+			hashIndex === -1
+				? { path: raw, elementId: null }
+				: { path: raw.slice(0, hashIndex), elementId: raw.slice(hashIndex + 1) },
+	};
+}
+
+const VALID_CATEGORIES = new Set<InteractiveCategory>([
+	"module",
+	"function",
+	"type",
+	"data",
+	"flow",
+	"call",
+	"concept",
+	"annotation",
+]);
+
+/** Parse a category string, defaulting to "annotation" if invalid. */
+export function parseCategory(value: string | undefined): InteractiveCategory {
+	if (value && VALID_CATEGORIES.has(value as InteractiveCategory)) {
+		return value as InteractiveCategory;
+	}
+	return "annotation";
+}
+
+/** Parse interactive metadata from a SceneElement's raw metadata bag. */
+export function parseInteractiveData(id: string, metadata: Record<string, string>): InteractiveData | null {
+	const ref = metadata.ref;
+	if (!ref) return null;
+
+	const parsedRef = parseRef(ref);
+	const category = parseCategory(metadata.category);
+	const label = metadata.label ?? id;
+	const tooltip = metadata.tt ?? null;
+	const navOverride = metadata.nav;
+	const navTarget = navOverride ? parseRef(navOverride) : parsedRef;
+
+	const modalRaw = metadata.modal;
+	const modal = modalRaw ? parseModal(id, ref, modalRaw, metadata["modal-position"]) : null;
+
+	const linkRaw = metadata.link;
+	const link = linkRaw ? parseLink(id, ref, linkRaw) : null;
+
+	return { ref, parsedRef, category, label, tooltip, navTarget, modal, link };
 }
 
 /** Test whether two rects intersect (AABB). */

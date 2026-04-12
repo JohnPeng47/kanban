@@ -1,10 +1,8 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { showAppToast } from "@/components/app-toaster";
 import type { Scene } from "../rendering/scene";
-import { isExpandable } from "../rendering/scene";
 import { Viewport, type ViewportSceneEvent } from "../rendering/viewport";
-import type { Rect } from "../types";
-import type { InteractiveElement, InteractiveElementRegistry } from "./interactive-registry";
+import type { InteractiveData, Rect } from "../types";
 
 const PATH_DISPLAY_MAX_LEN = 20;
 
@@ -22,28 +20,17 @@ function truncatePath(path: string, maxLen: number): string {
 	return filename;
 }
 
-export interface InteractionLayerProps {
+export interface SceneInputProps {
 	scene: Scene;
-	interactiveRegistry: InteractiveElementRegistry;
-	onNavigate?: (element: InteractiveElement, domEvent: PointerEvent) => void;
-	onExpand?: (elementId: string) => void;
-	onSelectionChange?: (elements: InteractiveElement[]) => void;
-	/** When true, single-finger touch drag draws a selection lasso instead of panning. */
-	selectMode?: boolean;
+	onNavigate?: (interactive: InteractiveData, domEvent: PointerEvent) => void;
+	onSelectionChange?: (elements: InteractiveData[]) => void;
 	children?: ReactNode;
 }
 
-/** React component that handles diagram interaction: click, selection, tooltip,
- *  and delegates pan/zoom to Viewport. Renders Viewport wrapping children. */
-export function InteractionLayer({
-	scene,
-	interactiveRegistry,
-	onNavigate,
-	onExpand,
-	onSelectionChange,
-	selectMode = false,
-	children,
-}: InteractionLayerProps): ReactElement {
+/** Processes pointer input against the Scene: hit testing, selection state,
+ *  click dispatch. Receives pre-classified events from Viewport.
+ *  Does not decide what to do with clicks — fires onNavigate to the application layer. */
+export function SceneInput({ scene, onNavigate, onSelectionChange, children }: SceneInputProps): ReactElement {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -123,13 +110,18 @@ export function InteractionLayer({
 		[scene],
 	);
 
-	const getSelectedElements = useCallback(
-		(ids: Set<string>): InteractiveElement[] => {
-			return Array.from(ids)
-				.map((id) => interactiveRegistry.get(id))
-				.filter((el): el is InteractiveElement => el != null);
+	const getSelectedInteractiveData = useCallback(
+		(ids: Set<string>): InteractiveData[] => {
+			const result: InteractiveData[] = [];
+			for (const id of ids) {
+				const el = scene.getElement(id);
+				if (el?.interactive) {
+					result.push(el.interactive);
+				}
+			}
+			return result;
 		},
-		[interactiveRegistry],
+		[scene],
 	);
 
 	// Track the current preview set so we can re-render the path list overlay
@@ -141,45 +133,45 @@ export function InteractionLayer({
 			const hitIds = scene.hitTestRect(sceneRect, "intersect");
 			const validIds = new Set<string>();
 			for (const id of hitIds) {
-				if (interactiveRegistry.get(id)) {
+				const el = scene.getElement(id);
+				if (el?.interactive) {
 					validIds.add(id);
 				}
 			}
 
 			setDragPreviewIds((prev) => {
-				// Clear visuals for elements no longer in the lasso
 				for (const id of prev) {
 					if (!validIds.has(id)) {
 						applySelectionVisual(id, false);
 					}
 				}
-				// Apply visuals for newly lassoed elements
 				for (const id of validIds) {
 					applySelectionVisual(id, true);
 				}
 				return validIds;
 			});
 		},
-		[scene, interactiveRegistry, applySelectionVisual],
+		[scene, applySelectionVisual],
 	);
 
 	const dragPreviewPaths = useMemo(() => {
 		const items: Array<{ id: string; path: string }> = [];
 		for (const id of dragPreviewIds) {
-			const el = interactiveRegistry.get(id);
-			if (el?.parsedRef.filePath) {
-				items.push({ id, path: truncatePath(el.parsedRef.filePath, PATH_DISPLAY_MAX_LEN) });
+			const el = scene.getElement(id);
+			if (el?.interactive?.parsedRef.filePath) {
+				items.push({ id, path: truncatePath(el.interactive.parsedRef.filePath, PATH_DISPLAY_MAX_LEN) });
 			}
 		}
 		return items;
-	}, [dragPreviewIds, interactiveRegistry]);
+	}, [dragPreviewIds, scene]);
 
 	const handleSelectionDragEnd = useCallback(
 		(sceneRect: Rect) => {
 			const hitIds = scene.hitTestRect(sceneRect, "intersect");
 			const newSelectedIds = new Set<string>();
 			for (const id of hitIds) {
-				if (interactiveRegistry.get(id)) {
+				const el = scene.getElement(id);
+				if (el?.interactive) {
 					newSelectedIds.add(id);
 				}
 			}
@@ -198,7 +190,7 @@ export function InteractionLayer({
 			setDragPreviewIds(new Set());
 			setSelectedIds(newSelectedIds);
 
-			const elements = getSelectedElements(newSelectedIds);
+			const elements = getSelectedInteractiveData(newSelectedIds);
 			onSelectionChange?.(elements);
 
 			// Collect unique file paths and copy to clipboard
@@ -229,7 +221,7 @@ export function InteractionLayer({
 				);
 			}
 		},
-		[scene, interactiveRegistry, selectedIds, applySelectionVisual, getSelectedElements, onSelectionChange],
+		[scene, selectedIds, applySelectionVisual, getSelectedInteractiveData, onSelectionChange],
 	);
 
 	const handleSceneClick = useCallback(
@@ -246,27 +238,14 @@ export function InteractionLayer({
 				setSelectedIds((prev) => {
 					if (prev.size === 0) return prev;
 					const empty = new Set<string>();
-					onSelectionChange?.(getSelectedElements(empty));
+					onSelectionChange?.(getSelectedInteractiveData(empty));
 					return empty;
 				});
 				return;
 			}
 
-			const interactive = interactiveRegistry.get(hitId);
-
-			// Check if this click resolves to an expandable ancestor
-			let expandableId: string | null = null;
-			if (onExpand) {
-				let walkId: string | null = hitId;
-				while (walkId) {
-					const el = scene.getElement(walkId);
-					if (el && isExpandable(el)) {
-						expandableId = walkId;
-						break;
-					}
-					walkId = el?.parentId ?? null;
-				}
-			}
+			const el = scene.getElement(hitId);
+			const interactive = el?.interactive ?? null;
 
 			// Update selection
 			if (interactive) {
@@ -280,7 +259,7 @@ export function InteractionLayer({
 							next.add(hitId);
 							applySelectionVisual(hitId, true);
 						}
-						onSelectionChange?.(getSelectedElements(next));
+						onSelectionChange?.(getSelectedInteractiveData(next));
 						return next;
 					});
 				} else {
@@ -290,7 +269,7 @@ export function InteractionLayer({
 						}
 						applySelectionVisual(hitId, true);
 						const next = new Set([hitId]);
-						onSelectionChange?.(getSelectedElements(next));
+						onSelectionChange?.(getSelectedInteractiveData(next));
 						return next;
 					});
 				}
@@ -301,32 +280,17 @@ export function InteractionLayer({
 				setSelectedIds((prev) => {
 					if (prev.size === 0) return prev;
 					const empty = new Set<string>();
-					onSelectionChange?.(getSelectedElements(empty));
+					onSelectionChange?.(getSelectedInteractiveData(empty));
 					return empty;
 				});
 			}
 
-			// If expand found, fire expand and skip navigate
-			if (expandableId) {
-				onExpand?.(expandableId);
-				return;
-			}
-
-			// Fire navigate only if no expand
+			// Fire navigate for interactive elements
 			if (interactive && onNavigate) {
 				onNavigate(interactive, event.domEvent);
 			}
 		},
-		[
-			scene,
-			interactiveRegistry,
-			selectedIds,
-			applySelectionVisual,
-			getSelectedElements,
-			onNavigate,
-			onExpand,
-			onSelectionChange,
-		],
+		[scene, selectedIds, applySelectionVisual, getSelectedInteractiveData, onNavigate, onSelectionChange],
 	);
 
 	return (
@@ -358,7 +322,6 @@ export function InteractionLayer({
 				onSelectionDrag={handleSelectionDrag}
 				onSelectionDragEnd={handleSelectionDragEnd}
 				selectionOverlayPaths={dragPreviewPaths}
-				selectMode={selectMode}
 			>
 				{children}
 			</Viewport>

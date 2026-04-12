@@ -1,12 +1,11 @@
-import type { Point, Rect, Transform } from "../types";
+import type { InteractiveData, Point, Rect, ReflowState, Transform } from "../types";
 
 /**
  * The universal primitive of the Scene.
  *
  * Every tagged element in the diagram is a SceneElement. The element's
- * roles (reflow group, interactive region, arrow, viewport root) are
- * determined by its metadata — specifically, the data-* attributes
- * from the source SVG.
+ * roles are determined by its parsed role fields — `interactive` and
+ * `reflow` — which are derived from data-* attributes at construction time.
  */
 export interface SceneElement {
 	/** Unique identifier.
@@ -34,6 +33,14 @@ export interface SceneElement {
 
 	/** Whether this element has a visual rect that can be grown during reflow. */
 	hasVisualRect: boolean;
+
+	/** Parsed interactive metadata (ref, category, label, modal, link).
+	 *  Non-null when this element has data-interactive + data-ref. */
+	interactive: InteractiveData | null;
+
+	/** Reflow participation marker.
+	 *  Non-null when this element has data-reflow-group or data-arrow. */
+	reflow: ReflowState | null;
 }
 
 /** The rendering abstraction between the diagram loader and the rest of the framework. */
@@ -60,6 +67,15 @@ export interface Scene {
 
 	growVisualBounds(id: string, deltaW: number, deltaH: number): void;
 
+	/** Insert a new element into the Scene. Called after DOM insertion. */
+	addElement(id: string, domNode: SVGGElement, parentId: string): SceneElement;
+
+	/** Remove an element and all its descendants from the Scene. */
+	removeElement(id: string): void;
+
+	/** Parse a DOM subtree and add all tagged elements to the Scene. */
+	addSubtree(rootDomNode: SVGElement, parentId: string): SceneElement[];
+
 	// ─── Hit Testing ───────────────────────────────────────────
 
 	/** Point hit test. Takes a screen-space point (Viewport converts to screen
@@ -80,17 +96,13 @@ export interface Scene {
 // ─── Role helpers ──────────────────────────────────────────
 
 export function isReflowGroup(el: SceneElement): boolean {
-	return "reflow-group" in el.metadata;
+	return el.reflow !== null;
 }
 
 export function isInteractiveRegion(el: SceneElement): boolean {
-	return "interactive" in el.metadata;
+	return el.interactive !== null;
 }
 
 export function isArrow(el: SceneElement): boolean {
 	return "arrow" in el.metadata;
-}
-
-export function isExpandable(el: SceneElement): boolean {
-	return el.metadata.expandable === "true";
 }

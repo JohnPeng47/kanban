@@ -2,7 +2,9 @@ import {
 	composeTransforms,
 	IDENTITY_TRANSFORM,
 	type Point,
+	parseInteractiveData,
 	type Rect,
+	type ReflowState,
 	rectContains,
 	rectsIntersect,
 	type Transform,
@@ -82,17 +84,11 @@ export class SvgScene implements Scene {
 		style.textContent = `
 			[data-interactive] { cursor: pointer; transition: filter 0.15s ease; }
 			[data-interactive]:hover, [data-interactive].selected { filter: brightness(1.5) drop-shadow(0 0 6px currentColor); }
-			[data-expandable] .collapsed-content { cursor: pointer; }
-			[data-expandable] .collapsed-content:hover > rect:first-child {
-				filter: brightness(1.3) drop-shadow(0 0 8px rgba(210, 153, 34, 0.4));
-			}
 			.selected > rect:first-of-type {
 				stroke: #4C9AFF;
 				stroke-width: 2;
 				filter: drop-shadow(0 0 4px rgba(76, 154, 255, 0.4));
 			}
-			.expanded-content rect[rx] { transition: filter 0.15s ease; }
-			.expanded-content rect[rx]:hover { filter: brightness(1.3) drop-shadow(0 0 4px rgba(76, 154, 255, 0.2)); }
 		`;
 		svg.insertBefore(style, svg.firstChild);
 	}
@@ -110,6 +106,8 @@ export class SvgScene implements Scene {
 			transform: { ...IDENTITY_TRANSFORM },
 			metadata: {},
 			hasVisualRect: false,
+			interactive: null,
+			reflow: null,
 		};
 		this.elements.set(this.rootId, rootElement);
 
@@ -148,6 +146,11 @@ export class SvgScene implements Scene {
 				localBounds = { x: 0, y: 0, width: 0, height: 0 };
 			}
 
+			// Parse roles from metadata
+			const interactive = metadata.interactive !== undefined ? parseInteractiveData(id, metadata) : null;
+			const hasReflow = metadata["reflow-group"] !== undefined || metadata.arrow !== undefined;
+			const reflow: ReflowState | null = hasReflow ? { originalBounds: { ...localBounds } } : null;
+
 			const element: SceneElement = {
 				id,
 				parentId,
@@ -156,6 +159,8 @@ export class SvgScene implements Scene {
 				transform: { ...IDENTITY_TRANSFORM },
 				metadata,
 				hasVisualRect: visualRect !== null,
+				interactive,
+				reflow,
 			};
 			this.elements.set(id, element);
 
@@ -326,7 +331,7 @@ export class SvgScene implements Scene {
 		const matches: string[] = [];
 
 		for (const [id, element] of this.elements) {
-			if (!("interactive" in element.metadata)) continue;
+			if (!element.interactive) continue;
 			const worldBounds = this.getWorldBounds(id);
 			if (mode === "contain") {
 				if (rectContains(sceneRect, worldBounds)) {
@@ -337,6 +342,136 @@ export class SvgScene implements Scene {
 			}
 		}
 		return matches;
+	}
+
+	// ─── Dynamic Elements ──────────────────────────────────────
+
+	addElement(id: string, domNode: SVGGElement, parentId: string): SceneElement {
+		if (this.elements.has(id)) {
+			throw new Error(`[SvgScene] Element with id "${id}" already exists`);
+		}
+
+		const metadata = readMetadata(domNode);
+		const visualRect = findVisualRect(domNode);
+		if (visualRect) {
+			this.visualRects.set(id, visualRect);
+		}
+
+		let localBounds: Rect;
+		try {
+			const bbox = domNode.getBBox();
+			localBounds = { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
+		} catch {
+			localBounds = { x: 0, y: 0, width: 0, height: 0 };
+		}
+
+		const interactive = metadata.interactive !== undefined ? parseInteractiveData(id, metadata) : null;
+		const hasReflow = metadata["reflow-group"] !== undefined || metadata.arrow !== undefined;
+		const reflow: ReflowState | null = hasReflow ? { originalBounds: { ...localBounds } } : null;
+
+		const element: SceneElement = {
+			id,
+			parentId,
+			childIds: [],
+			localBounds,
+			transform: { ...IDENTITY_TRANSFORM },
+			metadata,
+			hasVisualRect: visualRect !== null,
+			interactive,
+			reflow,
+		};
+
+		this.elements.set(id, element);
+		this.domElements.set(id, domNode);
+
+		const parent = this.elements.get(parentId);
+		if (parent) {
+			parent.childIds.push(id);
+		}
+
+		this.invalidateWorldBoundsCache(parentId);
+		return element;
+	}
+
+	removeElement(id: string): void {
+		const element = this.elements.get(id);
+		if (!element) return;
+
+		// Recursively remove descendants first
+		for (const childId of [...element.childIds]) {
+			this.removeElement(childId);
+		}
+
+		// Remove from parent's childIds
+		if (element.parentId) {
+			const parent = this.elements.get(element.parentId);
+			if (parent) {
+				const idx = parent.childIds.indexOf(id);
+				if (idx !== -1) {
+					parent.childIds.splice(idx, 1);
+				}
+			}
+		}
+
+		this.elements.delete(id);
+		this.domElements.delete(id);
+		this.visualRects.delete(id);
+		this.worldBoundsCache.delete(id);
+	}
+
+	addSubtree(rootDomNode: SVGElement, parentId: string): SceneElement[] {
+		const added: SceneElement[] = [];
+		const arrowCounter = { value: this.nextArrowIndex() };
+		const taggedGs = rootDomNode.querySelectorAll<SVGGElement>(SCENE_ELEMENT_SELECTOR);
+
+		// Build a local DOM→ID map for parent resolution within the subtree
+		const domToId = new Map<SVGGElement, string>();
+		for (const g of taggedGs) {
+			const id = resolveElementId(g, arrowCounter);
+			if (!id || this.elements.has(id)) continue;
+			domToId.set(g, id);
+		}
+
+		for (const [g, id] of domToId) {
+			// Resolve parent: walk DOM ancestry, check subtree map first, then existing elements
+			let resolvedParentId = parentId;
+			let ancestor: Element | null = g.parentElement;
+			while (ancestor && ancestor !== rootDomNode) {
+				if (ancestor instanceof SVGGElement) {
+					const ancestorId = domToId.get(ancestor);
+					if (ancestorId) {
+						resolvedParentId = ancestorId;
+						break;
+					}
+					// Check if this ancestor is already in the scene
+					for (const [existingId, existingDom] of this.domElements) {
+						if (existingDom === ancestor) {
+							resolvedParentId = existingId;
+							break;
+						}
+					}
+					if (resolvedParentId !== parentId) break;
+				}
+				ancestor = ancestor.parentElement;
+			}
+
+			this.domElements.set(id, g);
+			const element = this.addElement(id, g, resolvedParentId);
+			added.push(element);
+		}
+
+		return added;
+	}
+
+	private nextArrowIndex(): number {
+		let max = -1;
+		for (const id of this.elements.keys()) {
+			if (id.startsWith("arrow-")) {
+				const num = Number.parseInt(id.slice(6), 10);
+				if (Number.isFinite(num) && num > max) max = num;
+			}
+		}
+		return max + 1;
 	}
 
 	// ─── Rendering ─────────────────────────────────────────────

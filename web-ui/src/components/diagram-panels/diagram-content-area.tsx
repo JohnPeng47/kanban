@@ -1,53 +1,28 @@
-import { BoxSelect, FileText, Hand } from "lucide-react";
-import { type ReactElement, useCallback, useMemo, useRef, useState } from "react";
+import { FileText } from "lucide-react";
+import { type ReactElement, useCallback } from "react";
 
 import { showAppToast } from "@/components/app-toaster";
-import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Tooltip } from "@/components/ui/tooltip";
-import { InteractionLayer } from "@/diagram/interaction/interaction-layer";
-import type { InteractiveElement } from "@/diagram/interaction/interactive-registry";
-import { InteractiveElementRegistry } from "@/diagram/interaction/interactive-registry";
+import { SceneInput } from "@/diagram/input/scene-input";
 import type { Scene } from "@/diagram/rendering/scene";
+import type { InteractiveData } from "@/diagram/types";
 import { useDiagram } from "@/diagram/use-diagram";
-import { useReflowEngine } from "@/diagram/use-reflow-engine";
 import { getRuntimeTrpcClient } from "@/runtime/trpc-client";
-
-/** Resolve a relative expand-src path against the current diagram's directory. */
-function resolveExpandSrc(selectedPath: string, expandSrc: string): string {
-	const dirIndex = selectedPath.lastIndexOf("/");
-	if (dirIndex === -1) return expandSrc;
-	return `${selectedPath.slice(0, dirIndex)}/${expandSrc}`;
-}
-
-const SVG_NS = "http://www.w3.org/2000/svg";
 
 function DiagramScene({
 	scene,
 	workspaceId,
 	workspacePath,
-	selectedPath,
 }: {
 	scene: Scene;
 	workspaceId: string | null;
 	workspacePath: string | null;
-	selectedPath: string;
 }): ReactElement {
-	const interactiveRegistry = useMemo(() => {
-		const reg = new InteractiveElementRegistry();
-		reg.buildFromScene(scene);
-		return reg;
-	}, [scene]);
-
-	const reflow = useReflowEngine(scene);
-	const expandingRef = useRef(new Set<string>());
-	const [selectMode, setSelectMode] = useState(false);
-
 	const handleNavigate = useCallback(
-		(element: InteractiveElement, domEvent: PointerEvent) => {
+		(interactive: InteractiveData, domEvent: PointerEvent) => {
 			if (!workspaceId || !workspacePath) return;
 			const trpc = getRuntimeTrpcClient(workspaceId);
-			const { filePath, startLine } = element.navTarget;
+			const { filePath, startLine } = interactive.navTarget;
 			void trpc.diagrams.navigate
 				.mutate({
 					root: workspacePath,
@@ -64,130 +39,7 @@ function DiagramScene({
 		[workspaceId, workspacePath],
 	);
 
-	const handleExpand = useCallback(
-		(elementId: string) => {
-			if (!reflow || !workspaceId) return;
-
-			// If already expanded, collapse (synchronous)
-			if (reflow.isExpanded(elementId)) {
-				const svg = scene.getSvgElement();
-				const g = svg.querySelector(`[data-reflow-group="${elementId}"]`);
-				if (g) {
-					const collapsedG = g.querySelector(".collapsed-content") as SVGGElement | null;
-					const expandedG = g.querySelector(".expanded-content") as SVGGElement | null;
-					if (collapsedG) collapsedG.classList.remove("hidden");
-					if (expandedG) {
-						expandedG.classList.remove("visible");
-						expandedG.innerHTML = "";
-					}
-				}
-				reflow.toggleExpand(elementId);
-				return;
-			}
-
-			// Prevent double-expand
-			if (expandingRef.current.has(elementId)) return;
-			expandingRef.current.add(elementId);
-
-			// Read expand metadata from the DOM element
-			const svg = scene.getSvgElement();
-			const g = svg.querySelector(`[data-reflow-group="${elementId}"]`);
-			if (!g) {
-				expandingRef.current.delete(elementId);
-				return;
-			}
-			const expandSrc = g.getAttribute("data-expand-src");
-			const expandW = Number.parseFloat(g.getAttribute("data-expand-w") ?? "0");
-			const expandH = Number.parseFloat(g.getAttribute("data-expand-h") ?? "0");
-			if (!expandSrc || !expandW || !expandH) {
-				expandingRef.current.delete(elementId);
-				return;
-			}
-
-			// Fetch sub-diagram content
-			const trpc = getRuntimeTrpcClient(workspaceId);
-			const contentPath = resolveExpandSrc(selectedPath, expandSrc);
-
-			void trpc.diagrams.getContent
-				.query({ path: contentPath })
-				.then((result) => {
-					// Parse the sub-diagram SVG
-					const doc = new DOMParser().parseFromString(result.content, "text/html");
-					const innerSvg = doc.querySelector("svg");
-					if (!innerSvg) return;
-
-					const expandedG = g.querySelector(".expanded-content") as SVGGElement | null;
-					const collapsedG = g.querySelector(".collapsed-content") as SVGGElement | null;
-					if (!expandedG || !collapsedG) return;
-
-					// Get collapsed bounds for positioning
-					const element = scene.getElement(elementId);
-					if (!element) return;
-					const bounds = element.localBounds;
-
-					// Create nested <svg> container
-					const nested = document.createElementNS(SVG_NS, "svg");
-					nested.setAttribute("x", String(bounds.x));
-					nested.setAttribute("y", String(bounds.y));
-					nested.setAttribute("width", String(expandW));
-					nested.setAttribute("height", String(expandH));
-					const innerViewBox = innerSvg.getAttribute("viewBox");
-					if (innerViewBox) {
-						nested.setAttribute("viewBox", innerViewBox);
-					}
-					// Move children from parsed SVG into nested element
-					while (innerSvg.firstChild) {
-						nested.appendChild(innerSvg.firstChild);
-					}
-
-					expandedG.innerHTML = "";
-					expandedG.appendChild(nested);
-
-					// Toggle visibility
-					collapsedG.classList.add("hidden");
-					expandedG.classList.add("visible");
-
-					// Apply displacement script
-					reflow.toggleExpand(elementId);
-				})
-				.catch((err) => {
-					console.error(`[DiagramScene] Failed to load expand content for "${elementId}":`, err);
-				})
-				.finally(() => {
-					expandingRef.current.delete(elementId);
-				});
-		},
-		[scene, reflow, workspaceId, selectedPath],
-	);
-
-	return (
-		<InteractionLayer
-			scene={scene}
-			interactiveRegistry={interactiveRegistry}
-			onNavigate={handleNavigate}
-			onExpand={handleExpand}
-			selectMode={selectMode}
-		>
-			<div className="absolute bottom-4 right-4 z-10 flex gap-1 rounded-lg bg-surface-1 border border-border p-1 shadow-lg">
-				<Tooltip content="Pan mode">
-					<Button
-						variant={selectMode ? "ghost" : "default"}
-						size="sm"
-						icon={<Hand size={14} />}
-						onClick={() => setSelectMode(false)}
-					/>
-				</Tooltip>
-				<Tooltip content="Select mode">
-					<Button
-						variant={selectMode ? "default" : "ghost"}
-						size="sm"
-						icon={<BoxSelect size={14} />}
-						onClick={() => setSelectMode(true)}
-					/>
-				</Tooltip>
-			</div>
-		</InteractionLayer>
-	);
+	return <SceneInput scene={scene} onNavigate={handleNavigate} />;
 }
 
 export function DiagramContentArea({
@@ -238,12 +90,7 @@ export function DiagramContentArea({
 
 	return (
 		<div className="flex flex-1 min-w-0 min-h-0 bg-surface-1">
-			<DiagramScene
-				scene={scene}
-				workspaceId={workspaceId}
-				workspacePath={workspacePath}
-				selectedPath={selectedPath}
-			/>
+			<DiagramScene scene={scene} workspaceId={workspaceId} workspacePath={workspacePath} />
 		</div>
 	);
 }

@@ -1,5 +1,15 @@
-import { type ReactElement, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { IDENTITY_TRANSFORM, type Point, type Rect, type Transform } from "../types";
+import {
+	forwardRef,
+	type ReactElement,
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useImperativeHandle,
+	useRef,
+	useState,
+} from "react";
+import { IDENTITY_TRANSFORM, type OverlayBadge, type Point, type Rect, type Transform } from "../types";
+import { OverLayer } from "./over-layer";
 import type { Scene } from "./scene";
 
 const ZOOM_SENSITIVITY = 0.002;
@@ -16,26 +26,39 @@ export interface ViewportSceneEvent {
 export interface ViewportProps {
 	scene: Scene;
 	onSceneClick?: (event: ViewportSceneEvent) => void;
+	onContextMenu?: (event: ViewportSceneEvent) => void;
 	onSelectionDrag?: (sceneRect: Rect) => void;
 	onSelectionDragEnd?: (sceneRect: Rect) => void;
 	/** When a selection lasso is active, render these labels to the left of the box. */
 	selectionOverlayPaths?: Array<{ id: string; path: string }>;
+	/** Overlay badges rendered on top of the diagram at fixed pixel size. */
+	badges?: OverlayBadge[];
 	/** When true, single-finger drag draws a selection lasso instead of panning. */
 	selectMode?: boolean;
 	children?: ReactNode;
 }
 
+/** Imperative handle for programmatic viewport control. */
+export interface ViewportHandle {
+	centerOn(scenePoint: Point, opts?: { scale?: number; animate?: boolean }): void;
+}
+
 /** Viewport component that owns pan/zoom and coordinate conversion.
  *  Wraps the Scene's SVG in a container with CSS transform. */
-export function Viewport({
-	scene,
-	onSceneClick,
-	onSelectionDrag,
-	onSelectionDragEnd,
-	selectionOverlayPaths,
-	selectMode = false,
-	children,
-}: ViewportProps): ReactElement {
+export const Viewport = forwardRef<ViewportHandle, ViewportProps>(function Viewport(
+	{
+		scene,
+		onSceneClick,
+		onContextMenu,
+		onSelectionDrag,
+		onSelectionDragEnd,
+		selectionOverlayPaths,
+		badges,
+		selectMode = false,
+		children,
+	},
+	ref,
+): ReactElement {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const transformDivRef = useRef<HTMLDivElement>(null);
 	const transformRef = useRef<Transform>({ ...IDENTITY_TRANSFORM });
@@ -89,6 +112,39 @@ export function Viewport({
 			scene.setTransform("root", t);
 		},
 		[scene],
+	);
+
+	// Expose imperative handle for programmatic viewport control (e.g. jump navigation)
+	useImperativeHandle(
+		ref,
+		() => ({
+			centerOn(scenePoint: Point, opts?: { scale?: number; animate?: boolean }) {
+				const container = containerRef.current;
+				const transformDiv = transformDivRef.current;
+				if (!container || !transformDiv) return;
+				const rect = container.getBoundingClientRect();
+				const scale = opts?.scale ?? transformRef.current.scale;
+				const newTransform: Transform = {
+					tx: rect.width / 2 - scenePoint.x * scale,
+					ty: rect.height / 2 - scenePoint.y * scale,
+					scale,
+				};
+				if (opts?.animate) {
+					transformDiv.style.transition = "transform 220ms ease";
+					requestAnimationFrame(() => {
+						applyTransform(newTransform);
+						syncRootTransform(newTransform);
+						setTimeout(() => {
+							transformDiv.style.transition = "";
+						}, 240);
+					});
+				} else {
+					applyTransform(newTransform);
+					syncRootTransform(newTransform);
+				}
+			},
+		}),
+		[applyTransform, syncRootTransform],
 	);
 
 	// Wheel zoom
@@ -349,6 +405,17 @@ export function Viewport({
 		}
 	}, []);
 
+	const handleContextMenu = useCallback(
+		(event: React.MouseEvent<HTMLDivElement>) => {
+			if (!onContextMenu) return;
+			event.preventDefault();
+			const screenPoint = { x: event.clientX, y: event.clientY };
+			const scenePoint = screenToScene(screenPoint);
+			onContextMenu({ scenePoint, screenPoint, domEvent: event.nativeEvent as unknown as PointerEvent });
+		},
+		[onContextMenu, screenToScene],
+	);
+
 	return (
 		<div
 			ref={containerRef}
@@ -356,8 +423,10 @@ export function Viewport({
 			onPointerDown={onPointerDown}
 			onPointerMove={onPointerMove}
 			onPointerCancel={onPointerCancel}
+			onContextMenu={handleContextMenu}
 		>
 			<div ref={transformDivRef} style={{ transformOrigin: "0 0", willChange: "transform" }} />
+			{badges && badges.length > 0 && <OverLayer badges={badges} scene={scene} transformRef={transformRef} />}
 			{children}
 			{selectionRect && (
 				<div
@@ -391,4 +460,4 @@ export function Viewport({
 			) : null}
 		</div>
 	);
-}
+});

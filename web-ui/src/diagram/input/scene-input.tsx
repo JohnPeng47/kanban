@@ -1,8 +1,17 @@
-import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	forwardRef,
+	type ReactElement,
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { showAppToast } from "@/components/app-toaster";
 import type { Scene } from "../rendering/scene";
-import { Viewport, type ViewportSceneEvent } from "../rendering/viewport";
-import type { InteractiveData, Rect } from "../types";
+import { Viewport, type ViewportHandle, type ViewportSceneEvent } from "../rendering/viewport";
+import type { InteractiveData, OverlayBadge, Rect } from "../types";
 
 const PATH_DISPLAY_MAX_LEN = 20;
 
@@ -24,13 +33,22 @@ export interface SceneInputProps {
 	scene: Scene;
 	onNavigate?: (interactive: InteractiveData, domEvent: PointerEvent) => void;
 	onSelectionChange?: (elements: InteractiveData[]) => void;
+	onContextMenu?: (event: ViewportSceneEvent) => void;
+	/** Overlay badges rendered on top of the diagram at fixed pixel size. */
+	badges?: OverlayBadge[];
 	children?: ReactNode;
 }
+
+/** Re-export ViewportHandle so consumers can use it without importing viewport directly. */
+export type { ViewportHandle };
 
 /** Processes pointer input against the Scene: hit testing, selection state,
  *  click dispatch. Receives pre-classified events from Viewport.
  *  Does not decide what to do with clicks — fires onNavigate to the application layer. */
-export function SceneInput({ scene, onNavigate, onSelectionChange, children }: SceneInputProps): ReactElement {
+export const SceneInput = forwardRef<ViewportHandle, SceneInputProps>(function SceneInput(
+	{ scene, onNavigate, onSelectionChange, onContextMenu, badges, children },
+	ref,
+): ReactElement {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -317,11 +335,14 @@ export function SceneInput({ scene, onNavigate, onSelectionChange, children }: S
 				}}
 			/>
 			<Viewport
+				ref={ref}
 				scene={scene}
 				onSceneClick={handleSceneClick}
+				onContextMenu={onContextMenu}
 				onSelectionDrag={handleSelectionDrag}
 				onSelectionDragEnd={handleSelectionDragEnd}
 				selectionOverlayPaths={dragPreviewPaths}
+				badges={badges}
 			>
 				{children}
 			</Viewport>
@@ -333,4 +354,4 @@ export function SceneInput({ scene, onNavigate, onSelectionChange, children }: S
 			`}</style>
 		</>
 	);
-}
+});

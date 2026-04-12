@@ -131,6 +131,9 @@ export function DiagramViewer({
 					selectedPath={viewer.selectedPath}
 					workspaceId={workspaceId}
 					workspacePath={viewer.workspacePath}
+					onRequestJump={viewer.requestJump}
+					pendingJumpElementId={viewer.pendingJumpElementId}
+					onJumpConsumed={viewer.consumeJump}
 				/>
 				<div className="absolute top-2 right-2 z-10">
 					<CodeVizStatusIndicator state={codeVizStatus.state} />

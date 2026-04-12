@@ -89,6 +89,36 @@ export class SvgScene implements Scene {
 				stroke-width: 2;
 				filter: drop-shadow(0 0 4px rgba(76, 154, 255, 0.4));
 			}
+
+			/* Modal anchors: animated purple dashed border */
+			[data-modal] > rect:first-of-type {
+				stroke: #A371F7;
+				stroke-dasharray: 6 3;
+				stroke-width: 1.2;
+				animation: dash-modal 12s linear infinite;
+			}
+			[data-modal]:hover > rect:first-of-type {
+				stroke-width: 1.8;
+				filter: drop-shadow(0 0 6px rgba(163, 113, 247, 0.4));
+			}
+			@keyframes dash-modal {
+				to { stroke-dashoffset: -54; }
+			}
+
+			/* Link anchors: animated gold dashed border */
+			[data-link] > rect:first-of-type {
+				stroke: #D4A72C;
+				stroke-dasharray: 8 4;
+				stroke-width: 1.2;
+				animation: dash-link 10s linear infinite;
+			}
+			[data-link]:hover > rect:first-of-type {
+				stroke-width: 1.8;
+				filter: drop-shadow(0 0 6px rgba(212, 167, 44, 0.4));
+			}
+			@keyframes dash-link {
+				to { stroke-dashoffset: -60; }
+			}
 		`;
 		svg.insertBefore(style, svg.firstChild);
 	}

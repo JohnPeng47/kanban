@@ -15,6 +15,12 @@ export interface UseDiagramViewerResult {
 	workspacePath: string | null;
 	onSelectPath: (path: string) => void;
 	onToggleFolder: (path: string) => void;
+	/** Request a cross-diagram jump. Sets selectedPath and stashes the jump target. */
+	requestJump: (path: string, elementId: string | null) => void;
+	/** The element ID to center on after the new Scene loads. Null when no jump is pending. */
+	pendingJumpElementId: string | null;
+	/** Call after the pending jump has been consumed. */
+	consumeJump: () => void;
 }
 
 /** Compute the set of ancestor folder paths for a given file path. */
@@ -56,6 +62,7 @@ export function useDiagramViewer(workspaceId: string | null, initialPath?: strin
 	const [isContentLoading, setIsContentLoading] = useState(false);
 	const [contentError, setContentError] = useState<string | null>(null);
 	const [workspacePath, setWorkspacePath] = useState<string | null>(null);
+	const [pendingJumpElementId, setPendingJumpElementId] = useState<string | null>(null);
 
 	// Fetch tree on mount / workspace change
 	useEffect(() => {
@@ -149,6 +156,25 @@ export function useDiagramViewer(workspaceId: string | null, initialPath?: strin
 		setSelectedPath(path);
 	}, []);
 
+	const requestJump = useCallback((path: string, elementId: string | null) => {
+		setPendingJumpElementId(elementId);
+		setSelectedPath(path);
+		// Use pushState for jumps so browser back works
+		const url = new URL(window.location.href);
+		url.searchParams.set("view", "diagram");
+		url.searchParams.set("path", path);
+		if (elementId) {
+			url.searchParams.set("at", elementId);
+		} else {
+			url.searchParams.delete("at");
+		}
+		history.pushState(null, "", url.toString());
+	}, []);
+
+	const consumeJump = useCallback(() => {
+		setPendingJumpElementId(null);
+	}, []);
+
 	const onToggleFolder = useCallback((path: string) => {
 		setExpandedFolders((prev) => {
 			const next = new Set(prev);
@@ -174,6 +200,9 @@ export function useDiagramViewer(workspaceId: string | null, initialPath?: strin
 			workspacePath,
 			onSelectPath,
 			onToggleFolder,
+			requestJump,
+			pendingJumpElementId,
+			consumeJump,
 		}),
 		[
 			tree,
@@ -187,6 +216,9 @@ export function useDiagramViewer(workspaceId: string | null, initialPath?: strin
 			workspacePath,
 			onSelectPath,
 			onToggleFolder,
+			requestJump,
+			pendingJumpElementId,
+			consumeJump,
 		],
 	);
 }

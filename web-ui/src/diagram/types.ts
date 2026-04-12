@@ -160,6 +160,31 @@ export function parseInteractiveData(id: string, metadata: Record<string, string
 	return { ref, parsedRef, category, label, tooltip, navTarget, modal, link };
 }
 
+// ─── Overlay badges ─────────────────────────────────────────
+
+/** Anchor point for an overlay badge. */
+export type BadgeAnchor =
+	| { space: "screen"; x: number; y: number }
+	| { space: "scene"; x: number; y: number }
+	| {
+			space: "element";
+			elementId: string;
+			corner: "center" | "top-right" | "top-left" | "bottom-right" | "bottom-left";
+	  };
+
+/** A clickable badge drawn on top of the diagram at a fixed pixel size. */
+export interface OverlayBadge {
+	id: string;
+	anchor: BadgeAnchor;
+	text: string;
+	onClick: () => void;
+	style?: {
+		color?: string;
+		background?: string;
+		borderColor?: string;
+	};
+}
+
 /** Test whether two rects intersect (AABB). */
 export function rectsIntersect(a: Rect, b: Rect): boolean {
 	return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;

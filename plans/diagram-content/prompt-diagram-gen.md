@@ -5,6 +5,8 @@ This document is the combined LLM instruction set for generating a complete diag
 
 ## Output Format
 
+All generated diagrams (including those referenced by `data-modal` and `data-link` attributes) are served from a `diagrams/` folder at the repository root. Place all diagram HTML files within this directory tree.
+
 Generate a single HTML file containing an `<svg>` element. The SVG uses a dark theme with monospace fonts.
 
 ```html
@@ -148,20 +150,6 @@ Arrows are siblings of the groups they connect, never children:
 4. **Use descriptive kebab-case IDs** reflecting the concept (e.g., `data-structures`, `work-loop`), not position (e.g., `box-3`).
 5. **Layout vertically.** Top-to-bottom. The reflow engine assumes this orientation.
 6. **Leave 40-60 SVG unit gaps** between groups for arrows and annotations.
-7. **For expandable sections**, add `data-expandable="true"`, `data-expand-src`, `data-expand-w`, `data-expand-h`, and the two child `<g>` containers:
-
-```xml
-<g data-reflow-group="message-channel" data-expandable="true"
-   data-expand-src="message-channel.html" data-expand-w="1060" data-expand-h="340">
-  <g class="collapsed-content">
-    <!-- visible when collapsed -->
-  </g>
-  <g class="expanded-content">
-    <!-- populated by framework when expanded -->
-  </g>
-</g>
-```
-
 ---
 
 ## Interactive Element Rules
@@ -183,12 +171,14 @@ Two optional attributes on `[data-interactive]` elements that create connections
 
 ### `data-modal` — pop-up overlay
 
-Clicking this element opens another diagram as a pop-up overlay drawn over the current diagram. The overlay is fully interactive (expand, select, code-jump, and nested modals all work). Use this when the target diagram provides contextual detail about the clicked element — e.g., clicking a type reference to see its anatomy.
+Clicking this element opens another diagram as a pop-up overlay drawn over the current diagram. The overlay is fully interactive (select, code-jump, and nested modals/links all work). Use this when the target diagram provides contextual detail about the clicked element — e.g., clicking a type reference to see its anatomy.
 
 ```
 data-modal="<relative-path-to-diagram.html>"
 data-modal-position="below-right"          (optional, default "auto")
 ```
+
+The path is a standard relative path resolved against the current diagram's directory. For example, if the current diagram is `layout3/scheduler-detail/base.html` and `data-modal="message-channel.html"`, the viewer loads `layout3/scheduler-detail/message-channel.html`. The target file is another SVG HTML file following the same format as all other diagrams.
 
 Position values: `above-left`, `above-right`, `below-left`, `below-right`, `left`, `right`, `auto`.
 
@@ -217,7 +207,7 @@ data-link="<relative-path-to-diagram.html>#<target-element-id>"
 data-link="<relative-path-to-diagram.html>"
 ```
 
-- Path is relative to the current diagram's directory (same convention as `data-expand-src`).
+- Path is a standard relative path resolved against the current diagram's directory (same resolution as `data-modal`). The target is another SVG HTML file following the same format.
 - `#elementId` is the `data-interactive` ID on the target diagram. The viewer loads the target, finds the element, and centers the viewport on it.
 - If `#elementId` is omitted, the viewport centers on the target diagram's root.
 

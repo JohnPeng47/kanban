@@ -1,0 +1,306 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 2600" width="1600" height="2600">
+  <defs>
+    <style>
+      text { font-family: 'Consolas', 'Monaco', 'Courier New', monospace; fill: #E6EDF3; }
+      .title { font-size: 16px; font-weight: bold; }
+      .label { font-size: 12px; }
+      .label-sm { font-size: 11px; }
+      .label-xs { font-size: 10px; }
+      .secondary { fill: #8B949E; }
+      .accent { fill: #0084FF; }
+      .box { fill: #24292E; stroke: #30363D; stroke-width: 1.5; rx: 6; ry: 6; }
+      .box-outer { fill: none; stroke: #30363D; stroke-width: 2; rx: 6; ry: 6; }
+      .boundary { stroke: #0084FF; stroke-width: 2; stroke-dasharray: 8,4; }
+      .arrow { stroke: #8B949E; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+      .arrow-accent { stroke: #0084FF; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-accent); }
+      .line { stroke: #30363D; stroke-width: 1; }
+      .line-dashed { stroke: #8B949E; stroke-width: 1; stroke-dasharray: 4,3; }
+    </style>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#8B949E"/>
+    </marker>
+    <marker id="arrowhead-accent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0084FF"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="2600" fill="#1F2428"/>
+
+  <!-- ==================== TITLE ==================== -->
+  <text x="40" y="40" class="title">DIAGRAM FEATURE — END-TO-END ARCHITECTURE &amp; DATA FLOW</text>
+  <line x1="40" y1="50" x2="680" y2="50" stroke="#0084FF" stroke-width="2"/>
+
+  <!-- URL entry point -->
+  <text x="60" y="80" class="label secondary">URL: ?view=diagram&amp;path=...&amp;at=...</text>
+  <line x1="100" y1="88" x2="100" y2="105" class="arrow"/>
+
+  <!-- ==================== DiagramViewer [DV] outer box ==================== -->
+  <rect x="40" y="110" width="1520" height="480" class="box-outer"/>
+  <text x="55" y="130" class="label">DiagramViewer</text>
+  <text x="195" y="130" class="label accent">[DV]</text>
+
+  <!-- TreePanel [TP] -->
+  <rect x="60" y="145" width="250" height="130" class="box"/>
+  <text x="75" y="165" class="label">TreePanel</text>
+  <text x="170" y="165" class="label accent">[TP]</text>
+  <text x="75" y="185" class="label-sm secondary">FileTreeNode[]</text>
+  <text x="75" y="200" class="label-sm secondary">expandedFolders</text>
+  <text x="75" y="215" class="label-sm">onSelectPath ──────►</text>
+  <text x="265" y="270" class="label-xs secondary">TP</text>
+  <text x="90" y="295" class="label-xs secondary">◄── Resize ──►</text>
+
+  <!-- DiagramContentArea [DA] -->
+  <rect x="340" y="145" width="710" height="150" class="box"/>
+  <text x="355" y="165" class="label">DiagramContentArea</text>
+  <text x="530" y="165" class="label accent">[DA]</text>
+  <text x="355" y="185" class="label-sm">useDiagram(html)</text>
+  <text x="490" y="185" class="label-sm accent">[UD]</text>
+  <text x="520" y="185" class="label-sm">→ Scene</text>
+  <!-- Arrow down from useDiagram -->
+  <line x1="400" y1="190" x2="400" y2="210" class="arrow"/>
+  <text x="355" y="225" class="label-sm">DiagramScene → SceneInput → Viewport</text>
+  <text x="355" y="245" class="label-xs secondary">** 02-rendering.txt   ** 03-interaction.txt</text>
+  <text x="1005" y="290" class="label-xs secondary">DA</text>
+
+  <!-- AgentPanel [AG] -->
+  <rect x="1080" y="145" width="270" height="130" class="box"/>
+  <text x="1095" y="165" class="label">AgentPanel (opt)</text>
+  <text x="1260" y="165" class="label accent">[AG]</text>
+  <text x="1095" y="185" class="label-sm secondary">Cline-powered sidebar</text>
+  <text x="1305" y="270" class="label-xs secondary">AG</text>
+  <text x="1100" y="295" class="label-xs secondary">◄── Resize ──►</text>
+
+  <!-- useDiagramViewer [UV] -->
+  <text x="60" y="330" class="label">useDiagramViewer</text>
+  <text x="220" y="330" class="label accent">[UV]</text>
+  <text x="260" y="330" class="label secondary">◄───┘</text>
+  <!-- Arrow down from UV -->
+  <line x1="80" y1="338" x2="80" y2="585" class="arrow"/>
+
+  <text x="100" y="355" class="label-sm secondary">state:</text>
+  <text x="110" y="372" class="label-sm secondary">tree, selectedPath,</text>
+  <text x="110" y="389" class="label-sm secondary">content, expandedFolders,</text>
+  <text x="110" y="406" class="label-sm secondary">pendingJumpElementId</text>
+  <text x="100" y="430" class="label-sm secondary">3 effects (on deps):</text>
+
+  <!-- useCodeVizStatus [CS] -->
+  <text x="340" y="330" class="label">useCodeVizStatus</text>
+  <text x="500" y="330" class="label accent">[CS]</text>
+  <!-- Arrow down from CS -->
+  <line x1="380" y1="338" x2="380" y2="585" class="arrow"/>
+
+  <text x="405" y="355" class="label-sm secondary">polls 30s</text>
+  <text x="405" y="372" class="label-sm secondary">→ "connected" | "workspace-not-registered" | "disconnected"</text>
+  <text x="405" y="389" class="label-sm secondary">→ drives CodeVizStatusIndicator badge (top-right of content)</text>
+
+  <!-- DV tag -->
+  <text x="1520" y="580" class="label-xs secondary">DV</text>
+
+  <!-- TRPC calls labels -->
+  <text x="80" y="610" class="label-sm secondary">TRPC calls</text>
+  <text x="370" y="610" class="label-sm secondary">TRPC call</text>
+
+  <!-- ==================== HTTP boundary ==================== -->
+  <line x1="40" y1="630" x2="1520" y2="630" class="boundary"/>
+  <text x="1100" y="625" class="label-sm accent">HTTP boundary</text>
+
+  <!-- ==================== TRPC diagrams router [TR] outer box ==================== -->
+  <rect x="40" y="650" width="1520" height="330" class="box-outer"/>
+  <text x="130" y="675" class="label">TRPC diagrams router</text>
+  <text x="340" y="675" class="label accent">[TR]</text>
+
+  <!-- File operations group -->
+  <rect x="60" y="690" width="500" height="200" class="box" style="fill:none;"/>
+  <text x="75" y="710" class="label-sm secondary">File operations</text>
+
+  <!-- diagrams.list [DL] -->
+  <rect x="80" y="720" width="220" height="150" class="box"/>
+  <text x="95" y="742" class="label-sm">diagrams.list</text>
+  <text x="215" y="742" class="label-sm accent">[DL]</text>
+  <text x="95" y="762" class="label-xs secondary">readdir recursive</text>
+  <text x="95" y="777" class="label-xs secondary">.html filter</text>
+  <text x="95" y="792" class="label-xs secondary">path traversal</text>
+  <text x="95" y="807" class="label-xs secondary">protection</text>
+  <text x="255" y="865" class="label-xs secondary">DL</text>
+
+  <!-- diagrams.getContent [DC] -->
+  <rect x="320" y="720" width="220" height="150" class="box"/>
+  <text x="335" y="742" class="label-sm">diagrams.getContent</text>
+  <text x="490" y="742" class="label-sm accent">[DC]</text>
+  <text x="335" y="762" class="label-xs secondary">readFile</text>
+  <text x="335" y="777" class="label-xs secondary">5MB cap</text>
+  <text x="335" y="792" class="label-xs secondary">path safe</text>
+  <text x="495" y="865" class="label-xs secondary">DC</text>
+
+  <!-- Code Viz proxy group -->
+  <rect x="580" y="690" width="510" height="200" class="box" style="fill:none;"/>
+  <text x="595" y="710" class="label-sm secondary">Code Viz proxy</text>
+
+  <!-- diagrams.navigate [DN] -->
+  <rect x="600" y="720" width="210" height="100" class="box"/>
+  <text x="615" y="742" class="label-sm">diagrams.navigate</text>
+  <text x="770" y="742" class="label-sm accent">[DN]</text>
+  <text x="615" y="762" class="label-xs secondary">→ codeVizClient.</text>
+  <text x="615" y="777" class="label-xs secondary">  navigate() ────►</text>
+  <text x="765" y="815" class="label-xs secondary">DN</text>
+
+  <!-- diagrams.checkExt [DE] -->
+  <rect x="830" y="720" width="240" height="100" class="box"/>
+  <text x="845" y="742" class="label-sm">diagrams.checkExt</text>
+  <text x="1010" y="742" class="label-sm accent">[DE]</text>
+  <text x="845" y="762" class="label-xs secondary">→ codeVizClient.</text>
+  <text x="845" y="777" class="label-xs secondary">  checkHealth() +</text>
+  <text x="845" y="792" class="label-xs secondary">  checkWorkspace()</text>
+  <text x="1025" y="815" class="label-xs secondary">DE</text>
+
+  <!-- code-viz-client.ts [CC] -->
+  <rect x="1100" y="690" width="430" height="200" class="box"/>
+  <text x="1115" y="712" class="label-sm">code-viz-client.ts</text>
+  <text x="1290" y="712" class="label-sm accent">[CC]</text>
+  <text x="1115" y="735" class="label-xs secondary">checkHealth()   GET  /api/health</text>
+  <text x="1430" y="735" class="label-xs accent">[CH]</text>
+  <text x="1115" y="752" class="label-xs secondary">checkWorkspace  GET  /api/ws</text>
+  <text x="1430" y="752" class="label-xs accent">[CW]</text>
+  <text x="1115" y="769" class="label-xs secondary">navigate()      POST /api/nav</text>
+  <text x="1430" y="769" class="label-xs accent">[CN]</text>
+  <text x="1115" y="792" class="label-xs secondary">port: $CODE_VIZ_PORT || 24680</text>
+  <text x="1485" y="885" class="label-xs secondary">CC</text>
+
+  <!-- Arrow from CC down -->
+  <line x1="1315" y1="890" x2="1315" y2="1010" class="arrow"/>
+
+  <!-- TR tag -->
+  <text x="1520" y="970" class="label-xs secondary">TR</text>
+
+  <!-- ==================== HTTP :24680 boundary ==================== -->
+  <line x1="40" y1="1010" x2="1520" y2="1010" class="boundary"/>
+  <text x="1050" y="1005" class="label-sm accent">HTTP :24680 boundary</text>
+
+  <!-- ==================== Code Viz VSCode Extension [CZ] ==================== -->
+  <rect x="40" y="1030" width="1520" height="80" class="box-outer"/>
+  <text x="60" y="1055" class="label">Code Viz VSCode Extension (optional)</text>
+  <text x="1510" y="1100" class="label-xs accent">CZ</text>
+
+  <!-- Arrow into CZ -->
+  <line x1="1315" y1="1010" x2="1315" y2="1040" class="arrow"/>
+
+  <text x="60" y="1080" class="label-xs secondary">/api/health → {{ status, pid, port }}</text>
+  <text x="450" y="1080" class="label-xs secondary">/api/workspaces → registered roots</text>
+  <text x="850" y="1080" class="label-xs secondary">/api/navigate → open file:line in editor</text>
+
+
+  <!-- ==================== DATA FLOW SECTION ==================== -->
+  <line x1="40" y1="1150" x2="1520" y2="1150" stroke="#0084FF" stroke-width="2"/>
+  <text x="40" y="1175" class="title">Data Flow: what calls what, when</text>
+  <line x1="40" y1="1185" x2="500" y2="1185" stroke="#0084FF" stroke-width="2"/>
+
+  <text x="60" y="1210" class="label-sm secondary">The arrows above show the static wiring. Below is the runtime sequence — read top-to-bottom.</text>
+  <text x="60" y="1228" class="label-sm secondary">Each numbered step traces through the tiers shown above.</text>
+
+  <!-- Column headers -->
+  <text x="80" y="1265" class="label" style="font-weight:bold;">Browser (useDiagramViewer)</text>
+  <text x="560" y="1265" class="label" style="font-weight:bold;">Node.js (TRPC)</text>
+  <text x="1020" y="1265" class="label" style="font-weight:bold;">Code Viz</text>
+  <line x1="80" y1="1272" x2="330" y2="1272" stroke="#E6EDF3" stroke-width="1"/>
+  <line x1="560" y1="1272" x2="700" y2="1272" stroke="#E6EDF3" stroke-width="1"/>
+  <line x1="1020" y1="1272" x2="1100" y2="1272" stroke="#E6EDF3" stroke-width="1"/>
+
+  <!-- Vertical timeline lines -->
+  <line x1="120" y1="1280" x2="120" y2="2520" stroke="#30363D" stroke-width="1"/>
+  <line x1="620" y1="1280" x2="620" y2="2520" stroke="#30363D" stroke-width="1"/>
+  <line x1="1060" y1="1280" x2="1060" y2="2520" stroke="#30363D" stroke-width="1"/>
+
+  <!-- Step 1: diagrams.list.query -->
+  <text x="60" y="1310" class="label accent" style="font-weight:bold;">1.</text>
+  <line x1="125" y1="1305" x2="615" y2="1305" class="arrow-accent"/>
+  <text x="200" y="1300" class="label-sm">diagrams.list.query</text>
+  <text x="625" y="1310" class="label-sm accent">[DL]</text>
+  <text x="665" y="1310" class="label-sm secondary">readdir</text>
+
+  <!-- Return -->
+  <line x1="615" y1="1325" x2="125" y2="1325" class="arrow" style="marker-end:url(#arrowhead)"/>
+  <text x="200" y="1322" class="label-xs secondary">◄── FileTreeNode[] ──</text>
+
+  <text x="140" y="1348" class="label-xs secondary">→ setTree, derive workspacePath</text>
+  <text x="140" y="1363" class="label-xs secondary">→ auto-expand top-level dirs</text>
+
+  <!-- Step 2: user picks file -->
+  <text x="60" y="1400" class="label accent" style="font-weight:bold;">2.</text>
+  <text x="140" y="1400" class="label-xs secondary">user picks file (onSelectPath)</text>
+  <line x1="125" y1="1412" x2="615" y2="1412" class="arrow-accent"/>
+  <text x="200" y="1408" class="label-sm">diagrams.getContent.query</text>
+  <text x="625" y="1418" class="label-sm accent">[DC]</text>
+  <text x="665" y="1418" class="label-sm secondary">readFile</text>
+
+  <!-- Return -->
+  <line x1="615" y1="1432" x2="125" y2="1432" class="arrow"/>
+  <text x="200" y="1430" class="label-xs secondary">◄── { content: "&lt;svg&gt;..." } ──</text>
+
+  <text x="140" y="1455" class="label-xs secondary">→ useDiagram → SvgScene</text>
+
+  <!-- Step 3: user clicks interactive element -->
+  <text x="60" y="1492" class="label accent" style="font-weight:bold;">3.</text>
+  <text x="140" y="1492" class="label-xs secondary">user clicks interactive element</text>
+  <text x="140" y="1510" class="label-xs secondary">handleNavigate dispatches:</text>
+  <text x="150" y="1528" class="label-xs secondary">├─ modal → openPopup (fetches via #2)</text>
+  <text x="150" y="1546" class="label-xs secondary">├─ link  → executeJump (#4 or centerOn)</text>
+  <text x="150" y="1564" class="label-xs secondary">└─ code  → fireCodeJump (#3a)</text>
+
+  <!-- Step 3a: diagrams.navigate.mutate -->
+  <text x="60" y="1600" class="label accent" style="font-weight:bold;">3a.</text>
+  <line x1="125" y1="1595" x2="615" y2="1595" class="arrow-accent"/>
+  <text x="200" y="1592" class="label-sm">diagrams.navigate.mutate</text>
+  <text x="625" y="1600" class="label-sm accent">[DN]</text>
+
+  <line x1="625" y1="1595" x2="1055" y2="1595" class="arrow-accent"/>
+  <text x="720" y="1592" class="label-xs secondary">POST /api/navigate</text>
+  <text x="1065" y="1600" class="label-sm accent">[CN]</text>
+
+  <!-- Returns -->
+  <line x1="1055" y1="1615" x2="625" y2="1615" class="arrow"/>
+  <text x="770" y="1613" class="label-xs secondary">{ ok }</text>
+  <line x1="615" y1="1625" x2="125" y2="1625" class="arrow"/>
+  <text x="300" y="1623" class="label-xs secondary">◄── { ok } ──</text>
+
+  <!-- Step 4: cross-diagram jump -->
+  <text x="60" y="1670" class="label accent" style="font-weight:bold;">4.</text>
+  <text x="140" y="1670" class="label-xs secondary">cross-diagram jump:</text>
+  <text x="140" y="1690" class="label-xs">requestJump(path, elementId)</text>
+  <text x="370" y="1690" class="label-xs accent">[UV]</text>
+  <text x="150" y="1710" class="label-xs secondary">├─ setPendingJumpElementId(elemId)</text>
+  <text x="150" y="1728" class="label-xs secondary">├─ setSelectedPath(path) ─── triggers #2</text>
+  <text x="150" y="1746" class="label-xs secondary">└─ pushState (browser back)</text>
+
+  <text x="140" y="1775" class="label-xs secondary">after Scene loads:</text>
+  <text x="140" y="1793" class="label-xs secondary">DiagramContentArea</text>
+  <text x="303" y="1793" class="label-xs accent">[DA]</text>
+  <text x="330" y="1793" class="label-xs secondary">sees pending +</text>
+  <text x="140" y="1811" class="label-xs secondary">scene ready → waits 50ms → consumeJump()</text>
+  <text x="140" y="1829" class="label-xs secondary">→ viewport.centerOn(target, {animate})</text>
+
+  <!-- Step 5: useCodeVizStatus -->
+  <text x="60" y="1870" class="label accent" style="font-weight:bold;">5.</text>
+  <text x="140" y="1870" class="label-xs secondary">useCodeVizStatus</text>
+  <text x="285" y="1870" class="label-xs accent">[CS]</text>
+  <text x="315" y="1870" class="label-xs secondary">(every 30s)</text>
+
+  <line x1="125" y1="1885" x2="615" y2="1885" class="arrow-accent"/>
+  <text x="200" y="1882" class="label-sm">diagrams.checkExtension.query</text>
+  <text x="625" y="1890" class="label-sm accent">[DE]</text>
+
+  <line x1="625" y1="1885" x2="1055" y2="1885" class="arrow-accent"/>
+  <text x="720" y="1882" class="label-xs secondary">/api/health</text>
+  <text x="1065" y="1890" class="label-sm accent">[CH]</text>
+
+  <!-- Return from health -->
+  <line x1="1055" y1="1905" x2="625" y2="1905" class="arrow"/>
+  <text x="720" y="1903" class="label-xs secondary">+ /api/workspaces</text>
+  <line x1="625" y1="1905" x2="1055" y2="1905" class="arrow-accent" style="opacity:0.4"/>
+  <text x="1065" y="1910" class="label-sm accent">[CW]</text>
+
+  <!-- Final return -->
+  <line x1="615" y1="1925" x2="125" y2="1925" class="arrow"/>
+  <text x="180" y="1923" class="label-xs secondary">◄── { extensionRunning, workspaceRegistered } ──</text>
+
+</svg>

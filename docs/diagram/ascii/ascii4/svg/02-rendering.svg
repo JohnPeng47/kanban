@@ -1,0 +1,344 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="2600" viewBox="0 0 1500 2600">
+  <defs>
+    <style>
+      text { font-family: 'Consolas', 'Monaco', 'Courier New', monospace; fill: #E6EDF3; }
+      .title { font-size: 16px; font-weight: bold; }
+      .subtitle { font-size: 13px; fill: #8B949E; }
+      .label { font-size: 12px; }
+      .small { font-size: 11px; }
+      .tiny { font-size: 10px; }
+      .accent { fill: #0084FF; }
+      .secondary { fill: #8B949E; }
+      .green { fill: #3FB950; }
+      .gold { fill: #D4A72C; }
+      .purple { fill: #A371F7; }
+      .box { fill: #24292E; stroke: #30363D; stroke-width: 1.5; rx: 6; ry: 6; }
+      .innerbox { fill: #2D3339; stroke: #30363D; stroke-width: 1; rx: 4; ry: 4; }
+      .arrow { stroke: #8B949E; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+      .arrow-accent { stroke: #0084FF; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-accent); }
+      .line { stroke: #30363D; stroke-width: 1; }
+      .line-accent { stroke: #0084FF; stroke-width: 1; stroke-dasharray: 4,3; }
+      .connector { stroke: #8B949E; stroke-width: 1.2; fill: none; }
+      .connector-accent { stroke: #0084FF; stroke-width: 1.2; fill: none; }
+    </style>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#8B949E" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowhead-accent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#0084FF" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowhead-down" markerWidth="8" markerHeight="6" refX="3" refY="6" orient="auto">
+      <path d="M0,0 L3,6 L6,0" fill="none" stroke="#8B949E" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1500" height="3750" fill="#1F2428" rx="0"/>
+
+  <!-- ==================== TITLE ==================== -->
+  <text x="750" y="35" text-anchor="middle" class="title" font-size="18">RENDERING PIPELINE — Scene, Viewport, OverLayer</text>
+  <line x1="250" y1="48" x2="1250" y2="48" stroke="#30363D" stroke-width="2"/>
+
+  <!-- ==================== useDiagram(html) ==================== -->
+  <rect x="580" y="70" width="340" height="32" class="innerbox"/>
+  <text x="750" y="91" text-anchor="middle" class="label">useDiagram(html)</text>
+  <text x="935" y="91" class="accent label">[UD]</text>
+
+  <!-- Arrow down -->
+  <line x1="750" y1="102" x2="750" y2="125" class="arrow"/>
+
+  <!-- DOMParser line -->
+  <text x="750" y="145" text-anchor="middle" class="small secondary">DOMParser -> &lt;svg&gt; -> body.appendChild (temp, for getBBox)</text>
+
+  <!-- Arrow down -->
+  <line x1="750" y1="155" x2="750" y2="175" class="arrow"/>
+
+  <!-- ==================== SvgScene BOX ==================== -->
+  <rect x="40" y="180" width="1420" height="260" class="box"/>
+  <text x="60" y="200" class="label accent">new SvgScene(svg)</text>
+
+  <!-- Step 1 -->
+  <text x="70" y="230" class="small">1. Remove viewBox, set w/h 1:1</text>
+  <text x="345" y="230" class="accent small">[SI]</text>
+
+  <!-- Step 2 -->
+  <text x="480" y="230" class="small">2. injectInteractionStyles</text>
+  <text x="710" y="230" class="accent small">[SY]</text>
+
+  <!-- Step 2 detail box -->
+  <rect x="480" y="245" width="310" height="95" class="innerbox"/>
+  <text x="495" y="265" class="tiny">[data-interactive] -> pointer</text>
+  <text x="495" y="282" class="tiny">.selected > rect  -> blue glow</text>
+  <text x="495" y="299" class="tiny">[data-modal]      -> purple</text>
+  <text x="495" y="316" class="tiny">[data-link]       -> gold</text>
+  <text x="640" y="299" class="tiny purple">---</text>
+  <text x="640" y="316" class="tiny gold">---</text>
+
+  <!-- Step 3 -->
+  <text x="850" y="230" class="small">3. buildElementTree</text>
+  <text x="1020" y="230" class="accent small">[BT]</text>
+
+  <text x="870" y="255" class="tiny secondary">querySelectorAll(SELECTOR)</text>
+  <text x="870" y="272" class="tiny secondary">resolveId -> readMetadata</text>
+  <text x="870" y="289" class="tiny secondary">-> findVisualRect -> walk parents</text>
+  <text x="870" y="306" class="tiny secondary">-> getBBox -> parseInteractive</text>
+
+  <text x="870" y="340" class="tiny secondary">see modal: 02-rendering-svgscene-detail.txt</text>
+
+  <!-- SS label -->
+  <text x="1420" y="420" text-anchor="end" class="accent small">[SS]</text>
+
+  <!-- body.removeChild note -->
+  <text x="200" y="475" text-anchor="middle" class="tiny secondary">body.removeChild(svg)</text>
+
+  <!-- Vertical connectors from SvgScene -->
+  <line x1="520" y1="440" x2="520" y2="510" class="arrow"/>
+  <text x="535" y="475" class="tiny secondary">returns Scene</text>
+
+  <line x1="1180" y1="440" x2="1180" y2="510" class="arrow"/>
+  <text x="1195" y="475" class="tiny secondary">populates</text>
+
+  <!-- ==================== Scene (interface) BOX ==================== -->
+  <rect x="40" y="510" width="1420" height="310" class="box"/>
+  <text x="520" y="535" class="label">Scene (interface)</text>
+  <text x="720" y="535" class="accent label">[SC]</text>
+
+  <!-- Column: Element Tree -->
+  <text x="70" y="565" class="small" font-weight="bold">Element Tree</text>
+  <line x1="70" y1="572" x2="185" y2="572" stroke="#8B949E" stroke-width="0.8"/>
+  <text x="70" y="590" class="tiny">getRoot()</text>
+  <text x="70" y="607" class="tiny">getElement(id)</text>
+  <text x="70" y="624" class="tiny">getAllElements()</text>
+  <text x="70" y="641" class="tiny">getChildren(id)</text>
+  <text x="70" y="670" class="small" font-weight="bold">Mutations</text>
+  <text x="70" y="690" class="tiny">growVisualBounds()</text>
+  <text x="70" y="707" class="tiny">addElement()</text>
+  <text x="70" y="724" class="tiny">removeElement()</text>
+  <text x="70" y="741" class="tiny">addSubtree()</text>
+
+  <!-- Column: Bounds -->
+  <text x="370" y="565" class="small" font-weight="bold">Bounds</text>
+  <line x1="370" y1="572" x2="435" y2="572" stroke="#8B949E" stroke-width="0.8"/>
+  <text x="370" y="590" class="tiny">getLocalBounds(id)</text>
+  <text x="370" y="607" class="tiny">getWorldBounds(id)</text>
+  <text x="540" y="607" class="tiny secondary">---+</text>
+  <text x="390" y="624" class="tiny secondary">(cached)</text>
+  <text x="470" y="624" class="tiny secondary">&lt;---+</text>
+  <text x="520" y="641" class="tiny secondary">invalidate ^</text>
+
+  <text x="370" y="680" class="tiny">getSvgElement()</text>
+  <text x="510" y="680" class="tiny secondary">---+----+</text>
+
+  <!-- Column: Transforms -->
+  <text x="680" y="565" class="small" font-weight="bold">Transforms</text>
+  <line x1="680" y1="572" x2="780" y2="572" stroke="#8B949E" stroke-width="0.8"/>
+  <text x="680" y="590" class="tiny">setTransform(id, t)</text>
+  <text x="680" y="607" class="tiny">getTransform(id)</text>
+  <text x="680" y="624" class="tiny">getWorldTransform(id)</text>
+
+  <!-- Column: Hit Testing -->
+  <text x="960" y="565" class="small" font-weight="bold">Hit Testing</text>
+  <line x1="960" y1="572" x2="1060" y2="572" stroke="#8B949E" stroke-width="0.8"/>
+  <text x="960" y="590" class="tiny">hitTest()</text>
+  <text x="1055" y="590" class="accent tiny">[HT]</text>
+  <text x="960" y="607" class="tiny">hitTestRect()</text>
+
+  <text x="960" y="680" class="tiny">destroy()</text>
+
+  <!-- SC label -->
+  <text x="265" y="760" class="accent small">[SC]</text>
+
+  <!-- Vertical connectors from Scene -->
+  <line x1="520" y1="820" x2="520" y2="860" class="connector"/>
+  <line x1="520" y1="820" x2="200" y2="860" class="connector"/>
+
+  <!-- ==================== SceneElement BOX ==================== -->
+  <rect x="100" y="865" width="1340" height="330" class="box"/>
+  <text x="120" y="888" class="label accent">SceneElement (the universal node)</text>
+
+  <text x="130" y="918" class="small">id</text>
+  <text x="165" y="918" class="tiny secondary">-- "root" | data-reflow-group | data-interactive | "arrow-N"</text>
+
+  <text x="130" y="938" class="small">parentId / childIds</text>
+
+  <text x="130" y="960" class="small">localBounds: Rect</text>
+  <text x="310" y="960" class="tiny secondary">-- getBBox()</text>
+
+  <text x="130" y="980" class="small">transform: Transform</text>
+  <text x="340" y="980" class="tiny secondary">-- { tx, ty, scale }</text>
+
+  <text x="130" y="1000" class="small">metadata: Record&lt;str,str&gt;</text>
+
+  <!-- setTransform invalidates note -->
+  <text x="530" y="980" class="tiny secondary">setTransform invalidates</text>
+  <text x="530" y="995" class="tiny secondary">worldBoundsCache</text>
+
+  <!-- Interactive sub-box -->
+  <rect x="140" y="1015" width="380" height="85" class="innerbox"/>
+  <text x="155" y="1035" class="small">interactive: InteractiveData | null</text>
+  <text x="160" y="1055" class="tiny">ref, category, label, tooltip</text>
+  <text x="160" y="1072" class="tiny">navTarget, modal, link</text>
+
+  <!-- drives badges label -->
+  <text x="540" y="1050" class="tiny secondary">-- drives badges --></text>
+  <text x="1300" y="1050" class="tiny secondary">(modal? link?)</text>
+
+  <!-- reflow -->
+  <text x="130" y="1130" class="small">reflow: ReflowState | null</text>
+  <text x="370" y="1130" class="tiny secondary">{ originalBounds }</text>
+
+  <!-- SE label -->
+  <text x="1380" y="1168" text-anchor="end" class="accent small">[SE]</text>
+
+  <!-- ==================== VIEWPORT BOX ==================== -->
+  <rect x="40" y="1230" width="1420" height="1330" class="box"/>
+  <text x="170" y="1255" class="label">Viewport (container div, overflow:hidden, touch-none)</text>
+  <text x="655" y="1255" class="accent label">[VP]</text>
+
+  <!-- Arrow from Scene into Viewport -->
+  <line x1="200" y1="1195" x2="200" y2="1270" class="arrow"/>
+
+  <!-- ====== transformDiv sub-box ====== -->
+  <rect x="80" y="1280" width="900" height="190" class="innerbox"/>
+  <text x="100" y="1300" class="small accent">transformDiv (origin:0 0, will-change:transform)</text>
+  <text x="560" y="1300" class="accent tiny">[TD]</text>
+
+  <text x="110" y="1325" class="tiny">CSS: translate({tx}px,{ty}px) scale({scale})</text>
+
+  <!-- SVG element inner box -->
+  <rect x="110" y="1340" width="830" height="65" class="innerbox" style="fill:#24292E"/>
+  <text x="130" y="1362" class="tiny">SVG element</text>
+  <text x="130" y="1379" class="tiny secondary">mounted via useEffect: transformDiv.appendChild(svg)</text>
+  <text x="520" y="1379" class="accent tiny">[SV]</text>
+  <text x="130" y="1396" class="tiny secondary">&lt;--- scene.getSvgElement()</text>
+
+  <!-- Connector lines from Scene down to SVG mount and OverLayer -->
+  <path d="M 640,820 L 640,1360" class="connector" stroke-dasharray="4,3"/>
+  <path d="M 900,820 L 900,1560" class="connector" stroke-dasharray="4,3"/>
+  <path d="M 1180,820 L 1180,1560" class="connector" stroke-dasharray="4,3"/>
+
+  <!-- ====== OverLayer sub-box ====== -->
+  <rect x="80" y="1490" width="900" height="420" class="innerbox"/>
+  <text x="100" y="1515" class="small accent">OverLayer (z:10, absolute inset-0)</text>
+  <text x="370" y="1515" class="accent tiny">[OL]</text>
+
+  <text x="100" y="1540" class="tiny">Props: badges[], scene, transformRef</text>
+  <text x="380" y="1540" class="tiny secondary">&lt;-- shared</text>
+
+  <text x="100" y="1570" class="tiny">rAF loop</text>
+  <text x="165" y="1570" class="accent tiny">[RF]</text>
+  <text x="190" y="1570" class="tiny">: every frame read transformRef</text>
+  <text x="120" y="1590" class="tiny secondary">-> resolveAnchor(anchor, t, scene)</text>
+  <text x="420" y="1590" class="accent tiny">[BA]</text>
+  <text x="120" y="1610" class="tiny secondary">-> dom.style.left/top  (no React re-render)</text>
+
+  <!-- badge.anchor note -->
+  <text x="700" y="1570" class="tiny secondary">badge.anchor uses</text>
+  <text x="700" y="1587" class="tiny secondary">getWorldBounds</text>
+  <text x="700" y="1604" class="tiny secondary">for "element" space</text>
+
+  <!-- Badge DOM note -->
+  <text x="700" y="1640" class="tiny secondary">Badge DOM: 18x18px, -9px margin</text>
+  <text x="700" y="1657" class="tiny secondary">hover: scale(1.25)</text>
+
+  <!-- Anchor modes table -->
+  <rect x="110" y="1630" width="560" height="105" class="innerbox" style="fill:#24292E"/>
+
+  <!-- Table header line -->
+  <line x1="110" y1="1652" x2="670" y2="1652" class="line"/>
+  <line x1="200" y1="1630" x2="200" y2="1735" class="line"/>
+
+  <text x="125" y="1648" class="tiny accent">"screen"</text>
+  <text x="215" y="1648" class="tiny">{x,y} as-is</text>
+
+  <line x1="110" y1="1670" x2="670" y2="1670" class="line"/>
+  <text x="125" y="1686" class="tiny accent">"scene"</text>
+  <text x="215" y="1686" class="tiny">x*scale + tx,  y*scale + ty</text>
+
+  <line x1="110" y1="1700" x2="670" y2="1700" class="line"/>
+  <text x="125" y="1716" class="tiny accent">"element"</text>
+  <text x="215" y="1716" class="tiny">getWorldBounds(id) -> pick corner -> *scale + t</text>
+
+  <!-- ====== Selection lasso ====== -->
+  <rect x="80" y="1930" width="350" height="45" class="innerbox"/>
+  <text x="100" y="1952" class="small">Selection lasso (Ctrl+drag)</text>
+  <text x="100" y="1968" class="tiny secondary">border-accent, bg-accent/8</text>
+  <text x="450" y="1952" class="tiny secondary">{children} slot</text>
+
+  <!-- ====== Transform ====== -->
+  <text x="80" y="2020" class="small">Transform</text>
+  <text x="170" y="2020" class="accent small">[TF]</text>
+  <text x="200" y="2020" class="small">: { tx, ty, scale }</text>
+
+  <!-- screenToScene -->
+  <text x="80" y="2060" class="small">screenToScene(screenPt)</text>
+  <text x="315" y="2060" class="accent small">[S2]</text>
+  <text x="700" y="2060" class="small">sceneToScreen(scenePt)</text>
+
+  <text x="100" y="2085" class="tiny secondary">x = (screen.x - rect.left - tx) / scale</text>
+  <text x="720" y="2085" class="tiny secondary">sx = pt.x * scale + tx</text>
+  <text x="100" y="2102" class="tiny secondary">y = (screen.y - rect.top  - ty) / scale</text>
+  <text x="720" y="2102" class="tiny secondary">sy = pt.y * scale + ty</text>
+
+  <!-- applyTransform -->
+  <text x="80" y="2145" class="small">applyTransform(t)</text>
+  <text x="260" y="2145" class="tiny secondary">--> transformDiv.style.transform = translate(tx,ty) scale(s)</text>
+
+  <!-- syncRootTransform arrow -->
+  <text x="120" y="2180" class="tiny secondary">+--> syncRootTransform(t) --> scene.setTransform("root", t) --> invalidates worldBoundsCache --+</text>
+
+  <text x="1230" y="2210" class="tiny secondary">(cache coherence)</text>
+
+  <!-- ====== Gestures table ====== -->
+  <text x="80" y="2250" class="small">Gestures:</text>
+
+  <rect x="80" y="2265" width="860" height="230" class="innerbox" style="fill:#24292E"/>
+
+  <!-- Gesture rows -->
+  <line x1="250" y1="2265" x2="250" y2="2495" class="line"/>
+
+  <text x="100" y="2290" class="tiny">Wheel zoom</text>
+  <text x="205" y="2290" class="accent tiny">[WZ]</text>
+  <text x="265" y="2290" class="tiny">delta -> newScale (0.1..5), pivot at cursor</text>
+  <line x1="80" y1="2300" x2="940" y2="2300" class="line"/>
+
+  <text x="100" y="2325" class="tiny">Drag pan</text>
+  <text x="205" y="2325" class="accent tiny">[DP]</text>
+  <text x="265" y="2325" class="tiny">tx = start.tx + dx, ty = start.ty + dy (4px threshold)</text>
+  <line x1="80" y1="2340" x2="940" y2="2340" class="line"/>
+
+  <text x="100" y="2365" class="tiny">Pinch zoom</text>
+  <text x="205" y="2365" class="accent tiny">[PZ]</text>
+  <text x="265" y="2365" class="tiny">dist ratio -> scale, midpoint -> pan offset</text>
+  <line x1="80" y1="2380" x2="940" y2="2380" class="line"/>
+
+  <text x="100" y="2405" class="tiny">Ctrl+drag</text>
+  <text x="205" y="2405" class="accent tiny">[SD]</text>
+  <text x="265" y="2405" class="tiny">screen rect -> overlay, scene rect -> onSelectionDrag</text>
+  <line x1="80" y1="2420" x2="940" y2="2420" class="line"/>
+
+  <text x="100" y="2445" class="tiny">centerOn</text>
+  <text x="205" y="2445" class="accent tiny">[CO]</text>
+  <text x="265" y="2445" class="tiny">tx = w/2 - pt.x*s, ty = h/2 - pt.y*s (220ms animate)</text>
+
+  <!-- "all call apply + syncRoot" note -->
+  <text x="960" y="2340" class="tiny secondary">all call</text>
+  <text x="960" y="2358" class="tiny secondary">apply +</text>
+  <text x="960" y="2376" class="tiny secondary">syncRoot</text>
+
+  <!-- VP label -->
+  <text x="1420" y="2545" text-anchor="end" class="accent small">[VP]</text>
+
+  <!-- ==================== CONNECTING ARROWS (major flow) ==================== -->
+
+  <!-- useDiagram down to DOMParser area is already drawn above -->
+
+  <!-- SvgScene down connectors already drawn -->
+
+  <!-- Scene to SceneElement connector -->
+  <path d="M 200,820 L 200,865" class="arrow"/>
+
+  <!-- SceneElement to Viewport connector -->
+  <path d="M 200,1195 L 200,1230" class="arrow"/>
+
+</svg>

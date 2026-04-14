@@ -5,26 +5,26 @@ DIAGRAM FEATURE — END-TO-END ARCHITECTURE & DATA FLOW
   URL: ?view=diagram&path=...&at=...
        │
        ▼
-  ┌─ DiagramViewer [DV] ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  ┌─ DiagramViewer [EDV] ────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
   │                                                                                                                                      │
-  │  ┌─ TreePanel [TP] ──────┐       ┌─ DiagramContentArea [DA] ──────────────────────────────────────┐     ┌─ AgentPanel (opt) [AG] ──┐ │
-  │  │                       │       │                                                                │     │                          │ │
-  │  │  FileTreeNode[]       │       │  useDiagram(html) [UD] → Scene                                │     │  Cline-powered sidebar   │ │
-  │  │  expandedFolders      │       │       │                                                        │     │                          │ │
-  │  │  onSelectPath ────────┼──┐    │       ▼                                                        │     │                          │ │
-  │  │                   TP  │  │    │  DiagramScene → SceneInput → Viewport                          │     │                      AG  │ │
-  │  └───────────────────────┘  │    │  ** 02-rendering.txt   ** 03-interaction.txt                    │     └──────────────────────────┘ │
-  │      ◄── Resize ──►        │    │                                                            DA  │       ◄── Resize ──►             │
-  │                             │    └────────────────────────────────────────────────────────────────┘                                   │
+  │  ┌─ TreePanel [ETP] ─────┐       ┌─ DiagramContentArea [EDA] ─────────────────────────────────┐     ┌─ AgentPanel (opt) [EAG] ──┐ │
+  │  │                       │       │                                                             │     │                          │ │
+  │  │  FileTreeNode[]       │       │  useDiagram(html) [CUD] → Scene                            │     │  Cline-powered sidebar   │ │
+  │  │  expandedFolders      │       │       │                                                     │     │                          │ │
+  │  │  onSelectPath ────────┼──┐    │       ▼                                                     │     │                          │ │
+  │  │                  ETP  │  │    │  DiagramScene → SceneInput → Viewport                       │     │                     EAG  │ │
+  │  └───────────────────────┘  │    │  ** 02-rendering.txt   ** 03-interaction.txt                 │     └──────────────────────────┘ │
+  │      ◄── Resize ──►        │    │                                                         EDA  │       ◄── Resize ──►             │
+  │                             │    └─────────────────────────────────────────────────────────────┘                                   │
   │                             │                                                                                                        │
-  │  useDiagramViewer [UV] ◄───┘    useCodeVizStatus [CS]                                                                               │
+  │  useDiagramViewer [EUV] ◄──┘    useCodeVizStatus [ECS]                                                                             │
   │       │                              │ polls 30s                                                                                     │
   │       │  state:                      │ → "connected" | "workspace-not-registered" | "disconnected"                                   │
   │       │   tree, selectedPath,        │ → drives CodeVizStatusIndicator badge (top-right of content)                                  │
   │       │   content, expandedFolders,  │                                                                                               │
   │       │   pendingJumpElementId       │                                                                                               │
   │       │                              │                                                                                               │
-  │       │  3 effects (on deps):        │                                                                                           DV  │
+  │       │  3 effects (on deps):        │                                                                                          EDV  │
   └───────┼──────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┘
           │                              │
           │   TRPC calls                 │   TRPC call
@@ -32,28 +32,28 @@ DIAGRAM FEATURE — END-TO-END ARCHITECTURE & DATA FLOW
 ═════════════════════════════════════════════════════════════════════════════════════════════════  HTTP boundary
           │                              │
   ┌───────┼──────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┐
-  │       │         TRPC diagrams router [TR]                                                                                            │
+  │       │         TRPC diagrams router [ETR]                                                                                          │
   │       │                              │                                                                                               │
   │       │  ┌─ File operations ─────────┼─────────────────────────┐   ┌─ Code Viz proxy ────────────────────────────────────────────┐   │
   │       │  │                           │                         │   │                                                             │   │
   │  ┌────┼──┼───────────────────────────┼────┐  ┌─────────────────┼───┼──────────────────┐  ┌───────────────────────────────────────┐│   │
   │  │    ▼  │                           ▼    │  │                 ▼   │                  │  │                                       ││   │
-  │  │ diagrams.list [DL]       diagrams.     │  │ diagrams.       │   │ diagrams.        │  │  code-viz-client.ts [CC]              ││   │
-  │  │                          getContent[DC]│  │ navigate [DN]   │   │ checkExt [DE]    │  │                                       ││   │
-  │  │ readdir recursive        readFile      │  │ → codeVizClient.│   │ → codeVizClient. │  │  checkHealth()  GET  /api/health [CH] ││   │
-  │  │ .html filter             5MB cap       │  │   navigate() ───┼───┼──────────────────┼──│  checkWorkspace GET  /api/ws    [CW]  ││   │
-  │  │ path traversal           path safe     │  │             DN  │   │   checkHealth() +│  │  navigate()     POST /api/nav   [CN]  ││   │
-  │  │ protection           DC  │         DL  │  └─────────────────┘   │   checkWorkspace()  │                                       ││   │
-  │  └────────────────────────────────────────┘                        │              DE  │  │  port: $CODE_VIZ_PORT || 24680    CC  ││   │
+  │  │ diagrams.list [EDL]      diagrams.     │  │ diagrams.       │   │ diagrams.        │  │  code-viz-client.ts [ECC]             ││   │
+  │  │                          getContent[EDC]  │ navigate [EDN]  │   │ checkExt [EDE]   │  │                                       ││   │
+  │  │ readdir recursive        readFile      │  │ → codeVizClient.│   │ → codeVizClient. │  │  checkHealth()  GET  /api/health [CCH]││   │
+  │  │ .html filter             5MB cap       │  │   navigate() ───┼───┼──────────────────┼──│  checkWorkspace GET  /api/ws    [CCW] ││   │
+  │  │ path traversal           path safe     │  │            EDN  │   │   checkHealth() +│  │  navigate()     POST /api/nav   [CCN] ││   │
+  │  │ protection          EDC  │        EDL  │  └─────────────────┘   │   checkWorkspace()  │                                       ││   │
+  │  └────────────────────────────────────────┘                        │             EDE  │  │  port: $CODE_VIZ_PORT || 24680   ECC  ││   │
   │                                                                    └──────────────────┘  └──────────────────────┬────────────────┘│   │
   │                                                                                                                │                 │   │
-  │                                                                                                            TR  │                     │
+  │                                                                                                           ETR  │                     │
   └────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┘
                                                                                                                    │
 ═══════════════════════════════════════════════════════════════════════════════════════════════  HTTP :24680 boundary
                                                                                                                    │
   ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┐
-  │  Code Viz VSCode Extension (optional)                                                                         │                  CZ  │
+  │  Code Viz VSCode Extension (optional)                                                                        │                 ECZ  │
   │                                                                                                                ▼                      │
   │  /api/health     → { status, pid, port }       /api/workspaces → registered roots        /api/navigate → open file:line in editor    │
   └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -67,110 +67,110 @@ DIAGRAM FEATURE — END-TO-END ARCHITECTURE & DATA FLOW
   Browser (useDiagramViewer)                    Node.js (TRPC)                            Code Viz
   ──────────────────────────                    ──────────────                            ────────
      │                                             │                                        │
-  1. │── diagrams.list.query ────────────────────►[DL] readdir                              │  {#s1}
+  1. │── diagrams.list.query ────────────────────►[EDL] readdir                             │  {#es1}
      │◄── FileTreeNode[] ────────────────────────  │                                        │
      │  → setTree, derive workspacePath            │                                        │
      │  → auto-expand top-level dirs               │                                        │
      │                                             │                                        │
-  2. │  user picks file (onSelectPath)             │                                        │  {#s2}
-     │── diagrams.getContent.query ──────────────►[DC] readFile                             │
+  2. │  user picks file (onSelectPath)             │                                        │  {#es2}
+     │── diagrams.getContent.query ──────────────►[EDC] readFile                            │
      │◄── { content: "<svg>..." } ────────────────│                                        │
      │  → useDiagram → SvgScene                   │                                        │
      │    ** 02-rendering.txt                      │                                        │
      │                                             │                                        │
-  3. │  user clicks interactive element            │                                        │  {#s3}
+  3. │  user clicks interactive element            │                                        │  {#es3}
      │  handleNavigate dispatches:                 │                                        │
      │   ├─ modal → openPopup (fetches via #2)     │                                        │
      │   ├─ link  → executeJump (#4 or centerOn)   │                                        │
      │   └─ code  → fireCodeJump (#3a)             │                                        │
      │    ** 03-interaction.txt                    │                                        │
      │                                             │                                        │
- 3a. │── diagrams.navigate.mutate ───────────────►[DN]───── POST /api/navigate ────────────►[CN]
+ 3a. │── diagrams.navigate.mutate ───────────────►[EDN]───── POST /api/navigate ───────────►[CCN]
      │◄── { ok } ─────────────────────────────────│◄──────── { ok } ───────────────────────│
      │                                             │                                        │
-  4. │  cross-diagram jump:                        │                                        │  {#s4}
-     │  requestJump(path, elementId) [UV]          │                                        │
+  4. │  cross-diagram jump:                        │                                        │  {#es4}
+     │  requestJump(path, elementId) [EUV]         │                                        │
      │  ├─ setPendingJumpElementId(elemId)          │                                        │
      │  ├─ setSelectedPath(path) ─── triggers #2   │                                        │
      │  └─ pushState (browser back)                │                                        │
      │                                             │                                        │
      │  after Scene loads:                         │                                        │
-     │  DiagramContentArea [DA] sees pending +     │                                        │
+     │  DiagramContentArea [EDA] sees pending +    │                                        │
      │  scene ready → waits 50ms → consumeJump()   │                                        │
      │  → viewport.centerOn(target, {animate})     │                                        │
      │                                             │                                        │
-  5. │  useCodeVizStatus [CS] (every 30s)          │                                        │  {#s5}
-     │── diagrams.checkExtension.query ──────────►[DE]───── /api/health ───────────────────►[CH]
-     │                                             │◄──────── + /api/workspaces ───────────►[CW]
+  5. │  useCodeVizStatus [ECS] (every 30s)         │                                        │  {#es5}
+     │── diagrams.checkExtension.query ──────────►[EDE]───── /api/health ──────────────────►[CCH]
+     │                                             │◄──────── + /api/workspaces ────────────►[CCW]
      │◄── { extensionRunning, workspaceRegistered }│                                        │
 ```
 
 ```code-refs
-DV  web-ui/src/components/diagram-viewer.tsx:19-156          DiagramViewer 3-panel layout component
-UV  web-ui/src/hooks/use-diagram-viewer.ts:49-224            useDiagramViewer (tree, content, jump state)
-CS  web-ui/src/hooks/use-code-viz-status.ts:14-50            useCodeVizStatus (30s health poll)
-UD  web-ui/src/diagram/use-diagram.ts:8-52                   useDiagram hook: HTML→DOMParser→SvgScene
-DA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354   DiagramContentArea component
-TR  src/trpc/diagrams-api.ts:73-155                          createDiagramsApi factory (4 procedures)
-DL  src/trpc/diagrams-api.ts:75-103                          listDiagrams — recursive readdir, .html only
-DC  src/trpc/diagrams-api.ts:105-130                         getDiagramContent — readFile, 5MB cap, path safe
-DN  src/trpc/diagrams-api.ts:132-137                         navigateToDiagramSource → codeVizClient
-DE  src/trpc/diagrams-api.ts:139-153                         checkExtensionStatus — health + workspace
-CC  src/diagram/code-viz-client.ts:108-112                   codeVizClient singleton
-CH  src/diagram/code-viz-client.ts:45-54                     checkHealth — GET /api/health
-CW  src/diagram/code-viz-client.ts:66-82                     checkWorkspace — realpath comparison
-CN  src/diagram/code-viz-client.ts:84-106                    navigate — POST /api/navigate
-CZ  (external)                                               Code Viz VSCode Extension on :24680
-TP  web-ui/src/components/diagram-panels/diagram-tree-panel.tsx   DiagramTreePanel (file browser)
-AG  web-ui/src/hooks/use-diagram-agent-panel.ts              useDiagramAgentPanel hook
+CDV  web-ui/src/components/diagram-viewer.tsx:19-156          DiagramViewer 3-panel layout component
+CUV  web-ui/src/hooks/use-diagram-viewer.ts:49-224            useDiagramViewer (tree, content, jump state)
+CCS  web-ui/src/hooks/use-code-viz-status.ts:14-50            useCodeVizStatus (30s health poll)
+CUD  web-ui/src/diagram/use-diagram.ts:8-52                   useDiagram hook: HTML→DOMParser→SvgScene
+CDA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354   DiagramContentArea component
+CTR  src/trpc/diagrams-api.ts:73-155                          createDiagramsApi factory (4 procedures)
+CDL  src/trpc/diagrams-api.ts:75-103                          listDiagrams — recursive readdir, .html only
+CDC  src/trpc/diagrams-api.ts:105-130                         getDiagramContent — readFile, 5MB cap, path safe
+CDN  src/trpc/diagrams-api.ts:132-137                         navigateToDiagramSource → codeVizClient
+CDE  src/trpc/diagrams-api.ts:139-153                         checkExtensionStatus — health + workspace
+CCC  src/diagram/code-viz-client.ts:108-112                   codeVizClient singleton
+CCH  src/diagram/code-viz-client.ts:45-54                     checkHealth — GET /api/health
+CCW  src/diagram/code-viz-client.ts:66-82                     checkWorkspace — realpath comparison
+CCN  src/diagram/code-viz-client.ts:84-106                    navigate — POST /api/navigate
+CCZ  (external)                                               Code Viz VSCode Extension on :24680
+CTP  web-ui/src/components/diagram-panels/diagram-tree-panel.tsx   DiagramTreePanel (file browser)
+CAG  web-ui/src/hooks/use-diagram-agent-panel.ts              useDiagramAgentPanel hook
 ```
 
 ```entities
-# name                  id_type  id    description
+# name                  id_type  id     description
 
 # Tier 1: Browser
-diagram-viewer          box      DV    DiagramViewer 3-panel container
-  tree-panel            box      TP    TreePanel sidebar
-  content-area          box      DA    DiagramContentArea — renders Scene
-  agent-panel           box      AG    AgentPanel (optional Cline sidebar)
-  use-diagram-viewer    text     UV    useDiagramViewer — state + effects
-  use-codeviz-status    text     CS    useCodeVizStatus — 30s poll cycle
+diagram-viewer          box      EDV    DiagramViewer 3-panel container
+  tree-panel            box      ETP    TreePanel sidebar
+  content-area          box      EDA    DiagramContentArea — renders Scene
+  agent-panel           box      EAG    AgentPanel (optional Cline sidebar)
+  use-diagram-viewer    text     EUV    useDiagramViewer — state + effects
+  use-codeviz-status    text     ECS    useCodeVizStatus — 30s poll cycle
 
 # Tier 2: Server
-trpc-router             box      TR    TRPC diagrams router
-  diagrams-list         text     DL    diagrams.list — readdir .html
-  diagrams-get-content  text     DC    diagrams.getContent — readFile
-  diagrams-navigate     text     DN    diagrams.navigate — Code Viz proxy
-  diagrams-check-ext    text     DE    diagrams.checkExtension — health
-  codeviz-client        box      CC    code-viz-client.ts HTTP calls
+trpc-router             box      ETR    TRPC diagrams router
+  diagrams-list         text     EDL    diagrams.list — readdir .html
+  diagrams-get-content  text     EDC    diagrams.getContent — readFile
+  diagrams-navigate     text     EDN    diagrams.navigate — Code Viz proxy
+  diagrams-check-ext    text     EDE    diagrams.checkExtension — health
+  codeviz-client        box      ECC    code-viz-client.ts HTTP calls
 
 # Tier 3: Extension
-codeviz-extension       box      CZ    Code Viz VSCode Extension
+codeviz-extension       box      ECZ    Code Viz VSCode Extension
 
 # Data Flow (sequence diagram)
-data-flow-sequence      text     --    Runtime sequence diagram (section header)
-  step-tree-loading     marker   s1    1: diagrams.list → FileTreeNode[]
-  step-content-fetch    marker   s2    2: onSelectPath → getContent
-  step-navigate         marker   s3    3: click → fireCodeJump → navigate
-  step-jump-protocol    marker   s4    4: requestJump → fetch → centerOn
-  step-health-poll      marker   s5    5: checkExtension every 30s
+data-flow-sequence      text     --     Runtime sequence diagram (section header)
+  step-tree-loading     marker   es1    1: diagrams.list → FileTreeNode[]
+  step-content-fetch    marker   es2    2: onSelectPath → getContent
+  step-navigate         marker   es3    3: click → fireCodeJump → navigate
+  step-jump-protocol    marker   es4    4: requestJump → fetch → centerOn
+  step-health-poll      marker   es5    5: checkExtension every 30s
 ```
 
 ```links
 # local-id  target-file                          target-id  description
-DA           02-rendering.txt                     UD         ContentArea → useDiagram (Scene construction)
-DA           03-interaction.txt                   DS         ContentArea → DiagramScene (interaction layer)
-UD           02-rendering.txt                     UD         useDiagram hook (same entry point, full detail)
-UV           03-interaction.txt                   EJ         useDiagramViewer.requestJump consumed by executeJump
-DN           03-interaction.txt                   FJ         diagrams.navigate called by fireCodeJump
-s2           02-rendering.txt                     SS         content fetch → SvgScene construction
-s3           03-interaction.txt                   HN         click element → handleNavigate dispatch
-s4           03-interaction.txt                   EJ         cross-diagram jump → executeJump
+EDA          02-rendering.txt                     EUD        ContentArea → useDiagram (Scene construction)
+EDA          03-interaction.txt                   EDS        ContentArea → DiagramScene (interaction layer)
+EUD          02-rendering.txt                     EUD        useDiagram hook (same entry point, full detail)
+EUV          03-interaction.txt                   EEJ        useDiagramViewer.requestJump consumed by executeJump
+EDN          03-interaction.txt                   EFJ        diagrams.navigate called by fireCodeJump
+es2          02-rendering.txt                     ESS        content fetch → SvgScene construction
+es3          03-interaction.txt                   EHN        click element → handleNavigate dispatch
+es4          03-interaction.txt                   EEJ        cross-diagram jump → executeJump
 ```
 
 ```notes
-Entity IDs and code-ref IDs share the same 2-char namespace. Both are resolved
-by finding [XX] on the diagram (for box/text types) or {#xx} (for marker types).
-No prefix is needed to disambiguate — the [brackets] already distinguish IDs from
-surrounding text. Cross-diagram jump targets use the form: ** filename.txt#ID
+Entity IDs use an "E" prefix (e.g., EDV, EDA) and code-ref IDs use a "C" prefix
+(e.g., CDV, CDA) to disambiguate the two namespaces. On the diagram, visual element
+labels use [EXX] for entities or [CXX] for code-ref-only IDs. Marker anchors use
+{#exx} (e.g., {#es1}). Cross-diagram jump targets use the form: ** filename.txt#ID
 ```

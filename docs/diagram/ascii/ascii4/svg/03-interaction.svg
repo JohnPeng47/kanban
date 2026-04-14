@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 2200" width="1500" height="2200" font-family="'Consolas', 'Monaco', 'Courier New', monospace">
+  <defs>
+    <marker id="arrowDown" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M1,1 L4,7 L7,1" fill="none" stroke="#8B949E" stroke-width="1.5"/>
+    </marker>
+    <marker id="arrowRight" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M1,1 L7,4 L1,7" fill="none" stroke="#8B949E" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1500" height="2200" fill="#1F2428" rx="0"/>
+
+  <!-- Title -->
+  <text x="750" y="36" text-anchor="middle" fill="#E6EDF3" font-size="16" font-weight="bold">INTERACTION PIPELINE — SceneInput, Navigation, Popups, Badges</text>
+  <line x1="100" y1="48" x2="1400" y2="48" stroke="#30363D" stroke-width="2"/>
+
+  <!-- DA: DiagramContentArea (outermost) -->
+  <rect x="30" y="65" width="1440" height="2100" rx="6" fill="none" stroke="#30363D" stroke-width="1.5"/>
+  <text x="50" y="85" fill="#0084FF" font-size="12" font-weight="bold">DA</text>
+  <text x="80" y="85" fill="#E6EDF3" font-size="12">DiagramContentArea</text>
+  <text x="1440" y="2155" fill="#0084FF" font-size="11" text-anchor="end">DA</text>
+
+  <!-- useDiagram line -->
+  <text x="60" y="112" fill="#8B949E" font-size="11">useDiagram(content) → Scene</text>
+
+  <!-- Arrow down from useDiagram -->
+  <line x1="110" y1="118" x2="110" y2="138" stroke="#8B949E" stroke-width="1" marker-end="url(#arrowDown)"/>
+
+  <!-- DS: DiagramScene -->
+  <rect x="55" y="142" width="1390" height="2000" rx="6" fill="none" stroke="#30363D" stroke-width="1.5"/>
+  <text x="75" y="162" fill="#0084FF" font-size="12" font-weight="bold">DS</text>
+  <text x="100" y="162" fill="#E6EDF3" font-size="12">DiagramScene</text>
+  <text x="1415" y="2130" fill="#0084FF" font-size="11" text-anchor="end">DS</text>
+
+  <!-- DS state -->
+  <text x="80" y="182" fill="#8B949E" font-size="11">state: popupStack[], userBadges[], contextMenu</text>
+
+  <!-- SI: SceneInput -->
+  <rect x="80" y="195" width="1340" height="370" rx="6" fill="none" stroke="#30363D" stroke-width="1.5"/>
+  <text x="100" y="215" fill="#0084FF" font-size="12" font-weight="bold">SI</text>
+  <text x="120" y="215" fill="#E6EDF3" font-size="12">SceneInput</text>
+  <text x="1390" y="555" fill="#0084FF" font-size="11" text-anchor="end">SI</text>
+
+  <!-- SI state -->
+  <text x="105" y="238" fill="#8B949E" font-size="11">state: selectedIds: Set&lt;string&gt;, dragPreviewIds</text>
+
+  <!-- VP: Viewport -->
+  <rect x="110" y="252" width="1280" height="48" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1"/>
+  <text x="130" y="272" fill="#0084FF" font-size="11" font-weight="bold">VP</text>
+  <text x="152" y="272" fill="#E6EDF3" font-size="11">Viewport</text>
+  <text x="130" y="290" fill="#8B949E" font-size="10">props: onSceneClick, onContextMenu, onSelectionDrag, onSelectionDragEnd, badges</text>
+
+  <!-- TT: Tooltip -->
+  <rect x="110" y="315" width="540" height="90" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1"/>
+  <text x="130" y="335" fill="#0084FF" font-size="11" font-weight="bold">TT</text>
+  <text x="152" y="335" fill="#E6EDF3" font-size="11">Tooltip</text>
+  <text x="130" y="355" fill="#8B949E" font-size="10">SVG mouseover → closest [data-tt] → show</text>
+  <text x="130" y="370" fill="#8B949E" font-size="10">fixed div, z:100, clientX+14/Y-10</text>
+  <text x="130" y="385" fill="#8B949E" font-size="10">touch: pointerdown → show, tap away → hide</text>
+
+  <!-- Arrow: "User click lands here" annotation -->
+  <text x="330" y="600" fill="#8B949E" font-size="11" text-anchor="middle">User click lands here (via Viewport.onSceneClick)</text>
+  <line x1="180" y1="605" x2="180" y2="570" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="180" y1="570" x2="530" y2="570" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- Arrow down to handleSceneClick -->
+  <line x1="330" y1="608" x2="330" y2="635" stroke="#8B949E" stroke-width="1" marker-end="url(#arrowDown)"/>
+
+  <!-- HC: handleSceneClick -->
+  <rect x="80" y="640" width="600" height="260" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="100" y="660" fill="#0084FF" font-size="12" font-weight="bold">HC</text>
+  <text x="122" y="660" fill="#E6EDF3" font-size="12">handleSceneClick</text>
+
+  <text x="105" y="688" fill="#8B949E" font-size="11">scene.hitTest(screenPoint)</text>
+  <text x="370" y="688" fill="#0084FF" font-size="10">[HT]</text>
+
+  <!-- hitTest branch lines -->
+  <line x1="150" y1="695" x2="150" y2="720" stroke="#8B949E" stroke-width="1"/>
+  <!-- null branch -->
+  <line x1="150" y1="720" x2="170" y2="720" stroke="#8B949E" stroke-width="1"/>
+  <text x="180" y="724" fill="#8B949E" font-size="10">null → deselect all, fire onSelectionChange([])</text>
+
+  <!-- hit element branch -->
+  <line x1="150" y1="720" x2="150" y2="750" stroke="#8B949E" stroke-width="1"/>
+  <line x1="150" y1="750" x2="170" y2="750" stroke="#8B949E" stroke-width="1"/>
+  <text x="180" y="754" fill="#8B949E" font-size="10">hit element:</text>
+
+  <text x="200" y="774" fill="#8B949E" font-size="10">├── shift? → toggle in selectedIds</text>
+  <text x="200" y="794" fill="#8B949E" font-size="10">└── no shift → clear all, select this</text>
+
+  <!-- fire onNavigate -->
+  <text x="230" y="820" fill="#8B949E" font-size="10">└── fire onNavigate(interactive, domEvent)</text>
+
+  <!-- Arrow from onNavigate back up to annotation -->
+  <line x1="560" y1="816" x2="620" y2="816" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="620" y1="816" x2="620" y2="595" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="530" y1="595" x2="620" y2="595" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- Arrow down from HC to HN -->
+  <line x1="330" y1="900" x2="330" y2="930" stroke="#8B949E" stroke-width="1" marker-end="url(#arrowDown)"/>
+
+  <!-- HN: handleNavigate -->
+  <rect x="80" y="935" width="1340" height="190" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="100" y="958" fill="#0084FF" font-size="12" font-weight="bold">HN</text>
+  <text x="122" y="958" fill="#E6EDF3" font-size="12">handleNavigate</text>
+
+  <!-- 4 branches inside HN -->
+  <!-- Branch 1: Alt+click -->
+  <rect x="105" y="972" width="270" height="135" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="120" y="990" fill="#E6EDF3" font-size="10" font-weight="bold">Alt+click?</text>
+  <text x="120" y="1010" fill="#0084FF" font-size="10">fireCodeJump [FJ]</text>
+  <text x="120" y="1028" fill="#8B949E" font-size="10">TRPC navigate.mutate</text>
+  <text x="120" y="1046" fill="#8B949E" font-size="10">{ root, filePath,</text>
+  <text x="120" y="1064" fill="#8B949E" font-size="10">  line, newTab }</text>
+
+  <!-- Branch 2: modal -->
+  <rect x="395" y="972" width="280" height="135" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="410" y="990" fill="#E6EDF3" font-size="10" font-weight="bold">modal?</text>
+  <text x="410" y="1010" fill="#0084FF" font-size="10">openPopup [OP]</text>
+  <text x="410" y="1028" fill="#8B949E" font-size="10">resolveDiagramPath</text>
+  <text x="410" y="1046" fill="#8B949E" font-size="10">TRPC getContent.query</text>
+  <text x="410" y="1064" fill="#8B949E" font-size="10">push to popupStack</text>
+
+  <!-- Branch 3: link -->
+  <rect x="695" y="972" width="310" height="135" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="710" y="990" fill="#E6EDF3" font-size="10" font-weight="bold">link?</text>
+  <text x="710" y="1010" fill="#0084FF" font-size="10">executeJump [EJ]</text>
+  <text x="710" y="1028" fill="#8B949E" font-size="10">same diagram?</text>
+  <text x="720" y="1046" fill="#8B949E" font-size="10">→ centerOn(target, animate)</text>
+  <text x="710" y="1064" fill="#8B949E" font-size="10">cross diagram?</text>
+  <text x="720" y="1082" fill="#8B949E" font-size="10">→ onRequestJump(path, elId)</text>
+
+  <!-- Branch 4: default -->
+  <rect x="1025" y="972" width="270" height="135" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="1040" y="990" fill="#E6EDF3" font-size="10" font-weight="bold">default</text>
+  <text x="1040" y="1010" fill="#0084FF" font-size="10">fireCodeJump [FJ]</text>
+  <text x="1040" y="1028" fill="#8B949E" font-size="10">(same as Alt)</text>
+
+  <!-- Arrow down from modal branch to popup stack -->
+  <line x1="535" y1="1107" x2="535" y2="1125" stroke="#8B949E" stroke-width="1"/>
+  <line x1="535" y1="1125" x2="535" y2="1160" stroke="#8B949E" stroke-width="1" marker-end="url(#arrowDown)"/>
+
+  <!-- PS: Popup Stack -->
+  <rect x="80" y="1165" width="1340" height="285" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="100" y="1188" fill="#0084FF" font-size="12" font-weight="bold">PS</text>
+  <text x="122" y="1188" fill="#E6EDF3" font-size="12">Popup Stack</text>
+
+  <text x="105" y="1212" fill="#8B949E" font-size="11">popupStack.map((entry, i) =&gt;</text>
+  <text x="120" y="1230" fill="#E6EDF3" font-size="11">PopupDiagramOverlay</text>
+  <text x="310" y="1230" fill="#0084FF" font-size="10">[PO]</text>
+
+  <text x="120" y="1252" fill="#8B949E" font-size="10">zIndex: 50 + i*2</text>
+  <text x="120" y="1268" fill="#8B949E" font-size="10">onClose: slice stack at i</text>
+  <text x="120" y="1284" fill="#8B949E" font-size="10">onNavigate: relay to parent</text>
+
+  <!-- PO internals box -->
+  <rect x="450" y="1218" width="620" height="210" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="470" y="1238" fill="#E6EDF3" font-size="10" font-weight="bold">PopupDiagramOverlay internals:</text>
+  <text x="470" y="1258" fill="#8B949E" font-size="10">backdrop (blur, click to close) + ESC key</text>
+  <text x="470" y="1278" fill="#8B949E" font-size="10">useDiagram(entry.content) → popup Scene</text>
+  <text x="470" y="1298" fill="#8B949E" font-size="10">SceneInput (nested, fully interactive, can open more popups)</text>
+  <text x="470" y="1318" fill="#8B949E" font-size="10">layout: min 200x150, max 85% container, 24px offset</text>
+  <text x="470" y="1338" fill="#8B949E" font-size="10">onNavigate relayed back → handleNavigate (recursive!)</text>
+
+  <!-- Bottom row: Lasso Selection and Badges side by side -->
+  <!-- SD/SE: Lasso Selection -->
+  <rect x="80" y="1480" width="620" height="340" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="100" y="1503" fill="#0084FF" font-size="12" font-weight="bold">SD/SE</text>
+  <text x="148" y="1503" fill="#E6EDF3" font-size="12">Lasso Selection</text>
+
+  <text x="105" y="1528" fill="#8B949E" font-size="10">Ctrl+drag (or selectMode touch)</text>
+
+  <!-- Arrow down -->
+  <line x1="160" y1="1535" x2="160" y2="1555" stroke="#8B949E" stroke-width="1" marker-end="url(#arrowDown)"/>
+
+  <text x="105" y="1575" fill="#0084FF" font-size="10">handleSelectionDrag [SD]</text>
+  <text x="115" y="1593" fill="#8B949E" font-size="10">scene.hitTestRect(sceneRect, "intersect")</text>
+  <text x="115" y="1609" fill="#8B949E" font-size="10">filter to .interactive only</text>
+  <text x="115" y="1625" fill="#8B949E" font-size="10">toggle .selected CSS class</text>
+  <text x="115" y="1641" fill="#8B949E" font-size="10">show dragPreviewPaths beside lasso</text>
+
+  <!-- Arrow down (on pointer up) -->
+  <line x1="160" y1="1650" x2="160" y2="1670" stroke="#8B949E" stroke-width="1" marker-end="url(#arrowDown)"/>
+  <text x="200" y="1667" fill="#8B949E" font-size="9">(on pointer up)</text>
+
+  <text x="105" y="1690" fill="#0084FF" font-size="10">handleSelectionDragEnd [SE]</text>
+  <text x="115" y="1708" fill="#8B949E" font-size="10">final hitTestRect → setSelectedIds</text>
+  <text x="115" y="1724" fill="#8B949E" font-size="10">refs → clipboard.writeText → toast "Copied N ref(s)"</text>
+  <text x="115" y="1740" fill="#8B949E" font-size="10">fire onSelectionChange(interactiveData[])</text>
+
+  <!-- Badges + Context Menu -->
+  <rect x="720" y="1480" width="700" height="340" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="740" y="1503" fill="#E6EDF3" font-size="12" font-weight="bold">Badges + Context Menu</text>
+  <text x="1390" y="1808" fill="#0084FF" font-size="11" text-anchor="end">CM</text>
+
+  <!-- Auto badges -->
+  <text x="745" y="1528" fill="#E6EDF3" font-size="10" font-weight="bold">Auto badges (useMemo)</text>
+  <text x="930" y="1528" fill="#0084FF" font-size="10">[AB]</text>
+  <text x="755" y="1548" fill="#A371F7" font-size="10">el.modal → ⬡ purple #A371F7 → openPopup</text>
+  <text x="755" y="1566" fill="#D4A72C" font-size="10">el.link  → → gold #D4A72C   → executeJump</text>
+  <text x="755" y="1584" fill="#8B949E" font-size="10">anchor: element top-right corner</text>
+
+  <!-- User badges -->
+  <text x="745" y="1616" fill="#E6EDF3" font-size="10" font-weight="bold">User badges (context menu)</text>
+  <text x="948" y="1616" fill="#0084FF" font-size="10">[UB]</text>
+  <text x="755" y="1636" fill="#8B949E" font-size="10">right-click → menu (z:200) → "Add Badge"</text>
+  <text x="755" y="1654" fill="#3FB950" font-size="10">pin green #3FB950, scene-anchored</text>
+  <text x="755" y="1672" fill="#8B949E" font-size="10">click pin → remove</text>
+
+  <!-- allBadges -->
+  <text x="745" y="1704" fill="#E6EDF3" font-size="10">allBadges = [...auto, ...user]</text>
+  <text x="755" y="1724" fill="#8B949E" font-size="10">→ passed to SceneInput → Viewport → OverLayer</text>
+</svg>

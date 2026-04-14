@@ -9,13 +9,13 @@ POPUP OVERLAY DETAIL (modal expansion of 03-interaction.txt)
   │  DiagramScene                                                                              │
   │                                                                                            │
   │  popupStack: PopupEntry[]                                                                  │
-  │    ┌─────────────────────────────────────────────┐                                         │
-  │    │  PopupEntry:                                │                                         │
-  │    │    path: string       (resolved diagram)    │                                         │
-  │    │    content: string    (fetched HTML)         │                                         │
-  │    │    position: OverlayPosition                │                                         │
-  │    │    anchorBounds: Rect (source el bounds)    │                                         │
-  │    └─────────────────────────────────────────────┘                                         │
+  │    ┌─────────────────────────────────────────────────┐                                     │
+  │    │  PopupEntry:                                    │                                     │
+  │    │    path: string       (resolved diagram)        │                                     │
+  │    │    content: string    (fetched HTML)             │                                     │
+  │    │    position: OverlayPosition                    │                                     │
+  │    │    anchorBounds: Rect (source el bounds)        │                                     │
+  │    └─────────────────────────────────────────────────┘                                     │
   │                                                                                            │
   │  Stacking: zIndex = 50 + i*2  (each popup above previous)                                 │
   │  Close: onClose slices stack at index i (closes this + all above)                          │
@@ -23,7 +23,7 @@ POPUP OVERLAY DETAIL (modal expansion of 03-interaction.txt)
   └────────────────────────────────────────────────────────────────────────────────────────────┘
 
   ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-  │  PopupDiagramOverlay                                                                   PO  │
+  │  PopupDiagramOverlay                                                                  EPO  │
   │                                                                                            │
   │  ┌── absolute inset-0 ────────────────────────────────────────────────────────────────┐    │
   │  │  backdrop: bg-surface-0/50 backdrop-blur(2px)                                      │    │
@@ -31,7 +31,7 @@ POPUP OVERLAY DETAIL (modal expansion of 03-interaction.txt)
   │  │                                                                                    │    │
   │  │  ┌── positioned popup ───────────────────────────────────────────────────────┐     │    │
   │  │  │                                                                          │     │    │
-  │  │  │  Layout: computePopupLayout [PL]                                         │     │    │
+  │  │  │  Layout: computePopupLayout [EPL]                                        │     │    │
   │  │  │    input: container size, diagram natural size (root localBounds)         │     │    │
   │  │  │    output: { top: 24, left: 24, width, height }                          │     │    │
   │  │  │                                                                          │     │    │
@@ -60,14 +60,14 @@ POPUP OVERLAY DETAIL (modal expansion of 03-interaction.txt)
   │  │  │  │   - trigger code jumps (Alt+click)                          │      │     │    │
   │  │  │  │   - open nested popups (modal click → push to popupStack)   │      │     │    │
   │  │  │  │   - follow links (jump to other diagram)                    │      │     │    │
-  │  │  │  │                                                          PS  │      │     │    │
+  │  │  │  │                                                         EPS  │      │     │    │
   │  │  │  └──────────────────────────────────────────────────────────────┘      │     │    │
-  │  │  │                                                                  PP  │     │    │
+  │  │  │                                                                 EPP  │     │    │
   │  │  └──────────────────────────────────────────────────────────────────────┘     │    │
   │  │                                                                              │    │
   │  │  ESC key → onClose (window keydown listener)                                 │    │
   │  └──────────────────────────────────────────────────────────────────────────────┘    │
-  │                                                                                PO  │
+  │                                                                               EPO  │
   └──────────────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -95,42 +95,42 @@ POPUP OVERLAY DETAIL (modal expansion of 03-interaction.txt)
 ```
 
 ```code-refs
-PO  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145   PopupDiagramOverlay component
-PL  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:36-60    computePopupLayout: size to fit diagram
-PS  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155  PopupScene: SceneInput with parent's onNavigate
-PP  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:114-143  Positioned popup div with close btn
+CPO  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145   PopupDiagramOverlay component
+CPL  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:36-60    computePopupLayout: size to fit diagram
+CPS  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155  PopupScene: SceneInput with parent's onNavigate
+CPP  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:114-143  Positioned popup div with close btn
 ```
 
 ```entities
-# name                  id_type  id    description
+# name                  id_type  id     description
 
-popup-overlay           box      PO    PopupDiagramOverlay (full component)
-  popup-layout          text     PL    computePopupLayout (size/position calc)
-  popup-scene           box      PS    PopupScene wrapper (SceneInput + own Scene)
-  positioned-popup      box      PP    Positioned popup div (visual container)
+popup-overlay           box      EPO    PopupDiagramOverlay (full component)
+  popup-layout          text     EPL    computePopupLayout (size/position calc)
+  popup-scene           box      EPS    PopupScene wrapper (SceneInput + own Scene)
+  positioned-popup      box      EPP    Positioned popup div (visual container)
 ```
 
 ```arrows
 # src              target           description
 modal-click        openPopup        user clicks data-modal element → handleNavigate → openPopup
 openPopup          popupStack       resolvePath + TRPC getContent → push PopupEntry to stack
-popupStack         PO               popupStack.map renders PopupDiagramOverlay per entry
-PO.content         PS.useDiagram    entry.content → useDiagram → own Scene
-PO.onClose         popupStack       onClose slices stack at index (closes this + above)
-PO.backdrop        PO.onClose       backdrop click → onClose
-PO.esc             PO.onClose       ESC key → onClose
+popupStack         EPO              popupStack.map renders PopupDiagramOverlay per entry
+EPO.content        EPS.useDiagram   entry.content → useDiagram → own Scene
+EPO.onClose        popupStack       onClose slices stack at index (closes this + above)
+EPO.backdrop       EPO.onClose      backdrop click → onClose
+EPO.esc            EPO.onClose      ESC key → onClose
 ```
 
 ```links
 # local-id  target-file                          target-id  description
-PS           02-rendering.txt                     VP         each popup has its own SceneInput → Viewport stack
-PS           03-interaction.txt                   HN         clicks inside popup relay onNavigate → parent handleNavigate
-PO           03-interaction.txt                   PS         parent diagram (this is the modal expansion)
+EPS          02-rendering.txt                     EVP        each popup has its own SceneInput → Viewport stack
+EPS          03-interaction.txt                   EHN        clicks inside popup relay onNavigate → parent handleNavigate
+EPO          03-interaction.txt                   EPS        parent diagram (this is the modal expansion)
 ```
 
 ```notes
-Entity IDs and code-ref IDs share the same 2-char namespace. Both are resolved
-by finding [XX] on the diagram (for box/text types) or {#xx} (for marker types).
-No prefix is needed to disambiguate — the [brackets] already distinguish IDs from
-surrounding text. Cross-diagram jump targets use the form: ** filename.txt#ID
+Code-ref IDs use a "C" prefix (e.g. CPO, CPL) and entity IDs use an "E" prefix
+(e.g. EPO, EPL) to disambiguate the two namespaces. Diagram labels use entity IDs
+in [EXX] brackets. Entity markers use {#exx}. Cross-diagram jump targets use the
+form: ** filename.txt#EXX (entity prefix on the target ID).
 ```

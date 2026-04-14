@@ -9,23 +9,23 @@ TYPES & DATA MODEL — Core shapes that flow through the system
 
 ═══ Geometry Primitives ════════════════════════════════════════════════════════════════════════════════
 
-  ┌────────────────┐      ┌────────────────┐      ┌─────────────────────────────┐
-  │  Rect      RC  │      │  Point     PT  │      │  Transform             TF  │
-  │                │      │                │      │                            │
-  │  x: number     │      │  x: number     │      │  tx: number   (translateX) │
-  │  y: number     │      │  y: number     │      │  ty: number   (translateY) │
-  │  width: number │      └────────────────┘      │  scale: number             │
-  │  height: number│                              │                            │
-  └────────────────┘                              │  IDENTITY = {0, 0, 1}      │
-                                                  └─────────────────────────────┘
+  ┌─────────────────┐      ┌─────────────────┐      ┌──────────────────────────────┐
+  │  Rect      ERC  │      │  Point     EPT  │      │  Transform              ETF  │
+  │                 │      │                 │      │                             │
+  │  x: number     │      │  x: number      │      │  tx: number   (translateX)  │
+  │  y: number     │      │  y: number      │      │  ty: number   (translateY)  │
+  │  width: number │      └─────────────────┘      │  scale: number              │
+  │  height: number│                               │                             │
+  └─────────────────┘                               │  IDENTITY = {0, 0, 1}      │
+                                                    └──────────────────────────────┘
 
   Transform operations:
-  ┌─────────────────────────────────────────────────────────────────────────────────┐
-  │  composeTransforms(parent, child)  →  combined transform                  CT  │
-  │  transformRect(rect, transform)    →  rect in new coordinate space        XR  │
-  │  rectsIntersect(a, b)              →  AABB overlap test                   RI  │
-  │  rectContains(outer, inner)        →  full containment test               RN  │
-  └─────────────────────────────────────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────────────────────────┐
+  │  composeTransforms(parent, child)  →  combined transform                  ECT  │
+  │  transformRect(rect, transform)    →  rect in new coordinate space        CXR  │
+  │  rectsIntersect(a, b)              →  AABB overlap test                   CRI  │
+  │  rectContains(outer, inner)        →  full containment test               CRN  │
+  └──────────────────────────────────────────────────────────────────────────────────┘
 
 
 ═══ Interactive Metadata ═══════════════════════════════════════════════════════════════════════════════
@@ -34,59 +34,59 @@ TYPES & DATA MODEL — Core shapes that flow through the system
   ─────────────────────                          ──────────────────
 
   data-interactive="myFunc"     ─┐
-  data-ref="src/foo.ts:10-50"   ─┤    ┌───────────────────────────────────────────┐
-  data-category="function"      ─┤    │  InteractiveData                     ID  │
-  data-label="myFunc"           ─┤    │                                          │
-  data-tt="src/foo.ts — helper" ─┤───►│  ref: "src/foo.ts:10-50"                │
-  data-nav="src/bar.ts:5"      ─┤    │  parsedRef: ParsedRef                    │
-  data-modal="detail.html"     ─┤    │  category: "function"                    │
-  data-modal-position="right"  ─┤    │  label: "myFunc"                         │
-  data-link="other.html#elem"  ─┘    │  tooltip: "src/foo.ts — helper"          │
-                                      │  navTarget: ParsedRef (nav or ref)       │
-                                      │  modal: DiagramModal | null              │
-                                      │  link: DiagramLink | null                │
-                                      └───────────────────────────────────────────┘
+  data-ref="src/foo.ts:10-50"   ─┤    ┌────────────────────────────────────────────┐
+  data-category="function"      ─┤    │  InteractiveData                     EID  │
+  data-label="myFunc"           ─┤    │                                           │
+  data-tt="src/foo.ts — helper" ─┤───►│  ref: "src/foo.ts:10-50"                 │
+  data-nav="src/bar.ts:5"      ─┤    │  parsedRef: ParsedRef                     │
+  data-modal="detail.html"     ─┤    │  category: "function"                     │
+  data-modal-position="right"  ─┤    │  label: "myFunc"                          │
+  data-link="other.html#elem"  ─┘    │  tooltip: "src/foo.ts — helper"           │
+                                      │  navTarget: ParsedRef (nav or ref)        │
+                                      │  modal: DiagramModal | null               │
+                                      │  link: DiagramLink | null                 │
+                                      └────────────────────────────────────────────┘
 
-  ┌────────────────────────────┐      ┌──────────────────────────────────────┐
-  │  ParsedRef            PR  │      │  InteractiveCategory            IC  │
-  │                           │      │                                     │
-  │  filePath: string         │      │  "module" | "function" | "type"     │
-  │  startLine: number        │      │  "data"   | "flow"     | "call"    │
-  │  endLine: number | null   │      │  "concept" | "annotation"          │
-  └────────────────────────────┘      └──────────────────────────────────────┘
+  ┌─────────────────────────────┐      ┌───────────────────────────────────────┐
+  │  ParsedRef            EPR  │      │  InteractiveCategory            EIC  │
+  │                            │      │                                      │
+  │  filePath: string          │      │  "module" | "function" | "type"      │
+  │  startLine: number         │      │  "data"   | "flow"     | "call"     │
+  │  endLine: number | null    │      │  "concept" | "annotation"           │
+  └─────────────────────────────┘      └───────────────────────────────────────┘
 
 
 ═══ Navigation Targets ═════════════════════════════════════════════════════════════════════════════════
 
-  ┌──────────────────────────────────────────────┐     ┌──────────────────────────────────────────┐
-  │  DiagramModal                           DM  │     │  DiagramLink                        DK  │
-  │                                             │     │                                         │
-  │  source:                                    │     │  source:                                │
-  │    elementId: string                        │     │    elementId: string                    │
-  │    ref: string | null                       │     │    ref: string | null                   │
-  │                                             │     │                                         │
-  │  target:                                    │     │  target:                                │
-  │    path: string (relative to diagram dir)   │     │    path: string                         │
-  │    position: OverlayPosition                │     │    elementId: string | null              │
-  │      "above-left" | "above-right"           │     │                                         │
-  │      "below-left" | "below-right"           │     │  Parsed from: "path.html#elementId"     │
-  │      "left" | "right" | "auto"              │     │  or just: "path.html"                   │
-  └──────────────────────────────────────────────┘     └──────────────────────────────────────────┘
+  ┌───────────────────────────────────────────────┐     ┌───────────────────────────────────────────┐
+  │  DiagramModal                           EDM  │     │  DiagramLink                        EDK  │
+  │                                              │     │                                          │
+  │  source:                                     │     │  source:                                 │
+  │    elementId: string                         │     │    elementId: string                     │
+  │    ref: string | null                        │     │    ref: string | null                    │
+  │                                              │     │                                          │
+  │  target:                                     │     │  target:                                 │
+  │    path: string (relative to diagram dir)    │     │    path: string                          │
+  │    position: OverlayPosition                 │     │    elementId: string | null               │
+  │      "above-left" | "above-right"            │     │                                          │
+  │      "below-left" | "below-right"            │     │  Parsed from: "path.html#elementId"      │
+  │      "left" | "right" | "auto"               │     │  or just: "path.html"                    │
+  └───────────────────────────────────────────────┘     └───────────────────────────────────────────┘
 
 
 ═══ Overlay Badges ═════════════════════════════════════════════════════════════════════════════════════
 
-  ┌──────────────────────────────────────────────────────────────────────────────────┐
-  │  OverlayBadge                                                              OB  │
-  │                                                                                │
-  │  id: string                                                                    │
-  │  anchor: BadgeAnchor                                                           │
-  │  text: string          (emoji or symbol, e.g. "⬡", "→", "📌")                │
-  │  onClick: () => void                                                           │
-  │  style?: { color, background, borderColor }                                    │
-  └────────────────────────────────────────────────────────────────────────────────┘
+  ┌───────────────────────────────────────────────────────────────────────────────────┐
+  │  OverlayBadge                                                              EOB  │
+  │                                                                                 │
+  │  id: string                                                                     │
+  │  anchor: BadgeAnchor                                                            │
+  │  text: string          (emoji or symbol, e.g. "⬡", "→", "📌")                 │
+  │  onClick: () => void                                                            │
+  │  style?: { color, background, borderColor }                                     │
+  └───────────────────────────────────────────────────────────────────────────────────┘
 
-  BadgeAnchor (discriminated union) [BA]:
+  BadgeAnchor (discriminated union) [EBA]:
   ┌──────────────────────┬──────────────────────────────────────────────────────────┐
   │  { space: "screen" } │  Fixed screen position. x, y in pixels.                │
   ├──────────────────────┼──────────────────────────────────────────────────────────┤
@@ -98,70 +98,70 @@ TYPES & DATA MODEL — Core shapes that flow through the system
 ```
 
 ```code-refs
-RC  web-ui/src/diagram/types.ts:4-9                 Rect interface
-PT  web-ui/src/diagram/types.ts:12-15               Point interface
-TF  web-ui/src/diagram/types.ts:18-22               Transform interface
-CT  web-ui/src/diagram/types.ts:203-210             composeTransforms
-XR  web-ui/src/diagram/types.ts:213-220             transformRect
-RI  web-ui/src/diagram/types.ts:189-191             rectsIntersect (AABB)
-RN  web-ui/src/diagram/types.ts:194-201             rectContains
-ID  web-ui/src/diagram/types.ts:55-64               InteractiveData interface
-PR  web-ui/src/diagram/types.ts:72-76               ParsedRef interface
-IC  web-ui/src/diagram/types.ts:26                  InteractiveCategory union type
-DM  web-ui/src/diagram/types.ts:31-40               DiagramModal interface
-DK  web-ui/src/diagram/types.ts:43-52               DiagramLink interface
-OB  web-ui/src/diagram/types.ts:176-186             OverlayBadge interface
-BA  web-ui/src/diagram/types.ts:166-173             BadgeAnchor discriminated union
+CRC  web-ui/src/diagram/types.ts:4-9                 Rect interface
+CPT  web-ui/src/diagram/types.ts:12-15               Point interface
+CTF  web-ui/src/diagram/types.ts:18-22               Transform interface
+CCT  web-ui/src/diagram/types.ts:203-210             composeTransforms
+CXR  web-ui/src/diagram/types.ts:213-220             transformRect
+CRI  web-ui/src/diagram/types.ts:189-191             rectsIntersect (AABB)
+CRN  web-ui/src/diagram/types.ts:194-201             rectContains
+CID  web-ui/src/diagram/types.ts:55-64               InteractiveData interface
+CPR  web-ui/src/diagram/types.ts:72-76               ParsedRef interface
+CIC  web-ui/src/diagram/types.ts:26                  InteractiveCategory union type
+CDM  web-ui/src/diagram/types.ts:31-40               DiagramModal interface
+CDK  web-ui/src/diagram/types.ts:43-52               DiagramLink interface
+COB  web-ui/src/diagram/types.ts:176-186             OverlayBadge interface
+CBA  web-ui/src/diagram/types.ts:166-173             BadgeAnchor discriminated union
 ```
 
 ```entities
-# name                  id_type  id    description
+# name                  id_type  id     description
 
 # Geometry
-rect                    box      RC    Rect { x, y, width, height }
-point                   box      PT    Point { x, y }
-transform               box      TF    Transform { tx, ty, scale }
-transform-ops           box      CT    composeTransforms, transformRect, rectsIntersect, rectContains
+rect                    box      ERC    Rect { x, y, width, height }
+point                   box      EPT    Point { x, y }
+transform               box      ETF    Transform { tx, ty, scale }
+transform-ops           box      ECT    composeTransforms, transformRect, rectsIntersect, rectContains
 
 # Interactive metadata
-interactive-data        box      ID    InteractiveData (parsed from SVG data-* attrs)
-parsed-ref              box      PR    ParsedRef { filePath, startLine, endLine }
-interactive-category    box      IC    InteractiveCategory union type
+interactive-data        box      EID    InteractiveData (parsed from SVG data-* attrs)
+parsed-ref              box      EPR    ParsedRef { filePath, startLine, endLine }
+interactive-category    box      EIC    InteractiveCategory union type
 
 # Navigation targets
-diagram-modal           box      DM    DiagramModal { source, target.path + position }
-diagram-link            box      DK    DiagramLink { source, target.path + elementId }
+diagram-modal           box      EDM    DiagramModal { source, target.path + position }
+diagram-link            box      EDK    DiagramLink { source, target.path + elementId }
 
 # Badges
-overlay-badge           box      OB    OverlayBadge { id, anchor, text, onClick, style }
-badge-anchor            text     BA    BadgeAnchor discriminated union (screen/scene/element)
+overlay-badge           box      EOB    OverlayBadge { id, anchor, text, onClick, style }
+badge-anchor            text     EBA    BadgeAnchor discriminated union (screen/scene/element)
 ```
 
 ```arrows
 # src              target           description
-data-* attrs       ID               SVG data-* attributes parsed into InteractiveData
-ID.parsedRef       PR               InteractiveData.parsedRef is a ParsedRef
-ID.modal           DM               InteractiveData.modal is a DiagramModal | null
-ID.link            DK               InteractiveData.link is a DiagramLink | null
-OB.anchor          BA               OverlayBadge.anchor is a BadgeAnchor
+data-* attrs       EID              SVG data-* attributes parsed into InteractiveData
+EID.parsedRef      EPR              InteractiveData.parsedRef is a ParsedRef
+EID.modal          EDM              InteractiveData.modal is a DiagramModal | null
+EID.link           EDK              InteractiveData.link is a DiagramLink | null
+EOB.anchor         EBA              OverlayBadge.anchor is a BadgeAnchor
 ```
 
 ```links
 # local-id  target-file                          target-id  description
-TF           02-rendering.txt                     TF         Transform used in Viewport coordinate math
-CT           02-rendering-svgscene-detail.txt     WB         composeTransforms used in getWorldBounds
-CT           02-rendering-svgscene-detail.txt     HR         rectsIntersect used in hitTestRect
-ID           03-interaction.txt                   HN         InteractiveData drives handleNavigate dispatch
-DM           03-interaction.txt                   OP         DiagramModal consumed by openPopup
-DK           03-interaction.txt                   EJ         DiagramLink consumed by executeJump
-OB           02-rendering.txt                     OL         OverlayBadge consumed by OverLayer
-BA           02-rendering.txt                     BA         BadgeAnchor resolved by resolveAnchor
-RC           02-rendering.txt                     SC         Rect used in Scene bounds methods
+ETF          02-rendering.txt                     ETF        Transform used in Viewport coordinate math
+ECT          02-rendering-svgscene-detail.txt     EWB        composeTransforms used in getWorldBounds
+ECT          02-rendering-svgscene-detail.txt     EHR        rectsIntersect used in hitTestRect
+EID          03-interaction.txt                   EHN        InteractiveData drives handleNavigate dispatch
+EDM          03-interaction.txt                   EOP        DiagramModal consumed by openPopup
+EDK          03-interaction.txt                   EEJ        DiagramLink consumed by executeJump
+EOB          02-rendering.txt                     EOL        OverlayBadge consumed by OverLayer
+EBA          02-rendering.txt                     EBA        BadgeAnchor resolved by resolveAnchor
+ERC          02-rendering.txt                     ESC        Rect used in Scene bounds methods
 ```
 
 ```notes
-Entity IDs and code-ref IDs share the same 2-char namespace. Both are resolved
-by finding [XX] on the diagram (for box/text types) or {#xx} (for marker types).
-No prefix is needed to disambiguate — the [brackets] already distinguish IDs from
-surrounding text. Cross-diagram jump targets use the form: ** filename.txt#ID
+Entity IDs use an "E" prefix (e.g., ERC, EID) and code-ref IDs use a "C" prefix
+(e.g., CRC, CID) to disambiguate the two namespaces. On the diagram, visual element
+labels use [EXX] for entities or [CXX] for code-ref-only IDs. Cross-diagram jump
+targets use the form: ** filename.txt#ID
 ```

@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1680" width="1200" height="1680" font-family="'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', 'Consolas', monospace" font-size="13">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="1680" fill="#1F2428" rx="0"/>
+
+  <!-- Title -->
+  <text x="600" y="36" fill="#E6EDF3" font-size="16" font-weight="bold" text-anchor="middle">POPUP OVERLAY DETAIL (modal expansion of 03-interaction.txt)</text>
+  <text x="600" y="56" fill="#8B949E" font-size="12" text-anchor="middle">PopupDiagramOverlay — a fully interactive nested diagram viewer in a popup.</text>
+
+  <!-- ================================================================== -->
+  <!-- DiagramScene box -->
+  <!-- ================================================================== -->
+  <rect x="40" y="76" width="1120" height="310" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="60" y="100" fill="#E6EDF3" font-size="14" font-weight="bold">DiagramScene</text>
+
+  <text x="60" y="128" fill="#8B949E" font-size="13">popupStack: PopupEntry[]</text>
+
+  <!-- PopupEntry inner box -->
+  <rect x="80" y="142" width="440" height="130" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="100" y="166" fill="#E6EDF3" font-size="13" font-weight="bold">PopupEntry:</text>
+  <text x="100" y="188" fill="#8B949E" font-size="12">path: string</text>
+  <text x="296" y="188" fill="#6E7681" font-size="12">(resolved diagram)</text>
+  <text x="100" y="208" fill="#8B949E" font-size="12">content: string</text>
+  <text x="296" y="208" fill="#6E7681" font-size="12">(fetched HTML)</text>
+  <text x="100" y="228" fill="#8B949E" font-size="12">position: OverlayPosition</text>
+  <text x="100" y="248" fill="#8B949E" font-size="12">anchorBounds: Rect</text>
+  <text x="296" y="248" fill="#6E7681" font-size="12">(source el bounds)</text>
+
+  <!-- Stacking / Close notes -->
+  <text x="60" y="304" fill="#8B949E" font-size="12">Stacking: zIndex = 50 + i*2  (each popup above previous)</text>
+  <text x="60" y="324" fill="#8B949E" font-size="12">Close: onClose slices stack at index i (closes this + all above)</text>
+
+  <!-- ================================================================== -->
+  <!-- PopupDiagramOverlay box -->
+  <!-- ================================================================== -->
+  <rect x="40" y="406" width="1120" height="680" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="60" y="432" fill="#E6EDF3" font-size="14" font-weight="bold">PopupDiagramOverlay</text>
+  <text x="1120" y="432" fill="#0084FF" font-size="13" font-weight="bold" text-anchor="end">PO</text>
+
+  <!-- Backdrop layer -->
+  <rect x="64" y="448" width="1072" height="618" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="84" y="472" fill="#8B949E" font-size="12">absolute inset-0</text>
+  <text x="84" y="492" fill="#8B949E" font-size="12">backdrop: bg-surface-0/50 backdrop-blur(2px)</text>
+  <text x="84" y="512" fill="#8B949E" font-size="12">click backdrop → onClose</text>
+
+  <!-- Positioned popup box -->
+  <rect x="88" y="528" width="1000" height="488" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="108" y="554" fill="#8B949E" font-size="12">positioned popup</text>
+  <text x="1048" y="998" fill="#0084FF" font-size="13" font-weight="bold" text-anchor="end">PP</text>
+
+  <!-- Layout: computePopupLayout -->
+  <text x="108" y="578" fill="#E6EDF3" font-size="13">Layout: computePopupLayout</text>
+  <text x="395" y="578" fill="#0084FF" font-size="13" font-weight="bold">[PL]</text>
+  <text x="120" y="598" fill="#8B949E" font-size="12">input: container size, diagram natural size (root localBounds)</text>
+  <text x="120" y="618" fill="#8B949E" font-size="12">output: { top: 24, left: 24, width, height }</text>
+
+  <text x="120" y="646" fill="#8B949E" font-size="12">sizing logic:</text>
+  <text x="140" y="666" fill="#8B949E" font-size="12">maxW = 85% of container</text>
+  <text x="140" y="686" fill="#8B949E" font-size="12">maxH = 85% of container</text>
+  <text x="140" y="706" fill="#8B949E" font-size="12">min:  200 x 150</text>
+  <text x="140" y="726" fill="#8B949E" font-size="12">if diagram fits: use diagram size + 24px padding</text>
+  <text x="140" y="746" fill="#8B949E" font-size="12">else: scale to fit within max</text>
+
+  <!-- Close button box -->
+  <rect x="112" y="762" width="340" height="38" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="132" y="786" fill="#8B949E" font-size="12">close button (top-right, z:10)  &lt;X size={16}&gt; icon</text>
+
+  <!-- PopupScene box -->
+  <rect x="112" y="816" width="940" height="188" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1.5"/>
+  <text x="132" y="840" fill="#E6EDF3" font-size="13" font-weight="bold">PopupScene</text>
+  <text x="1012" y="988" fill="#0084FF" font-size="13" font-weight="bold" text-anchor="end">PS</text>
+
+  <text x="140" y="864" fill="#E6EDF3" font-size="12">useDiagram(content) → Scene</text>
+
+  <!-- Arrow down -->
+  <line x1="200" y1="872" x2="200" y2="888" stroke="#8B949E" stroke-width="1.5"/>
+  <polygon points="200,892 195,884 205,884" fill="#8B949E"/>
+
+  <text x="140" y="908" fill="#E6EDF3" font-size="12">SceneInput</text>
+  <text x="152" y="926" fill="#8B949E" font-size="12">scene = popup's own Scene</text>
+  <text x="152" y="944" fill="#8B949E" font-size="12">onNavigate = parent's handleNavigate</text>
+  <text x="152" y="962" fill="#6E7681" font-size="12">(clicks inside popup fire same nav dispatch)</text>
+
+  <!-- Capabilities list -->
+  <text x="540" y="864" fill="#8B949E" font-size="12">This means a popup can:</text>
+  <text x="552" y="884" fill="#E6EDF3" font-size="12">- trigger code jumps (Alt+click)</text>
+  <text x="552" y="904" fill="#E6EDF3" font-size="12">- open nested popups (modal click → push to popupStack)</text>
+  <text x="552" y="924" fill="#E6EDF3" font-size="12">- follow links (jump to other diagram)</text>
+
+  <!-- ESC note -->
+  <text x="84" y="1048" fill="#8B949E" font-size="12">ESC key → onClose (window keydown listener)</text>
+
+  <!-- ================================================================== -->
+  <!-- Popup trigger flow -->
+  <!-- ================================================================== -->
+  <text x="60" y="1128" fill="#E6EDF3" font-size="15" font-weight="bold">Popup trigger flow:</text>
+
+  <!-- Step 1: user clicks -->
+  <rect x="120" y="1148" width="380" height="34" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="310" y="1170" fill="#E6EDF3" font-size="13" text-anchor="middle">user clicks element with data-modal</text>
+
+  <!-- Arrow -->
+  <line x1="310" y1="1182" x2="310" y2="1206" stroke="#8B949E" stroke-width="1.5"/>
+  <polygon points="310,1210 305,1202 315,1202" fill="#8B949E"/>
+
+  <!-- Step 2: handleNavigate -->
+  <rect x="120" y="1212" width="380" height="34" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="310" y="1234" fill="#E6EDF3" font-size="13" text-anchor="middle">handleNavigate → interactive.modal exists</text>
+
+  <!-- Arrow -->
+  <line x1="310" y1="1246" x2="310" y2="1270" stroke="#8B949E" stroke-width="1.5"/>
+  <polygon points="310,1274 305,1266 315,1266" fill="#8B949E"/>
+
+  <!-- Step 3: openPopup -->
+  <rect x="120" y="1276" width="380" height="34" rx="6" fill="#24292E" stroke="#0084FF" stroke-width="1.5"/>
+  <text x="310" y="1298" fill="#E6EDF3" font-size="13" text-anchor="middle">openPopup(interactive)</text>
+
+  <!-- Branch lines from openPopup -->
+  <line x1="310" y1="1310" x2="310" y2="1330" stroke="#8B949E" stroke-width="1.5"/>
+
+  <!-- Branch connector: horizontal line -->
+  <line x1="160" y1="1330" x2="900" y2="1330" stroke="#8B949E" stroke-width="1"/>
+
+  <!-- Branch 1: resolveDiagramPath -->
+  <line x1="160" y1="1330" x2="160" y2="1348" stroke="#8B949E" stroke-width="1"/>
+  <polygon points="160,1352 155,1344 165,1344" fill="#8B949E"/>
+  <rect x="60" y="1354" width="440" height="30" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="80" y="1374" fill="#8B949E" font-size="12">resolveDiagramPath(selectedPath, modal.target.path)</text>
+
+  <!-- Branch 2: getWorldBounds -->
+  <line x1="530" y1="1330" x2="530" y2="1348" stroke="#8B949E" stroke-width="1"/>
+  <polygon points="530,1352 525,1344 535,1344" fill="#8B949E"/>
+  <rect x="510" y="1354" width="480" height="30" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="530" y="1374" fill="#8B949E" font-size="12">scene.getWorldBounds(modal.source.elementId) → anchorBounds</text>
+
+  <!-- Branch 3: TRPC -->
+  <line x1="900" y1="1330" x2="900" y2="1348" stroke="#8B949E" stroke-width="1"/>
+  <polygon points="900,1352 895,1344 905,1344" fill="#8B949E"/>
+  <rect x="700" y="1394" width="460" height="30" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="720" y="1414" fill="#8B949E" font-size="12">TRPC diagrams.getContent.query({ path: resolvedPath })</text>
+
+  <!-- Arrow from TRPC down to setPopupStack -->
+  <line x1="900" y1="1424" x2="900" y2="1440" stroke="#8B949E" stroke-width="1.5"/>
+  <line x1="900" y1="1440" x2="440" y2="1440" stroke="#8B949E" stroke-width="1.5"/>
+  <line x1="440" y1="1440" x2="440" y2="1456" stroke="#8B949E" stroke-width="1.5"/>
+  <polygon points="440,1460 435,1452 445,1452" fill="#8B949E"/>
+
+  <!-- setPopupStack box -->
+  <rect x="120" y="1462" width="640" height="34" rx="6" fill="#24292E" stroke="#0084FF" stroke-width="1.5"/>
+  <text x="440" y="1484" fill="#E6EDF3" font-size="13" text-anchor="middle">setPopupStack(prev => [...prev, { path, content, position, anchorBounds }])</text>
+
+  <!-- Arrow -->
+  <line x1="440" y1="1496" x2="440" y2="1520" stroke="#8B949E" stroke-width="1.5"/>
+  <polygon points="440,1524 435,1516 445,1516" fill="#8B949E"/>
+
+  <!-- Rendered result -->
+  <rect x="120" y="1526" width="640" height="34" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="440" y="1548" fill="#E6EDF3" font-size="13" text-anchor="middle">PopupDiagramOverlay rendered with fetched HTML</text>
+
+  <!-- Arrow -->
+  <line x1="440" y1="1560" x2="440" y2="1576" stroke="#8B949E" stroke-width="1.5"/>
+  <polygon points="440,1580 435,1572 445,1572" fill="#8B949E"/>
+
+  <!-- Sub-details -->
+  <rect x="120" y="1582" width="640" height="54" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="440" y="1604" fill="#8B949E" font-size="12" text-anchor="middle">its own useDiagram → its own Scene → its own SceneInput</text>
+  <text x="440" y="1624" fill="#8B949E" font-size="12" text-anchor="middle">fully interactive (zoom, pan, click, tooltips)</text>
+
+</svg>

@@ -1,0 +1,238 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="2650" viewBox="0 0 1200 2650">
+  <defs>
+    <style>
+      text { font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace; }
+      .title { font-size: 18px; font-weight: bold; fill: #E6EDF3; }
+      .subtitle { font-size: 13px; fill: #8B949E; }
+      .section-header { font-size: 15px; font-weight: bold; fill: #E6EDF3; }
+      .box-title { font-size: 14px; font-weight: bold; fill: #E6EDF3; }
+      .box-text { font-size: 12px; fill: #E6EDF3; }
+      .secondary { font-size: 12px; fill: #8B949E; }
+      .id-label { font-size: 12px; font-weight: bold; fill: #0084FF; }
+      .small-label { font-size: 11px; fill: #8B949E; }
+      .arrow-text { font-size: 12px; fill: #E6EDF3; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="2650" fill="#1F2428" rx="0"/>
+
+  <!-- Title -->
+  <text x="40" y="40" class="title">TYPES &amp; DATA MODEL</text>
+  <text x="310" y="40" class="subtitle">— Core shapes that flow through the system</text>
+
+  <!-- ═══ Geometry Primitives ═══ -->
+  <rect x="30" y="70" width="1140" height="36" fill="#24292E" rx="4"/>
+  <line x1="30" y1="106" x2="1170" y2="106" stroke="#0084FF" stroke-width="2"/>
+  <text x="45" y="94" class="section-header">Geometry Primitives</text>
+
+  <!-- Rect box [RC] -->
+  <rect x="40" y="125" width="220" height="160" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="55" y="148" class="box-title">Rect</text>
+  <text x="220" y="148" class="id-label">RC</text>
+  <line x1="40" y1="158" x2="260" y2="158" stroke="#30363D" stroke-width="1"/>
+  <text x="55" y="180" class="box-text">x: number</text>
+  <text x="55" y="200" class="box-text">y: number</text>
+  <text x="55" y="220" class="box-text">width: number</text>
+  <text x="55" y="240" class="box-text">height: number</text>
+
+  <!-- Point box [PT] -->
+  <rect x="290" y="125" width="220" height="120" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="305" y="148" class="box-title">Point</text>
+  <text x="470" y="148" class="id-label">PT</text>
+  <line x1="290" y1="158" x2="510" y2="158" stroke="#30363D" stroke-width="1"/>
+  <text x="305" y="180" class="box-text">x: number</text>
+  <text x="305" y="200" class="box-text">y: number</text>
+
+  <!-- Transform box [TF] -->
+  <rect x="540" y="125" width="380" height="175" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="555" y="148" class="box-title">Transform</text>
+  <text x="870" y="148" class="id-label">TF</text>
+  <line x1="540" y1="158" x2="920" y2="158" stroke="#30363D" stroke-width="1"/>
+  <text x="555" y="180" class="box-text">tx: number</text>
+  <text x="720" y="180" class="secondary">(translateX)</text>
+  <text x="555" y="200" class="box-text">ty: number</text>
+  <text x="720" y="200" class="secondary">(translateY)</text>
+  <text x="555" y="220" class="box-text">scale: number</text>
+  <line x1="555" y1="235" x2="905" y2="235" stroke="#30363D" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="555" y="258" class="secondary">IDENTITY = {0, 0, 1}</text>
+
+  <!-- Transform operations label -->
+  <text x="40" y="330" class="small-label">Transform operations:</text>
+
+  <!-- Transform operations box -->
+  <rect x="40" y="345" width="920" height="120" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="55" y="372" class="box-text">composeTransforms(parent, child)</text>
+  <text x="400" y="372" class="secondary">→  combined transform</text>
+  <text x="880" y="372" class="id-label">CT</text>
+  <text x="55" y="396" class="box-text">transformRect(rect, transform)</text>
+  <text x="400" y="396" class="secondary">→  rect in new coordinate space</text>
+  <text x="880" y="396" class="id-label">XR</text>
+  <text x="55" y="420" class="box-text">rectsIntersect(a, b)</text>
+  <text x="400" y="420" class="secondary">→  AABB overlap test</text>
+  <text x="880" y="420" class="id-label">RI</text>
+  <text x="55" y="444" class="box-text">rectContains(outer, inner)</text>
+  <text x="400" y="444" class="secondary">→  full containment test</text>
+  <text x="880" y="444" class="id-label">RN</text>
+
+  <!-- ═══ Interactive Metadata ═══ -->
+  <rect x="30" y="505" width="1140" height="36" fill="#24292E" rx="4"/>
+  <line x1="30" y1="541" x2="1170" y2="541" stroke="#0084FF" stroke-width="2"/>
+  <text x="45" y="529" class="section-header">Interactive Metadata</text>
+
+  <!-- Column headers -->
+  <text x="55" y="575" class="small-label">SVG data-* attributes</text>
+  <text x="560" y="575" class="small-label">Parsed structures</text>
+  <line x1="55" y1="582" x2="250" y2="582" stroke="#8B949E" stroke-width="1"/>
+  <line x1="560" y1="582" x2="730" y2="582" stroke="#8B949E" stroke-width="1"/>
+
+  <!-- data-* attributes list -->
+  <text x="55" y="610" class="box-text">data-interactive="myFunc"</text>
+  <text x="55" y="632" class="box-text">data-ref="src/foo.ts:10-50"</text>
+  <text x="55" y="654" class="box-text">data-category="function"</text>
+  <text x="55" y="676" class="box-text">data-label="myFunc"</text>
+  <text x="55" y="698" class="box-text">data-tt="src/foo.ts — helper"</text>
+  <text x="55" y="720" class="box-text">data-nav="src/bar.ts:5"</text>
+  <text x="55" y="742" class="box-text">data-modal="detail.html"</text>
+  <text x="55" y="764" class="box-text">data-modal-position="right"</text>
+  <text x="55" y="786" class="box-text">data-link="other.html#elem"</text>
+
+  <!-- Bracket lines connecting attributes to arrow -->
+  <line x1="350" y1="605" x2="370" y2="605" stroke="#8B949E" stroke-width="1"/>
+  <line x1="350" y1="627" x2="370" y2="627" stroke="#8B949E" stroke-width="1"/>
+  <line x1="350" y1="649" x2="370" y2="649" stroke="#8B949E" stroke-width="1"/>
+  <line x1="350" y1="671" x2="370" y2="671" stroke="#8B949E" stroke-width="1"/>
+  <line x1="350" y1="693" x2="370" y2="693" stroke="#8B949E" stroke-width="1"/>
+  <line x1="350" y1="715" x2="370" y2="715" stroke="#8B949E" stroke-width="1"/>
+  <line x1="350" y1="737" x2="370" y2="737" stroke="#8B949E" stroke-width="1"/>
+  <line x1="350" y1="759" x2="370" y2="759" stroke="#8B949E" stroke-width="1"/>
+  <line x1="350" y1="781" x2="370" y2="781" stroke="#8B949E" stroke-width="1"/>
+  <!-- Vertical bracket line -->
+  <line x1="370" y1="605" x2="370" y2="781" stroke="#8B949E" stroke-width="1"/>
+
+  <!-- Arrow -->
+  <line x1="370" y1="693" x2="470" y2="693" stroke="#0084FF" stroke-width="2"/>
+  <polygon points="470,688 480,693 470,698" fill="#0084FF"/>
+
+  <!-- InteractiveData box [ID] -->
+  <rect x="490" y="590" width="540" height="260" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="505" y="615" class="box-title">InteractiveData</text>
+  <text x="970" y="615" class="id-label">ID</text>
+  <line x1="490" y1="625" x2="1030" y2="625" stroke="#30363D" stroke-width="1"/>
+  <text x="505" y="650" class="box-text">ref: "src/foo.ts:10-50"</text>
+  <text x="505" y="672" class="box-text">parsedRef: ParsedRef</text>
+  <text x="505" y="694" class="box-text">category: "function"</text>
+  <text x="505" y="716" class="box-text">label: "myFunc"</text>
+  <text x="505" y="738" class="box-text">tooltip: "src/foo.ts — helper"</text>
+  <text x="505" y="760" class="box-text">navTarget: ParsedRef (nav or ref)</text>
+  <text x="505" y="782" class="box-text">modal: DiagramModal | null</text>
+  <text x="505" y="804" class="box-text">link: DiagramLink | null</text>
+
+  <!-- ParsedRef box [PR] -->
+  <rect x="40" y="870" width="370" height="120" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="55" y="895" class="box-title">ParsedRef</text>
+  <text x="360" y="895" class="id-label">PR</text>
+  <line x1="40" y1="905" x2="410" y2="905" stroke="#30363D" stroke-width="1"/>
+  <text x="55" y="930" class="box-text">filePath: string</text>
+  <text x="55" y="952" class="box-text">startLine: number</text>
+  <text x="55" y="974" class="box-text">endLine: number | null</text>
+
+  <!-- InteractiveCategory box [IC] -->
+  <rect x="450" y="870" width="480" height="120" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="465" y="895" class="box-title">InteractiveCategory</text>
+  <text x="870" y="895" class="id-label">IC</text>
+  <line x1="450" y1="905" x2="930" y2="905" stroke="#30363D" stroke-width="1"/>
+  <text x="465" y="930" class="box-text">"module" | "function" | "type"</text>
+  <text x="465" y="952" class="box-text">"data"   | "flow"     | "call"</text>
+  <text x="465" y="974" class="box-text">"concept" | "annotation"</text>
+
+  <!-- ═══ Navigation Targets ═══ -->
+  <rect x="30" y="1030" width="1140" height="36" fill="#24292E" rx="4"/>
+  <line x1="30" y1="1066" x2="1170" y2="1066" stroke="#0084FF" stroke-width="2"/>
+  <text x="45" y="1054" class="section-header">Navigation Targets</text>
+
+  <!-- DiagramModal box [DM] -->
+  <rect x="40" y="1085" width="545" height="290" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="55" y="1110" class="box-title">DiagramModal</text>
+  <text x="525" y="1110" class="id-label">DM</text>
+  <line x1="40" y1="1120" x2="585" y2="1120" stroke="#30363D" stroke-width="1"/>
+  <text x="55" y="1148" class="box-text">source:</text>
+  <text x="75" y="1170" class="box-text">elementId: string</text>
+  <text x="75" y="1192" class="box-text">ref: string | null</text>
+  <line x1="55" y1="1210" x2="570" y2="1210" stroke="#30363D" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="55" y="1235" class="box-text">target:</text>
+  <text x="75" y="1257" class="box-text">path: string</text>
+  <text x="210" y="1257" class="secondary">(relative to diagram dir)</text>
+  <text x="75" y="1279" class="box-text">position: OverlayPosition</text>
+  <text x="95" y="1301" class="secondary">"above-left" | "above-right"</text>
+  <text x="95" y="1321" class="secondary">"below-left" | "below-right"</text>
+  <text x="95" y="1341" class="secondary">"left" | "right" | "auto"</text>
+
+  <!-- DiagramLink box [DK] -->
+  <rect x="615" y="1085" width="540" height="260" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="630" y="1110" class="box-title">DiagramLink</text>
+  <text x="1095" y="1110" class="id-label">DK</text>
+  <line x1="615" y1="1120" x2="1155" y2="1120" stroke="#30363D" stroke-width="1"/>
+  <text x="630" y="1148" class="box-text">source:</text>
+  <text x="650" y="1170" class="box-text">elementId: string</text>
+  <text x="650" y="1192" class="box-text">ref: string | null</text>
+  <line x1="630" y1="1210" x2="1140" y2="1210" stroke="#30363D" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="630" y="1235" class="box-text">target:</text>
+  <text x="650" y="1257" class="box-text">path: string</text>
+  <text x="650" y="1279" class="box-text">elementId: string | null</text>
+  <line x1="630" y1="1297" x2="1140" y2="1297" stroke="#30363D" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="630" y="1318" class="secondary">Parsed from: "path.html#elementId"</text>
+  <text x="630" y="1338" class="secondary">or just: "path.html"</text>
+
+  <!-- ═══ Overlay Badges ═══ -->
+  <rect x="30" y="1415" width="1140" height="36" fill="#24292E" rx="4"/>
+  <line x1="30" y1="1451" x2="1170" y2="1451" stroke="#0084FF" stroke-width="2"/>
+  <text x="45" y="1439" class="section-header">Overlay Badges</text>
+
+  <!-- OverlayBadge box [OB] -->
+  <rect x="40" y="1470" width="1090" height="160" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6"/>
+  <text x="55" y="1495" class="box-title">OverlayBadge</text>
+  <text x="1070" y="1495" class="id-label">OB</text>
+  <line x1="40" y1="1505" x2="1130" y2="1505" stroke="#30363D" stroke-width="1"/>
+  <text x="55" y="1530" class="box-text">id: string</text>
+  <text x="55" y="1552" class="box-text">anchor: BadgeAnchor</text>
+  <text x="55" y="1574" class="box-text">text: string</text>
+  <text x="250" y="1574" class="secondary">(emoji or symbol, e.g. "&#x2B21;", "&#x2192;", "&#x1F4CC;")</text>
+  <text x="55" y="1596" class="box-text">onClick: () =&gt; void</text>
+  <text x="55" y="1618" class="box-text">style?: { color, background, borderColor }</text>
+
+  <!-- BadgeAnchor label -->
+  <text x="40" y="1665" class="box-text">BadgeAnchor (discriminated union)</text>
+  <text x="395" y="1665" class="id-label">BA</text>
+
+  <!-- BadgeAnchor table -->
+  <!-- Header row area / outer border -->
+  <rect x="40" y="1680" width="1090" height="150" fill="none" stroke="#30363D" stroke-width="1" rx="6"/>
+
+  <!-- Row 1: screen -->
+  <rect x="40" y="1680" width="280" height="50" fill="#24292E" stroke="#30363D" stroke-width="1" rx="6" ry="0"/>
+  <rect x="320" y="1680" width="810" height="50" fill="#24292E" stroke="#30363D" stroke-width="1" rx="0"/>
+  <!-- Fix top-right corner -->
+  <rect x="1124" y="1680" width="6" height="6" fill="#24292E"/>
+  <text x="55" y="1712" class="box-text">{ space: "screen" }</text>
+  <text x="335" y="1712" class="secondary">Fixed screen position. x, y in pixels.</text>
+
+  <!-- Row 2: scene -->
+  <rect x="40" y="1730" width="280" height="50" fill="#24292E" stroke="#30363D" stroke-width="1"/>
+  <rect x="320" y="1730" width="810" height="50" fill="#24292E" stroke="#30363D" stroke-width="1"/>
+  <text x="55" y="1762" class="box-text">{ space: "scene" }</text>
+  <text x="335" y="1762" class="secondary">Tracks with pan/zoom. x, y in scene coords.</text>
+
+  <!-- Row 3: element -->
+  <rect x="40" y="1780" width="280" height="50" fill="#24292E" stroke="#30363D" stroke-width="1" rx="0" ry="0"/>
+  <rect x="320" y="1780" width="810" height="50" fill="#24292E" stroke="#30363D" stroke-width="1" rx="0"/>
+  <!-- Fix bottom corners -->
+  <rect x="40" y="1824" width="6" height="6" fill="#24292E"/>
+  <rect x="1124" y="1824" width="6" height="6" fill="#24292E"/>
+  <text x="55" y="1805" class="box-text">{ space: "element" }</text>
+  <text x="335" y="1800" class="secondary">Attached to element corner.</text>
+  <text x="335" y="1820" class="secondary">elementId + corner (center, top-right, etc.)</text>
+
+  <!-- Outer rounded border for table (drawn on top) -->
+  <rect x="40" y="1680" width="1090" height="150" fill="none" stroke="#30363D" stroke-width="1" rx="6"/>
+</svg>

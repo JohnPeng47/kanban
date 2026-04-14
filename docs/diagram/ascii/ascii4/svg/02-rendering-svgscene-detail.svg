@@ -1,0 +1,210 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1810" viewBox="0 0 1100 1810">
+  <defs>
+    <style>
+      text { font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', 'Consolas', monospace; }
+      .title { font-size: 15px; font-weight: 700; fill: #E6EDF3; }
+      .subtitle { font-size: 12px; fill: #8B949E; }
+      .section-label { font-size: 13px; font-weight: 700; fill: #E6EDF3; }
+      .field-name { font-size: 12px; fill: #E6EDF3; }
+      .field-type { font-size: 12px; fill: #8B949E; }
+      .field-desc { font-size: 11px; fill: #6E7681; }
+      .body-text { font-size: 12px; fill: #E6EDF3; }
+      .body-dim { font-size: 12px; fill: #8B949E; }
+      .id-label { font-size: 12px; font-weight: 700; fill: #0084FF; }
+      .inner-text { font-size: 11.5px; fill: #E6EDF3; }
+      .inner-dim { font-size: 11.5px; fill: #8B949E; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="1810" rx="0" fill="#1F2428"/>
+
+  <!-- Title -->
+  <text x="550" y="32" text-anchor="middle" class="title">SvgScene IMPLEMENTATION DETAIL</text>
+  <text x="550" y="50" text-anchor="middle" class="subtitle">(modal expansion of 02-rendering.txt)</text>
+
+  <!-- Outer SvgScene box -->
+  <rect x="30" y="65" width="1040" height="1715" rx="6" fill="#24292E" stroke="#30363D" stroke-width="1.5"/>
+  <text x="52" y="88" class="title">SvgScene</text>
+  <text x="1038" y="88" text-anchor="end" class="id-label">[SS]</text>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Private State                                       -->
+  <!-- ============================================================ -->
+  <rect x="52" y="105" width="996" height="185" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+  <text x="72" y="128" class="section-label">Private State</text>
+
+  <!-- Field rows: name, type, description -->
+  <!-- svg -->
+  <text x="72" y="152" class="field-name">svg:</text>
+  <text x="232" y="152" class="field-type">SVGSVGElement</text>
+  <text x="540" y="152" class="field-desc">&#x2190; the root &lt;svg&gt;</text>
+  <!-- elements -->
+  <text x="72" y="172" class="field-name">elements:</text>
+  <text x="232" y="172" class="field-type">Map&lt;string, SceneElement&gt;</text>
+  <text x="540" y="172" class="field-desc">&#x2190; id &#x2192; node (full scene graph)</text>
+  <!-- domElements -->
+  <text x="72" y="192" class="field-name">domElements:</text>
+  <text x="232" y="192" class="field-type">Map&lt;string, SVGGElement&gt;</text>
+  <text x="540" y="192" class="field-desc">&#x2190; id &#x2192; DOM &lt;g&gt; backlink</text>
+  <!-- visualRects -->
+  <text x="72" y="212" class="field-name">visualRects:</text>
+  <text x="232" y="212" class="field-type">Map&lt;string, SVGRectElement&gt;</text>
+  <text x="540" y="212" class="field-desc">&#x2190; id &#x2192; first child &lt;rect&gt; (border)</text>
+  <!-- worldBoundsCache -->
+  <text x="72" y="232" class="field-name">worldBoundsCache:</text>
+  <text x="232" y="232" class="field-type">Map&lt;string, Rect&gt;</text>
+  <text x="540" y="232" class="field-desc">&#x2190; lazy, invalidated on transform &#x394;</text>
+  <!-- rootId -->
+  <text x="72" y="252" class="field-name">rootId:</text>
+  <text x="232" y="252" class="field-type">"root"</text>
+  <text x="540" y="252" class="field-desc">&#x2190; synthetic root node</text>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: buildElementTree                                    -->
+  <!-- ============================================================ -->
+  <!-- Section divider line -->
+  <line x1="52" y1="320" x2="1018" y2="320" stroke="#444C56" stroke-width="2"/>
+  <rect x="52" y="310" width="280" height="20" fill="#24292E"/>
+  <text x="62" y="325" class="section-label">buildElementTree</text>
+  <text x="300" y="325" class="id-label">[BT]</text>
+
+  <!-- Step 1 -->
+  <text x="72" y="358" class="body-text">1. Query:</text>
+  <text x="140" y="358" class="body-dim">svg.querySelectorAll("[data-reflow-group], [data-interactive], [data-arrow]")</text>
+
+  <!-- Step 2 -->
+  <text x="72" y="388" class="body-text">2. Create root SceneElement</text>
+  <text x="300" y="388" class="body-dim">(id="root", bounds = svg width x height)</text>
+
+  <!-- Step 3 -->
+  <text x="72" y="418" class="body-text">3. For each tagged &lt;g&gt;:</text>
+
+  <!-- Inner box: per-element processing -->
+  <rect x="90" y="432" width="910" height="340" rx="6" fill="#1F2428" stroke="#30363D" stroke-width="1"/>
+
+  <!-- resolveElementId -->
+  <text x="110" y="458" class="inner-text">resolveElementId(g)</text>
+  <text x="320" y="458" class="id-label">[RI]</text>
+  <text x="345" y="458" class="inner-dim">:</text>
+  <text x="120" y="478" class="inner-dim">data-reflow-group &#x2192; use its value</text>
+  <text x="120" y="496" class="inner-dim">data-interactive  &#x2192; use its value</text>
+  <text x="120" y="514" class="inner-dim">data-arrow        &#x2192; "arrow-{counter++}"</text>
+
+  <!-- readMetadata / findVisualRect -->
+  <text x="110" y="544" class="inner-text">readMetadata(g)</text>
+  <text x="280" y="544" class="inner-dim">&#x2192; all data-* attrs as Record&lt;string,string&gt;</text>
+  <text x="110" y="564" class="inner-text">findVisualRect(g)</text>
+  <text x="290" y="564" class="inner-dim">&#x2192; first child &lt;rect&gt; or null</text>
+
+  <!-- Parent resolution -->
+  <text x="110" y="596" class="inner-text">Parent resolution:</text>
+  <text x="270" y="596" class="inner-dim">walk DOM ancestors until</text>
+  <text x="120" y="616" class="inner-dim">another tagged &lt;g&gt; is found &#x2192; parentId</text>
+  <text x="120" y="636" class="inner-dim">or svg is reached &#x2192; parentId = "root"</text>
+
+  <!-- Roles -->
+  <text x="110" y="668" class="inner-text">Roles parsed from metadata:</text>
+  <text x="120" y="690" class="inner-dim">interactive = parseInteractiveData(id, metadata)</text>
+  <text x="605" y="690" class="id-label">[PI]</text>
+  <text x="120" y="710" class="inner-dim">reflow = has reflow-group or arrow? &#x2192; { originalBounds }</text>
+
+  <!-- Separator line below inner box  -->
+  <text x="110" y="750" class="body-dim"></text>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Bounds Computation                                  -->
+  <!-- ============================================================ -->
+  <line x1="52" y1="800" x2="1018" y2="800" stroke="#444C56" stroke-width="2"/>
+  <rect x="52" y="790" width="260" height="20" fill="#24292E"/>
+  <text x="62" y="805" class="section-label">Bounds Computation</text>
+
+  <!-- getLocalBounds -->
+  <text x="72" y="838" class="body-text">getLocalBounds(id)</text>
+  <text x="260" y="838" class="body-dim">&#x2192; element.localBounds  (from getBBox at construction)</text>
+
+  <!-- getWorldBounds -->
+  <text x="72" y="872" class="body-text">getWorldBounds(id)</text>
+  <text x="274" y="872" class="id-label">[WB]</text>
+  <text x="300" y="872" class="body-dim">:</text>
+  <text x="90" y="894" class="body-dim">cached? &#x2192; return</text>
+  <text x="90" y="914" class="body-dim">else: getAncestorTransform(id) &#x2192; compose parent chain (skip root)</text>
+  <text x="130" y="934" class="body-dim">transformRect(localBounds, ancestorTransform)</text>
+  <text x="130" y="954" class="body-dim">cache result</text>
+
+  <!-- composeTransforms -->
+  <text x="72" y="990" class="body-text">composeTransforms(parent, child)</text>
+  <text x="370" y="990" class="id-label">[CT]</text>
+  <text x="395" y="990" class="body-dim">:</text>
+  <text x="90" y="1012" class="body-dim">tx = parent.tx + child.tx * parent.scale</text>
+  <text x="90" y="1032" class="body-dim">ty = parent.ty + child.ty * parent.scale</text>
+  <text x="90" y="1052" class="body-dim">scale = parent.scale * child.scale</text>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Transforms                                          -->
+  <!-- ============================================================ -->
+  <line x1="52" y1="1090" x2="1018" y2="1090" stroke="#444C56" stroke-width="2"/>
+  <rect x="52" y="1080" width="180" height="20" fill="#24292E"/>
+  <text x="62" y="1095" class="section-label">Transforms</text>
+
+  <!-- setTransform -->
+  <text x="72" y="1128" class="body-text">setTransform(id, t)</text>
+  <text x="270" y="1128" class="id-label">[ST]</text>
+  <text x="295" y="1128" class="body-dim">:</text>
+  <text x="90" y="1150" class="body-dim">element.transform = t</text>
+  <text x="90" y="1170" class="body-dim">invalidateWorldBoundsCache(id)</text>
+  <text x="380" y="1170" class="field-desc">&#x2190; recursive: clears id + all descendants</text>
+  <text x="90" y="1190" class="body-dim">if id != root:</text>
+  <text x="110" y="1210" class="body-dim">domElement.style.transform = translate(tx,ty)</text>
+  <text x="530" y="1210" class="field-desc">&#x2190; CSS displacement</text>
+  <text x="90" y="1230" class="body-dim">(root transform is managed by Viewport's transformDiv)</text>
+
+  <!-- getWorldTransform -->
+  <text x="72" y="1268" class="body-text">getWorldTransform(id):</text>
+  <text x="90" y="1290" class="body-dim">walk parent chain &#x2192; collect all transforms &#x2192; composeTransforms in order</text>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Hit Testing                                         -->
+  <!-- ============================================================ -->
+  <line x1="52" y1="1330" x2="1018" y2="1330" stroke="#444C56" stroke-width="2"/>
+  <rect x="52" y="1320" width="180" height="20" fill="#24292E"/>
+  <text x="62" y="1335" class="section-label">Hit Testing</text>
+
+  <!-- hitTest -->
+  <text x="72" y="1368" class="body-text">hitTest(screenPt)</text>
+  <text x="240" y="1368" class="id-label">[HT]</text>
+  <text x="265" y="1368" class="body-dim">:</text>
+  <text x="90" y="1390" class="body-dim">document.elementFromPoint(x, y)</text>
+  <text x="90" y="1412" class="body-dim">&#x251C;&#x2500; not in our svg? &#x2192; null</text>
+  <text x="90" y="1434" class="body-dim">&#x2514;&#x2500; .closest("[data-reflow-group], [data-interactive], [data-arrow]")</text>
+  <text x="110" y="1454" class="body-dim">match against domElements map &#x2192; return id</text>
+
+  <!-- hitTestRect -->
+  <text x="72" y="1492" class="body-text">hitTestRect(sceneRect, mode)</text>
+  <text x="340" y="1492" class="id-label">[HR]</text>
+  <text x="365" y="1492" class="body-dim">:</text>
+  <text x="90" y="1514" class="body-dim">for each element with .interactive:</text>
+  <text x="110" y="1536" class="body-dim">getWorldBounds(id) &#x2192; test intersection/containment</text>
+  <text x="110" y="1558" class="body-dim">mode "intersect": rectsIntersect(sceneRect, worldBounds)</text>
+  <text x="110" y="1578" class="body-dim">mode "contain":   rectContains(sceneRect, worldBounds)</text>
+
+  <!-- ============================================================ -->
+  <!-- SECTION: Dynamic Mutations                                   -->
+  <!-- ============================================================ -->
+  <line x1="52" y1="1620" x2="1018" y2="1620" stroke="#444C56" stroke-width="2"/>
+  <rect x="52" y="1610" width="240" height="20" fill="#24292E"/>
+  <text x="62" y="1625" class="section-label">Dynamic Mutations</text>
+
+  <text x="72" y="1660" class="body-text">addElement(id, domNode, parentId)</text>
+  <text x="410" y="1660" class="body-dim">&#x2192; create SceneElement, link to parent</text>
+
+  <text x="72" y="1688" class="body-text">removeElement(id)</text>
+  <text x="410" y="1688" class="body-dim">&#x2192; recursive: remove descendants, unlink from parent</text>
+
+  <text x="72" y="1716" class="body-text">addSubtree(rootDomNode, parentId)</text>
+  <text x="410" y="1716" class="body-dim">&#x2192; querySelectorAll in subtree, resolve parents, batch add</text>
+
+  <text x="72" y="1744" class="body-text">growVisualBounds(id, dw, dh)</text>
+  <text x="410" y="1744" class="body-dim">&#x2192; resize SVGRectElement + update localBounds</text>
+
+</svg>

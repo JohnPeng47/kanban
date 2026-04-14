@@ -6,7 +6,7 @@ RENDERING PIPELINE — Scene, Viewport, OverLayer
 ** 04-types-and-data-model.txt        (Transform, Rect, composeTransforms, transformRect)
 
 
-  useDiagram(html) [UD]
+  useDiagram(html) [EUD]
        │
        ▼
   DOMParser → <svg> → body.appendChild (temp, for getBBox)
@@ -14,24 +14,24 @@ RENDERING PIPELINE — Scene, Viewport, OverLayer
        ▼
   ┌─ new SvgScene(svg) ───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
   │                                                                                                                                   │
-  │  1. Remove viewBox, set w/h 1:1 [SI]          2. injectInteractionStyles [SY]           3. buildElementTree [BT]                  │
+  │  1. Remove viewBox, set w/h 1:1 [ESI]         2. injectInteractionStyles [ESY]          3. buildElementTree [EBT]                 │
   │                                                   ┌──────────────────────────────┐          querySelectorAll(SELECTOR)             │
   │                                                   │ [data-interactive] → pointer  │          resolveId → readMetadata              │
   │                                                   │ .selected > rect  → blue glow│          → findVisualRect → walk parents       │
   │                                                   │ [data-modal]      → purple ╌╌│          → getBBox → parseInteractive           │
   │                                                   │ [data-link]       → gold ╌╌  │                                                │
   │                                                   └──────────────────────────────┘     see modal: 02-rendering-svgscene-detail.txt │
-  │                                                                                                                               SS  │
+  │                                                                                                                              ESS  │
   └─────────────────────────────┬─────────────────────────────────────────────────────────────────────────┬────────────────────────────┘
                                 │                                                                         │
        body.removeChild(svg)    │ returns Scene                                                           │ populates
                                 │                                                                         │
   ┌─────────────────────────────┼─────────────────────────────────────────────────────────────────────────┼────────────────────────────┐
-  │                             │           Scene (interface) [SC]                                        │                            │
+  │                             │           Scene (interface) [ESC]                                       │                            │
   │                             │                                                                         │                            │
   │  Element Tree               │     Bounds                     Transforms                  Hit Testing  │                            │
   │  ─────────────              │     ──────                     ──────────                  ─────────── │                            │
-  │  getRoot()                  │     getLocalBounds(id)          setTransform(id, t)         hitTest() [HT]                          │
+  │  getRoot()                  │     getLocalBounds(id)          setTransform(id, t)        hitTest() [EHT]                          │
   │  getElement(id)             │     getWorldBounds(id) ─────┐  getTransform(id)            hitTestRect()                            │
   │  getAllElements()           │       (cached) ◄────────────┤  getWorldTransform(id)                   │                            │
   │  getChildren(id)            │                  invalidate ▲                                           │                            │
@@ -40,7 +40,7 @@ RENDERING PIPELINE — Scene, Viewport, OverLayer
   │  growVisualBounds()         │                             │                       │                   │                            │
   │  addElement()               │                             │                       │                   │                            │
   │  removeElement()            │                             │                       │                   │                            │
-  │  addSubtree()           SC  │                             │                       │                   │                            │
+  │  addSubtree()          ESC  │                             │                       │                   │                            │
   └─────────────────────────────┼─────────────────────────────┼───────────────────────┼───────────────────┼────────────────────────────┘
                                 │                             │                       │                   │
           ┌─────────────────────┘                             │                       │                   │
@@ -58,29 +58,29 @@ RENDERING PIPELINE — Scene, Viewport, OverLayer
           │  │  │  navTarget, modal, link                │    ** 03-interaction.txt  ** 04-types-and-data-model.txt    │                   │                         │  │
           │  │  └───────────────────────────────────────┘                             │                   │                         │  │
           │  │  reflow: ReflowState | null  { originalBounds }                        │                   │                         │  │
-          │  │                                                                    SE  │                   │                         │  │
+          │  │                                                                   ESE  │                   │                         │  │
           │  └────────────────────────────────────────────────────────────────────────┼───────────────────┼─────────────────────────┘  │
           │                                                                           │                   │                            │
           │                                                                           │                   │                            │
   ┌───────┼───────────────────────────────────────────────────────────────────────────┼───────────────────┼────────────────────────────┐
-  │       │   Viewport (container div, overflow:hidden, touch-none) [VP]              │                   │                            │
+  │       │   Viewport (container div, overflow:hidden, touch-none) [EVP]             │                   │                            │
   │       │                                                                           │                   │                            │
-  │       │   ┌─ transformDiv (origin:0 0, will-change:transform) [TD] ──────────┐    │                   │                            │
+  │       │   ┌─ transformDiv (origin:0 0, will-change:transform) [ETD] ─────────┐    │                   │                            │
   │       │   │                                                                  │    │                   │                            │
   │       │   │  CSS: translate({tx}px,{ty}px) scale({scale})                    │    │                   │                            │
   │       │   │                                                                  │    │                   │                            │
   │       │   │  ┌─ SVG element ──────────────────────────────────────────────┐  │    │                   │                            │
-  │       │   │  │  mounted via useEffect: transformDiv.appendChild(svg) [SV] │  │    │                   │                            │
+  │       │   │  │  mounted via useEffect: transformDiv.appendChild(svg) [ESV]│  │    │                   │                            │
   │       │   │  │  ◄─────────────── scene.getSvgElement() ──────────────────┘  │    │                   │                            │
   │       │   │  └────────────────────────────────────────────────────────────┘  │    │                   │                            │
   │       │   └──────────────────────────────────────────────────────────────────┘    │                   │                            │
   │       │                                                                           │                   │                            │
-  │       │   ┌─ OverLayer (z:10, absolute inset-0) [OL] ───────────────────────┐    │                   │                            │
+  │       │   ┌─ OverLayer (z:10, absolute inset-0) [EOL] ────────────────────┐    │                   │                            │
   │       │   │                                                                  │    │                   │                            │
   │       │   │  Props: badges[], scene, transformRef ◄── shared ────────────────┼────┘                   │                            │
   │       │   │                                                                  │                        │                            │
-  │       │   │  rAF loop [RF]: every frame read transformRef                    │                        │                            │
-  │       │   │    → resolveAnchor(anchor, t, scene) [BA]                        │                        │                            │
+  │       │   │  rAF loop [ERF]: every frame read transformRef                   │                        │                            │
+  │       │   │    → resolveAnchor(anchor, t, scene) [EBA]                       │                        │                            │
   │       │   │    → dom.style.left/top  (no React re-render)                    │                        │                            │
   │       │   │                                                                  │     badge.anchor uses  │                            │
   │       │   │  ┌──────────┬─────────────────────────────────────────────────┐  │     getWorldBounds ────┘                            │
@@ -96,9 +96,9 @@ RENDERING PIPELINE — Scene, Viewport, OverLayer
   │       │   │  border-accent, bg-accent/8    │                                                                                      │
   │       │   └────────────────────────────────┘                                                                                      │
   │       │                                                                                                                            │
-  │       │   Transform [TF]: { tx, ty, scale }                                                                                       │
+  │       │   Transform [ETF]: { tx, ty, scale }                                                                                      │
   │       │                                                                                                                            │
-  │       │   screenToScene(screenPt) [S2]                         sceneToScreen(scenePt)                                              │
+  │       │   screenToScene(screenPt) [ES2]                       sceneToScreen(scenePt)                                              │
   │       │     x = (screen.x - rect.left - tx) / scale             sx = pt.x * scale + tx                                            │
   │       │     y = (screen.y - rect.top  - ty) / scale             sy = pt.y * scale + ty                                            │
   │       │                                                                                                                            │
@@ -108,111 +108,112 @@ RENDERING PIPELINE — Scene, Viewport, OverLayer
   │       │                                                                                                       │                    │
   │       │   Gestures:                                                                                    (cache │coherence)          │
   │       │   ┌────────────────────┬──────────────────────────────────────────────────────────┐             │                    │
-  │       │   │  Wheel zoom [WZ]   │  delta → newScale (0.1..5), pivot at cursor             │             │                    │
+  │       │   │  Wheel zoom [EWZ]  │  delta → newScale (0.1..5), pivot at cursor             │             │                    │
   │       │   ├────────────────────┼──────────────────────────────────────────────────────────┤             │                    │
-  │       │   │  Drag pan [DP]     │  tx = start.tx + dx, ty = start.ty + dy (4px threshold) │  all call   │                    │
+  │       │   │  Drag pan [EDP]    │  tx = start.tx + dx, ty = start.ty + dy (4px threshold) │  all call   │                    │
   │       │   ├────────────────────┼──────────────────────────────────────────────────────────┤  apply +    │                    │
-  │       │   │  Pinch zoom [PZ]   │  dist ratio → scale, midpoint → pan offset              │  syncRoot ──┘                    │
+  │       │   │  Pinch zoom [EPZ]  │  dist ratio → scale, midpoint → pan offset              │  syncRoot ──┘                    │
   │       │   ├────────────────────┼──────────────────────────────────────────────────────────┤                                  │
-  │       │   │  Ctrl+drag [SD]    │  screen rect → overlay, scene rect → onSelectionDrag    │                                  │
+  │       │   │  Ctrl+drag [ESD]   │  screen rect → overlay, scene rect → onSelectionDrag    │                                  │
   │       │   ├────────────────────┼──────────────────────────────────────────────────────────┤                                  │
-  │       │   │  centerOn [CO]     │  tx = w/2 - pt.x*s, ty = h/2 - pt.y*s (220ms animate)  │                                  │
-  │       │   └────────────────────┴──────────────────────────────────────────────────────────┘                              VP  │
+  │       │   │  centerOn [ECO]    │  tx = w/2 - pt.x*s, ty = h/2 - pt.y*s (220ms animate)  │                                  │
+  │       │   └────────────────────┴──────────────────────────────────────────────────────────┘                             EVP  │
   └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ```code-refs
-UD  web-ui/src/diagram/use-diagram.ts:8-52                           useDiagram: HTML→SvgScene lifecycle
-SC  web-ui/src/diagram/rendering/scene.ts:47-94                      Scene interface (element tree, bounds, hit test)
-SE  web-ui/src/diagram/rendering/scene.ts:10-44                      SceneElement: universal node structure
-SS  web-ui/src/diagram/rendering/svg-scene.ts:52-521                 SvgScene class: full Scene implementation
-SI  web-ui/src/diagram/rendering/svg-scene.ts:60-74                  constructor: viewBox removal, 1:1 setup
-SY  web-ui/src/diagram/rendering/svg-scene.ts:82-124                 injectInteractionStyles: CSS for hover/select/modal/link
-BT  web-ui/src/diagram/rendering/svg-scene.ts:126-206                buildElementTree: querySelectorAll tagged <g>s
-HT  web-ui/src/diagram/rendering/svg-scene.ts:347-358                hitTest: elementFromPoint → closest [data-interactive]
-VP  web-ui/src/diagram/rendering/viewport.tsx:48-463                 Viewport component: pan/zoom/selection container
-TF  web-ui/src/diagram/types.ts:17-22                                Transform type: { tx, ty, scale }
-S2  web-ui/src/diagram/rendering/viewport.tsx:98-107                 screenToScene coordinate conversion
-WZ  web-ui/src/diagram/rendering/viewport.tsx:151-176                Wheel zoom handler
-DP  web-ui/src/diagram/rendering/viewport.tsx:235-334                Drag pan / selection lasso in onPointerMove
-PZ  web-ui/src/diagram/rendering/viewport.tsx:243-279                Pinch-to-zoom (2-finger touch)
-SD  web-ui/src/diagram/rendering/viewport.tsx:295-320                Ctrl+drag selection lasso
-CO  web-ui/src/diagram/rendering/viewport.tsx:118-148                centerOn imperative method
-OL  web-ui/src/diagram/rendering/over-layer.tsx:64-127               OverLayer component: rAF badge rendering
-RF  web-ui/src/diagram/rendering/over-layer.tsx:68-89                rAF sync loop: transform → badge positions
-BA  web-ui/src/diagram/rendering/over-layer.tsx:6-52                 resolveAnchor: screen/scene/element → px
-TD  web-ui/src/diagram/rendering/viewport.tsx:428                    transformDiv: CSS transform carrier
-SV  web-ui/src/diagram/rendering/viewport.tsx:77-88                  SVG mount/unmount into transformDiv
+CUD  web-ui/src/diagram/use-diagram.ts:8-52                           useDiagram: HTML→SvgScene lifecycle
+CSC  web-ui/src/diagram/rendering/scene.ts:47-94                      Scene interface (element tree, bounds, hit test)
+CSE  web-ui/src/diagram/rendering/scene.ts:10-44                      SceneElement: universal node structure
+CSS  web-ui/src/diagram/rendering/svg-scene.ts:52-521                 SvgScene class: full Scene implementation
+CSI  web-ui/src/diagram/rendering/svg-scene.ts:60-74                  constructor: viewBox removal, 1:1 setup
+CSY  web-ui/src/diagram/rendering/svg-scene.ts:82-124                 injectInteractionStyles: CSS for hover/select/modal/link
+CBT  web-ui/src/diagram/rendering/svg-scene.ts:126-206                buildElementTree: querySelectorAll tagged <g>s
+CHT  web-ui/src/diagram/rendering/svg-scene.ts:347-358                hitTest: elementFromPoint → closest [data-interactive]
+CVP  web-ui/src/diagram/rendering/viewport.tsx:48-463                 Viewport component: pan/zoom/selection container
+CTF  web-ui/src/diagram/types.ts:17-22                                Transform type: { tx, ty, scale }
+CS2  web-ui/src/diagram/rendering/viewport.tsx:98-107                 screenToScene coordinate conversion
+CWZ  web-ui/src/diagram/rendering/viewport.tsx:151-176                Wheel zoom handler
+CDP  web-ui/src/diagram/rendering/viewport.tsx:235-334                Drag pan / selection lasso in onPointerMove
+CPZ  web-ui/src/diagram/rendering/viewport.tsx:243-279                Pinch-to-zoom (2-finger touch)
+CSD  web-ui/src/diagram/rendering/viewport.tsx:295-320                Ctrl+drag selection lasso
+CCO  web-ui/src/diagram/rendering/viewport.tsx:118-148                centerOn imperative method
+COL  web-ui/src/diagram/rendering/over-layer.tsx:64-127               OverLayer component: rAF badge rendering
+CRF  web-ui/src/diagram/rendering/over-layer.tsx:68-89                rAF sync loop: transform → badge positions
+CBA  web-ui/src/diagram/rendering/over-layer.tsx:6-52                 resolveAnchor: screen/scene/element → px
+CTD  web-ui/src/diagram/rendering/viewport.tsx:428                    transformDiv: CSS transform carrier
+CSV  web-ui/src/diagram/rendering/viewport.tsx:77-88                  SVG mount/unmount into transformDiv
 ```
 
 ```entities
-# name                  id_type  id    description
+# name                  id_type  id     description
 
 # Construction
-use-diagram             text     UD    useDiagram hook entry point
-svg-scene               box      SS    SvgScene constructor + steps
-  viewbox-removal       text     SI    Step 1: viewBox removal
-  inject-styles         text     SY    Step 2: CSS injection
-  build-tree            text     BT    Step 3: element tree construction
+use-diagram             text     EUD    useDiagram hook entry point
+svg-scene               box      ESS    SvgScene constructor + steps
+  viewbox-removal       text     ESI    Step 1: viewBox removal
+  inject-styles         text     ESY    Step 2: CSS injection
+  build-tree            text     EBT    Step 3: element tree construction
 
 # Scene interface
-scene-interface         box      SC    Scene interface (all method groups)
-  hit-test              text     HT    hitTest(screenPoint)
+scene-interface         box      ESC    Scene interface (all method groups)
+  hit-test              text     EHT    hitTest(screenPoint)
 
 # SceneElement
-scene-element           box      SE    SceneElement universal node
+scene-element           box      ESE    SceneElement universal node
 
 # Viewport
-viewport                box      VP    Viewport container div
-  transform-div         box      TD    transformDiv (CSS transform carrier)
-  svg-mount             box      SV    SVG element mount
-  over-layer            box      OL    OverLayer badge rendering
-    raf-loop            text     RF    rAF sync loop
-    resolve-anchor      text     BA    resolveAnchor dispatch
-  transform-type        text     TF    Transform { tx, ty, scale }
-  screen-to-scene       text     S2    screenToScene conversion
-  wheel-zoom            text     WZ    Wheel zoom gesture
-  drag-pan              text     DP    Drag pan gesture
-  pinch-zoom            text     PZ    Pinch-to-zoom gesture
-  ctrl-drag             text     SD    Ctrl+drag selection lasso
-  center-on             text     CO    centerOn imperative handle
+viewport                box      EVP    Viewport container div
+  transform-div         box      ETD    transformDiv (CSS transform carrier)
+  svg-mount             box      ESV    SVG element mount
+  over-layer            box      EOL    OverLayer badge rendering
+    raf-loop            text     ERF    rAF sync loop
+    resolve-anchor      text     EBA    resolveAnchor dispatch
+  transform-type        text     ETF    Transform { tx, ty, scale }
+  screen-to-scene       text     ES2    screenToScene conversion
+  wheel-zoom            text     EWZ    Wheel zoom gesture
+  drag-pan              text     EDP    Drag pan gesture
+  pinch-zoom            text     EPZ    Pinch-to-zoom gesture
+  ctrl-drag             text     ESD    Ctrl+drag selection lasso
+  center-on             text     ECO    centerOn imperative handle
 ```
 
 ```arrows
-# src              target           description
-UD                 SS               useDiagram → new SvgScene(svg)
-SS                 SC               SvgScene returns Scene interface (implements)
-SS                 SE               buildElementTree populates SceneElements
-SC.getSvgElement   SV               scene.getSvgElement() mounted into transformDiv
-SC.setTransform    SE.transform     setTransform updates element.transform
-SE.transform       SC.worldBounds   transform change invalidates worldBoundsCache
-SC.worldBounds     OL               OverLayer reads getWorldBounds for "element" anchors
-VP.transformRef    OL               OverLayer reads shared transformRef via rAF
-WZ                 TD               wheel zoom → applyTransform → CSS on transformDiv
-DP                 TD               drag pan → applyTransform → CSS on transformDiv
-PZ                 TD               pinch zoom → applyTransform → CSS on transformDiv
-CO                 TD               centerOn → applyTransform → CSS on transformDiv
-WZ                 SC.setTransform  wheel zoom → syncRootTransform → scene.setTransform("root")
-DP                 SC.setTransform  drag pan → syncRootTransform → scene.setTransform("root")
-PZ                 SC.setTransform  pinch zoom → syncRootTransform → scene.setTransform("root")
-CO                 SC.setTransform  centerOn → syncRootTransform → scene.setTransform("root")
-SE.interactive     OL               InteractiveData.modal/link drives badge creation
+# src               target            description
+EUD                  ESS               useDiagram → new SvgScene(svg)
+ESS                  ESC               SvgScene returns Scene interface (implements)
+ESS                  ESE               buildElementTree populates SceneElements
+ESC.getSvgElement    ESV               scene.getSvgElement() mounted into transformDiv
+ESC.setTransform     ESE.transform     setTransform updates element.transform
+ESE.transform        ESC.worldBounds   transform change invalidates worldBoundsCache
+ESC.worldBounds      EOL               OverLayer reads getWorldBounds for "element" anchors
+EVP.transformRef     EOL               OverLayer reads shared transformRef via rAF
+EWZ                  ETD               wheel zoom → applyTransform → CSS on transformDiv
+EDP                  ETD               drag pan → applyTransform → CSS on transformDiv
+EPZ                  ETD               pinch zoom → applyTransform → CSS on transformDiv
+ECO                  ETD               centerOn → applyTransform → CSS on transformDiv
+EWZ                  ESC.setTransform  wheel zoom → syncRootTransform → scene.setTransform("root")
+EDP                  ESC.setTransform  drag pan → syncRootTransform → scene.setTransform("root")
+EPZ                  ESC.setTransform  pinch zoom → syncRootTransform → scene.setTransform("root")
+ECO                  ESC.setTransform  centerOn → syncRootTransform → scene.setTransform("root")
+ESE.interactive      EOL               InteractiveData.modal/link drives badge creation
 ```
 
 ```links
-# local-id  target-file                          target-id  description
-UD           01-architecture-and-data-flow.txt    DA         useDiagram called from DiagramContentArea
-SC           03-interaction.txt                   SI         Scene consumed by SceneInput (hitTest, getElement)
-SE           03-interaction.txt                   HN         SceneElement.interactive drives handleNavigate dispatch
-SE           04-types-and-data-model.txt          ID         SceneElement.interactive is InteractiveData type
-OL           03-interaction.txt                   AB         OverLayer renders badges created by DiagramScene
-TF           04-types-and-data-model.txt          TF         Transform type defined in types.ts
-SS           02-rendering-svgscene-detail.txt     SS         SvgScene modal expansion (full implementation)
+# local-id  target-file                          target-id   description
+EUD          01-architecture-and-data-flow.txt    EDA         useDiagram called from DiagramContentArea
+ESC          03-interaction.txt                   ESI         Scene consumed by SceneInput (hitTest, getElement)
+ESE          03-interaction.txt                   EHN         SceneElement.interactive drives handleNavigate dispatch
+ESE          04-types-and-data-model.txt          EID         SceneElement.interactive is InteractiveData type
+EOL          03-interaction.txt                   EAB         OverLayer renders badges created by DiagramScene
+ETF          04-types-and-data-model.txt          ETF         Transform type defined in types.ts
+ESS          02-rendering-svgscene-detail.txt     ESS         SvgScene modal expansion (full implementation)
 ```
 
 ```notes
-Entity IDs and code-ref IDs share the same 2-char namespace. Both are resolved
-by finding [XX] on the diagram (for box/text types) or {#xx} (for marker types).
-No prefix is needed to disambiguate — the [brackets] already distinguish IDs from
-surrounding text. Cross-diagram jump targets use the form: ** filename.txt#ID
+Entity IDs use an "E" prefix (e.g., ESS, EVP) and code-ref IDs use a "C" prefix
+(e.g., CSS, CVP) to disambiguate between the two namespaces. Entity IDs appear as
+[EXX] on the diagram (for box/text types) or {#exx} (for marker types). Code-ref IDs
+appear only in the code-refs section. Cross-diagram jump targets use the form:
+** filename.txt#EXX (with the E prefix).
 ```

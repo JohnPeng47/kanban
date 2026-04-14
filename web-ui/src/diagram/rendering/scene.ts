@@ -1,3 +1,4 @@
+import type { SourceSpan } from "../diagram-data";
 import type { InteractiveData, Point, Rect, ReflowState, Transform } from "../types";
 
 /**
@@ -11,7 +12,7 @@ export interface SceneElement {
 	/** Unique identifier.
 	 *  - For reflow groups: the data-reflow-group value
 	 *  - For interactive regions: the data-interactive value
-	 *  - For arrows: "arrow-{index}"
+	 *  - For arrows: "arrow-{src}-{target}" (semantic) or "arrow-{index}" (legacy)
 	 *  - For the root: "root" */
 	id: string;
 
@@ -41,6 +42,10 @@ export interface SceneElement {
 	/** Reflow participation marker.
 	 *  Non-null when this element has data-reflow-group or data-arrow. */
 	reflow: ReflowState | null;
+
+	/** Source span in the diagram's ASCII source text.
+	 *  Non-null when this element has data-source-span. */
+	sourceSpan: SourceSpan | null;
 }
 
 /** The rendering abstraction between the diagram loader and the rest of the framework. */

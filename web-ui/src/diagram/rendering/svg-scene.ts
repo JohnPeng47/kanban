@@ -1,3 +1,4 @@
+import { parseSourceSpan } from "../diagram-data";
 import {
 	composeTransforms,
 	IDENTITY_TRANSFORM,
@@ -21,6 +22,13 @@ function resolveElementId(g: SVGGElement, arrowCounter: { value: number }): stri
 	const interactive = g.getAttribute("data-interactive");
 	if (interactive) return interactive;
 	if (g.hasAttribute("data-arrow")) {
+		// Prefer semantic arrow IDs from data-arrow-src/target
+		const src = g.getAttribute("data-arrow-src");
+		const target = g.getAttribute("data-arrow-target");
+		if (src && target) {
+			return `arrow-${src}-${target}`;
+		}
+		// Fallback to auto-incrementing for legacy arrows
 		const id = `arrow-${arrowCounter.value}`;
 		arrowCounter.value++;
 		return id;
@@ -138,6 +146,7 @@ export class SvgScene implements Scene {
 			hasVisualRect: false,
 			interactive: null,
 			reflow: null,
+			sourceSpan: null,
 		};
 		this.elements.set(this.rootId, rootElement);
 
@@ -180,6 +189,7 @@ export class SvgScene implements Scene {
 			const interactive = metadata.interactive !== undefined ? parseInteractiveData(id, metadata) : null;
 			const hasReflow = metadata["reflow-group"] !== undefined || metadata.arrow !== undefined;
 			const reflow: ReflowState | null = hasReflow ? { originalBounds: { ...localBounds } } : null;
+			const sourceSpan = metadata["source-span"] ? parseSourceSpan(metadata["source-span"]) : null;
 
 			const element: SceneElement = {
 				id,
@@ -191,6 +201,7 @@ export class SvgScene implements Scene {
 				hasVisualRect: visualRect !== null,
 				interactive,
 				reflow,
+				sourceSpan,
 			};
 			this.elements.set(id, element);
 
@@ -398,6 +409,7 @@ export class SvgScene implements Scene {
 		const interactive = metadata.interactive !== undefined ? parseInteractiveData(id, metadata) : null;
 		const hasReflow = metadata["reflow-group"] !== undefined || metadata.arrow !== undefined;
 		const reflow: ReflowState | null = hasReflow ? { originalBounds: { ...localBounds } } : null;
+		const sourceSpan = metadata["source-span"] ? parseSourceSpan(metadata["source-span"]) : null;
 
 		const element: SceneElement = {
 			id,
@@ -409,6 +421,7 @@ export class SvgScene implements Scene {
 			hasVisualRect: visualRect !== null,
 			interactive,
 			reflow,
+			sourceSpan,
 		};
 
 		this.elements.set(id, element);

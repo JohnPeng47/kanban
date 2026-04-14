@@ -10,10 +10,11 @@
 </head>
 <body>
 <svg id="diagram" xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 1200 1500"
+  viewBox="0 0 1100 1480"
   font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
   font-size="11">
 
+  <!-- SVG styles -->
   <style>
     text { fill: #8B949E; }
     .white { fill: #E6EDF3; }
@@ -32,6 +33,7 @@
     @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 
+  <!-- Arrow markers -->
   <defs>
     <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
       <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
@@ -41,347 +43,738 @@
     </marker>
   </defs>
 
+  <!-- Background -->
   <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
 
+
+  <!-- ══════════════════════════════════════════════════════════ -->
   <!-- Title -->
-  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-reflow-group="title"
+     data-interactive="ETI"
+     data-source-span="0:0-1:61"
+     data-entity-name="title"
+     data-entity-kind="text"
+     data-entity-desc="Diagram title line"
+     class="fade-section" style="animation-delay: 0s">
     <text x="20" y="28" class="white title">TYPES &amp; DATA MODEL</text>
-    <text x="20" y="48" class="dim subhead">Core shapes that flow through the system</text>
+    <text x="260" y="28" class="dim subhead">Core shapes that flow through the system</text>
   </g>
 
-  <!-- Section: Geometry Primitives -->
-  <g data-reflow-group="geometry-section" class="fade-section" style="animation-delay: 0.05s">
-    <line x1="20" y1="70" x2="1160" y2="70" stroke="#444C56" stroke-width="1"/>
-    <text x="20" y="90" class="white title">GEOMETRY PRIMITIVES</text>
+  <!-- Cross-references -->
+  <g data-reflow-group="cross-refs"
+     data-interactive="EXR"
+     data-source-span="3:2-6:90"
+     data-entity-name="cross-refs"
+     data-entity-kind="text"
+     data-entity-desc="Cross-reference links to related diagrams"
+     class="fade-section" style="animation-delay: 0.05s">
+    <g data-interactive="EXR.1"
+       data-source-span="3:2-3:90"
+       data-entity-parent="EXR"
+       data-link="02-rendering.html"
+       data-link-target-file="02-rendering.txt"
+       data-link-desc="Transform, Rect in Scene/Viewport">
+      <text x="20" y="54" class="blue">** 02-rendering.txt</text>
+      <text x="260" y="54" class="dim subhead">(Transform, Rect in Scene/Viewport)</text>
+    </g>
+    <g data-interactive="EXR.2"
+       data-source-span="4:2-4:70"
+       data-entity-parent="EXR"
+       data-link="03-interaction.html"
+       data-link-target-file="03-interaction.txt"
+       data-link-desc="InteractiveData drives navigation">
+      <text x="20" y="70" class="blue">** 03-interaction.txt</text>
+      <text x="260" y="70" class="dim subhead">(InteractiveData drives navigation)</text>
+    </g>
+    <g data-interactive="EXR.3"
+       data-source-span="5:2-5:90"
+       data-entity-parent="EXR"
+       data-link="02-rendering-svgscene-detail.html"
+       data-link-target-file="02-rendering-svgscene-detail.txt"
+       data-link-desc="composeTransforms, rectsIntersect used in SvgScene">
+      <text x="20" y="86" class="blue">** 02-rendering-svgscene-detail.txt</text>
+      <text x="260" y="86" class="dim subhead">(composeTransforms, rectsIntersect used in SvgScene)</text>
+    </g>
   </g>
 
-  <!-- Rect [RC] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Geometry Primitives Section Header -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-reflow-group="geo-primitives-header"
+     data-interactive="EGP"
+     data-source-span="8:0-8:93"
+     data-entity-name="geo-primitives-header"
+     data-entity-kind="section"
+     data-entity-desc="Geometry Primitives section header"
+     class="fade-section" style="animation-delay: 0.1s">
+    <line x1="20" y1="112" x2="1080" y2="112" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="130" class="white title">Geometry Primitives</text>
+    <line x1="20" y1="138" x2="1080" y2="138" stroke="#444C56" stroke-width="0.5"/>
+  </g>
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Rect -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="rect"
-     data-interactive="RC"
+     data-interactive="ERC"
      data-ref="web-ui/src/diagram/types.ts:4-9"
      data-category="type"
      data-label="Rect"
-     data-link="02-rendering.html#SC"
-     class="fade-section" style="animation-delay: 0.1s">
-    <rect x="20" y="105" width="220" height="150" rx="4"
+     data-source-span="10:2-17:21"
+     data-entity-name="rect"
+     data-entity-kind="box"
+     data-entity-desc="Rect { x, y, width, height }"
+     data-entity-parent="EGP"
+     data-code-ref-id="CRC"
+     data-link="02-rendering.html#ESC"
+     data-link-target-file="02-rendering.txt"
+     data-link-target-id="ESC"
+     data-link-desc="Rect used in Scene bounds methods"
+     class="fade-section" style="animation-delay: 0.15s">
+    <rect x="20" y="155" width="210" height="140" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1"/>
-    <text x="32" y="127" class="violet heading"
-          data-tt="types.ts:4 — Rect interface">
-      Rect [RC]
-    </text>
-    <text x="32" y="150" class="white">x: number</text>
-    <text x="32" y="168" class="white">y: number</text>
-    <text x="32" y="186" class="white">width: number</text>
-    <text x="32" y="204" class="white">height: number</text>
+    <text x="32" y="177" class="violet heading"
+          data-tt="types.ts:4 — Rect interface">Rect</text>
+    <g data-interactive="ERC.1" data-source-span="13:2-13:19" data-entity-parent="ERC">
+      <text x="32" y="200" class="white">x: number</text>
+    </g>
+    <g data-interactive="ERC.2" data-source-span="14:2-14:19" data-entity-parent="ERC">
+      <text x="32" y="216" class="white">y: number</text>
+    </g>
+    <g data-interactive="ERC.3" data-source-span="15:2-15:19" data-entity-parent="ERC">
+      <text x="32" y="232" class="white">width: number</text>
+    </g>
+    <g data-interactive="ERC.4" data-source-span="16:2-16:19" data-entity-parent="ERC">
+      <text x="32" y="248" class="white">height: number</text>
+    </g>
   </g>
 
-  <!-- Point [PT] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Point -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="point"
-     data-interactive="PT"
+     data-interactive="EPT"
      data-ref="web-ui/src/diagram/types.ts:12-15"
      data-category="type"
      data-label="Point"
-     class="fade-section" style="animation-delay: 0.15s">
-    <rect x="270" y="105" width="220" height="110" rx="4"
+     data-source-span="10:24-14:47"
+     data-entity-name="point"
+     data-entity-kind="box"
+     data-entity-desc="Point { x, y }"
+     data-entity-parent="EGP"
+     data-code-ref-id="CPT"
+     class="fade-section" style="animation-delay: 0.2s">
+    <rect x="260" y="155" width="210" height="100" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1"/>
-    <text x="282" y="127" class="violet heading"
-          data-tt="types.ts:12 — Point interface">
-      Point [PT]
-    </text>
-    <text x="282" y="150" class="white">x: number</text>
-    <text x="282" y="168" class="white">y: number</text>
+    <text x="272" y="177" class="violet heading"
+          data-tt="types.ts:12 — Point interface">Point</text>
+    <g data-interactive="EPT.1" data-source-span="13:24-13:42" data-entity-parent="EPT">
+      <text x="272" y="200" class="white">x: number</text>
+    </g>
+    <g data-interactive="EPT.2" data-source-span="14:24-14:42" data-entity-parent="EPT">
+      <text x="272" y="216" class="white">y: number</text>
+    </g>
   </g>
 
-  <!-- Transform [TF] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Transform -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="transform"
-     data-interactive="TF"
+     data-interactive="ETF"
      data-ref="web-ui/src/diagram/types.ts:18-22"
      data-category="type"
      data-label="Transform"
-     data-link="02-rendering.html#TF"
-     class="fade-section" style="animation-delay: 0.2s">
-    <rect x="520" y="105" width="350" height="150" rx="4"
+     data-source-span="10:50-18:62"
+     data-entity-name="transform"
+     data-entity-kind="box"
+     data-entity-desc="Transform { tx, ty, scale }"
+     data-entity-parent="EGP"
+     data-code-ref-id="CTF"
+     data-link="02-rendering.html#ETF"
+     data-link-target-file="02-rendering.txt"
+     data-link-target-id="ETF"
+     data-link-desc="Transform used in Viewport coordinate math"
+     class="fade-section" style="animation-delay: 0.25s">
+    <rect x="500" y="155" width="340" height="140" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1"/>
-    <text x="532" y="127" class="violet heading"
-          data-tt="types.ts:18 — Transform interface">
-      Transform [TF]
-    </text>
-    <text x="532" y="150" class="white">tx: number   <tspan class="dim">(translateX)</tspan></text>
-    <text x="532" y="168" class="white">ty: number   <tspan class="dim">(translateY)</tspan></text>
-    <text x="532" y="186" class="white">scale: number</text>
-    <text x="532" y="210" class="dim subhead">IDENTITY = {0, 0, 1}</text>
+    <text x="512" y="177" class="violet heading"
+          data-tt="types.ts:18 — Transform interface">Transform</text>
+    <g data-interactive="ETF.1" data-source-span="13:50-13:80" data-entity-parent="ETF">
+      <text x="512" y="200" class="white">tx: number</text>
+      <text x="650" y="200" class="dim subhead">(translateX)</text>
+    </g>
+    <g data-interactive="ETF.2" data-source-span="14:50-14:80" data-entity-parent="ETF">
+      <text x="512" y="216" class="white">ty: number</text>
+      <text x="650" y="216" class="dim subhead">(translateY)</text>
+    </g>
+    <g data-interactive="ETF.3" data-source-span="15:50-15:80" data-entity-parent="ETF">
+      <text x="512" y="232" class="white">scale: number</text>
+    </g>
+    <g data-interactive="ETF.4" data-source-span="17:50-17:80" data-entity-parent="ETF">
+      <text x="512" y="258" class="dim">IDENTITY = {0, 0, 1}</text>
+    </g>
   </g>
 
-  <!-- Transform operations [CT] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Transform operations label -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-reflow-group="transform-ops-label"
+     data-interactive="ETO"
+     data-source-span="20:2-20:93"
+     data-entity-name="transform-ops-label"
+     data-entity-kind="text"
+     data-entity-desc="Transform operations: label"
+     data-entity-parent="EGP"
+     class="fade-section" style="animation-delay: 0.3s">
+    <text x="20" y="320" class="white">Transform operations:</text>
+  </g>
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Transform operations box -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="transform-ops"
-     data-interactive="CT"
+     data-interactive="ECT"
      data-ref="web-ui/src/diagram/types.ts:203-210"
      data-category="function"
-     data-label="transformOps"
-     data-link="02-rendering-svgscene-detail.html#WB"
-     class="fade-section" style="animation-delay: 0.25s">
-    <rect x="20" y="280" width="850" height="120" rx="4"
+     data-label="Transform ops"
+     data-source-span="21:2-26:78"
+     data-entity-name="transform-ops"
+     data-entity-kind="box"
+     data-entity-desc="composeTransforms, transformRect, rectsIntersect, rectContains"
+     data-entity-parent="EGP"
+     data-code-ref-id="CCT"
+     data-link="02-rendering-svgscene-detail.html#EWB"
+     data-link-target-file="02-rendering-svgscene-detail.txt"
+     data-link-target-id="EWB"
+     data-link-desc="composeTransforms used in getWorldBounds"
+     class="fade-section" style="animation-delay: 0.35s">
+    <rect x="20" y="332" width="810" height="90" rx="4"
           fill="#24292E" stroke="#D29922" stroke-width="1"/>
-    <text x="32" y="302" class="orange heading">Transform operations</text>
-
-    <text x="40" y="325" class="white"
-          data-tt="types.ts:203 — composeTransforms: combine parent+child transforms">
-      composeTransforms(parent, child)  → combined transform [CT]
-    </text>
-
-    <g data-interactive="XR"
-       data-ref="web-ui/src/diagram/types.ts:213-220"
-       data-category="function"
-       data-label="transformRect">
-      <text x="40" y="345" class="white"
-            data-tt="types.ts:213 — transformRect: apply transform to rect">
-        transformRect(rect, transform)   → rect in new coordinate space [XR]
-      </text>
+    <g data-interactive="ECT.1"
+       data-source-span="22:2-22:76"
+       data-entity-parent="ECT"
+       data-ref="web-ui/src/diagram/types.ts:203-210">
+      <text x="32" y="354" class="orange"
+            data-tt="types.ts:203 — composeTransforms(parent, child)">composeTransforms(parent, child)</text>
+      <text x="400" y="354" class="dim">&#x2192;  combined transform</text>
     </g>
-
-    <g data-interactive="RI"
-       data-ref="web-ui/src/diagram/types.ts:189-191"
-       data-category="function"
-       data-label="rectsIntersect">
-      <text x="40" y="365" class="white"
-            data-tt="types.ts:189 — rectsIntersect: AABB overlap test">
-        rectsIntersect(a, b)             → AABB overlap test [RI]
-      </text>
+    <g data-interactive="ECT.2"
+       data-source-span="23:2-23:76"
+       data-entity-parent="ECT"
+       data-ref="web-ui/src/diagram/types.ts:213-220">
+      <text x="32" y="372" class="orange"
+            data-tt="types.ts:213 — transformRect(rect, transform)">transformRect(rect, transform)</text>
+      <text x="400" y="372" class="dim">&#x2192;  rect in new coordinate space</text>
     </g>
-
-    <g data-interactive="RN"
-       data-ref="web-ui/src/diagram/types.ts:194-201"
-       data-category="function"
-       data-label="rectContains">
-      <text x="40" y="385" class="white"
-            data-tt="types.ts:194 — rectContains: full containment test">
-        rectContains(outer, inner)       → full containment test [RN]
-      </text>
+    <g data-interactive="ECT.3"
+       data-source-span="24:2-24:76"
+       data-entity-parent="ECT"
+       data-ref="web-ui/src/diagram/types.ts:189-191">
+      <text x="32" y="390" class="orange"
+            data-tt="types.ts:189 — rectsIntersect(a, b)">rectsIntersect(a, b)</text>
+      <text x="400" y="390" class="dim">&#x2192;  AABB overlap test</text>
+    </g>
+    <g data-interactive="ECT.4"
+       data-source-span="25:2-25:76"
+       data-entity-parent="ECT"
+       data-ref="web-ui/src/diagram/types.ts:194-201">
+      <text x="32" y="408" class="orange"
+            data-tt="types.ts:194 — rectContains(outer, inner)">rectContains(outer, inner)</text>
+      <text x="400" y="408" class="dim">&#x2192;  full containment test</text>
     </g>
   </g>
 
-  <!-- Section: Interactive Metadata -->
-  <g data-reflow-group="interactive-section" class="fade-section" style="animation-delay: 0.3s">
-    <line x1="20" y1="430" x2="1160" y2="430" stroke="#444C56" stroke-width="1"/>
-    <text x="20" y="450" class="white title">INTERACTIVE METADATA</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Interactive Metadata Section Header -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-reflow-group="interactive-header"
+     data-interactive="EIM"
+     data-source-span="29:0-29:93"
+     data-entity-name="interactive-header"
+     data-entity-kind="section"
+     data-entity-desc="Interactive Metadata section header"
+     class="fade-section" style="animation-delay: 0.4s">
+    <line x1="20" y1="455" x2="1080" y2="455" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="473" class="white title">Interactive Metadata</text>
+    <line x1="20" y1="481" x2="1080" y2="481" stroke="#444C56" stroke-width="0.5"/>
   </g>
 
-  <!-- SVG data-* attributes → InteractiveData -->
-  <g data-reflow-group="data-attrs" class="fade-section" style="animation-delay: 0.35s">
-    <text x="20" y="478" class="dim heading">SVG data-* attributes</text>
-    <text x="500" y="478" class="dim heading">Parsed structures</text>
 
-    <!-- Left side: raw attributes -->
-    <text x="30" y="500" class="dim subhead">data-interactive="myFunc"</text>
-    <text x="30" y="515" class="dim subhead">data-ref="src/foo.ts:10-50"</text>
-    <text x="30" y="530" class="dim subhead">data-category="function"</text>
-    <text x="30" y="545" class="dim subhead">data-label="myFunc"</text>
-    <text x="30" y="560" class="dim subhead">data-tt="src/foo.ts — helper"</text>
-    <text x="30" y="575" class="dim subhead">data-nav="src/bar.ts:5"</text>
-    <text x="30" y="590" class="dim subhead">data-modal="detail.html"</text>
-    <text x="30" y="605" class="dim subhead">data-modal-position="right"</text>
-    <text x="30" y="620" class="dim subhead">data-link="other.html#elem"</text>
+  <!-- Column headers -->
+  <g data-reflow-group="attr-headers"
+     data-interactive="EAH"
+     data-source-span="31:2-32:38"
+     data-entity-name="attr-headers"
+     data-entity-kind="text"
+     data-entity-desc="SVG data-* attributes / Parsed structures column headers"
+     data-entity-parent="EIM"
+     class="fade-section" style="animation-delay: 0.45s">
+    <text x="20" y="503" class="white">SVG data-* attributes</text>
+    <text x="540" y="503" class="white">Parsed structures</text>
+    <line x1="20" y1="510" x2="240" y2="510" stroke="#6E7681" stroke-width="0.5"/>
+    <line x1="540" y1="510" x2="720" y2="510" stroke="#6E7681" stroke-width="0.5"/>
   </g>
 
-  <!-- Arrow: attrs → InteractiveData -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.4s">
-    <line x1="290" y1="555" x2="430" y2="555" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    <text x="320" y="545" class="dim subhead">parsed into</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- data-* attribute list (left column) -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-reflow-group="attr-list"
+     data-interactive="EAL"
+     data-source-span="34:2-42:42"
+     data-entity-name="attr-list"
+     data-entity-kind="text"
+     data-entity-desc="data-* attribute names (data-interactive through data-link)"
+     data-entity-parent="EIM"
+     class="fade-section" style="animation-delay: 0.5s">
+    <g data-interactive="EAL.1" data-source-span="34:2-34:42" data-entity-parent="EAL">
+      <text x="20" y="534" class="green">data-interactive</text>
+      <text x="195" y="534" class="dim">="myFunc"</text>
+    </g>
+    <g data-interactive="EAL.2" data-source-span="35:2-35:42" data-entity-parent="EAL">
+      <text x="20" y="550" class="green">data-ref</text>
+      <text x="195" y="550" class="dim">="src/foo.ts:10-50"</text>
+    </g>
+    <g data-interactive="EAL.3" data-source-span="36:2-36:42" data-entity-parent="EAL">
+      <text x="20" y="566" class="green">data-category</text>
+      <text x="195" y="566" class="dim">="function"</text>
+    </g>
+    <g data-interactive="EAL.4" data-source-span="37:2-37:42" data-entity-parent="EAL">
+      <text x="20" y="582" class="green">data-label</text>
+      <text x="195" y="582" class="dim">="myFunc"</text>
+    </g>
+    <g data-interactive="EAL.5" data-source-span="38:2-38:42" data-entity-parent="EAL">
+      <text x="20" y="598" class="green">data-tt</text>
+      <text x="195" y="598" class="dim">="src/foo.ts -- helper"</text>
+    </g>
+    <g data-interactive="EAL.6" data-source-span="39:2-39:42" data-entity-parent="EAL">
+      <text x="20" y="614" class="green">data-nav</text>
+      <text x="195" y="614" class="dim">="src/bar.ts:5"</text>
+    </g>
+    <g data-interactive="EAL.7" data-source-span="40:2-40:42" data-entity-parent="EAL">
+      <text x="20" y="630" class="green">data-modal</text>
+      <text x="195" y="630" class="dim">="detail.html"</text>
+    </g>
+    <g data-interactive="EAL.8" data-source-span="41:2-41:42" data-entity-parent="EAL">
+      <text x="20" y="646" class="green">data-modal-position</text>
+      <text x="195" y="646" class="dim">="right"</text>
+    </g>
+    <g data-interactive="EAL.9" data-source-span="42:2-42:42" data-entity-parent="EAL">
+      <text x="20" y="662" class="green">data-link</text>
+      <text x="195" y="662" class="dim">="other.html#elem"</text>
+    </g>
   </g>
 
-  <!-- InteractiveData [ID] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Arrow: data-* attrs -> InteractiveData -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-arrow
+     data-arrow-src="data-* attrs"
+     data-arrow-target="EID"
+     data-arrow-desc="SVG data-* attributes parsed into InteractiveData"
+     data-source-span="34:39-42:48"
+     class="fade-section" style="animation-delay: 0.52s">
+    <line x1="370" y1="534" x2="370" y2="662" stroke="#8B949E" stroke-width="1" stroke-dasharray="2,2"/>
+    <line x1="370" y1="598" x2="448" y2="598" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="380" y="590" class="dim subhead">parse</text>
+  </g>
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- InteractiveData box -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="interactive-data"
-     data-interactive="ID"
+     data-interactive="EID"
      data-ref="web-ui/src/diagram/types.ts:55-64"
      data-category="type"
      data-label="InteractiveData"
-     data-link="03-interaction.html#HN"
-     class="fade-section" style="animation-delay: 0.45s">
-    <rect x="440" y="490" width="500" height="200" rx="4"
+     data-source-span="35:45-46:56"
+     data-entity-name="interactive-data"
+     data-entity-kind="box"
+     data-entity-desc="InteractiveData (parsed from SVG data-* attrs)"
+     data-entity-parent="EIM"
+     data-code-ref-id="CID"
+     data-link="03-interaction.html#EHN"
+     data-link-target-file="03-interaction.txt"
+     data-link-target-id="EHN"
+     data-link-desc="InteractiveData drives handleNavigate dispatch"
+     class="fade-section" style="animation-delay: 0.55s">
+    <rect x="460" y="522" width="520" height="180" rx="4"
           fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
-    <text x="452" y="512" class="blue heading"
-          data-tt="types.ts:55 — InteractiveData interface">
-      InteractiveData [ID]
-    </text>
-    <text x="460" y="538" class="white">ref: "src/foo.ts:10-50"</text>
-    <text x="460" y="556" class="white">parsedRef: ParsedRef</text>
-    <text x="460" y="574" class="white">category: "function"</text>
-    <text x="460" y="592" class="white">label: "myFunc"</text>
-    <text x="460" y="610" class="white">tooltip: "src/foo.ts — helper"</text>
-    <text x="460" y="628" class="white">navTarget: ParsedRef (nav or ref)</text>
-    <text x="460" y="646" class="white">modal: DiagramModal | null</text>
-    <text x="460" y="664" class="white">link: DiagramLink | null</text>
+    <text x="472" y="544" class="blue heading"
+          data-tt="types.ts:55 — InteractiveData interface">InteractiveData</text>
+    <g data-interactive="EID.1" data-source-span="38:45-38:80" data-entity-parent="EID">
+      <text x="472" y="568" class="white">ref: "src/foo.ts:10-50"</text>
+    </g>
+    <g data-interactive="EID.2" data-source-span="39:45-39:80" data-entity-parent="EID">
+      <text x="472" y="584" class="white">parsedRef: ParsedRef</text>
+    </g>
+    <g data-interactive="EID.3" data-source-span="40:45-40:80" data-entity-parent="EID">
+      <text x="472" y="600" class="white">category: "function"</text>
+    </g>
+    <g data-interactive="EID.4" data-source-span="41:45-41:80" data-entity-parent="EID">
+      <text x="472" y="616" class="white">label: "myFunc"</text>
+    </g>
+    <g data-interactive="EID.5" data-source-span="42:45-42:80" data-entity-parent="EID">
+      <text x="472" y="632" class="white">tooltip: "src/foo.ts -- helper"</text>
+    </g>
+    <g data-interactive="EID.6" data-source-span="43:45-43:80" data-entity-parent="EID">
+      <text x="472" y="648" class="white">navTarget: ParsedRef</text>
+      <text x="660" y="648" class="dim subhead">(nav or ref)</text>
+    </g>
+    <g data-interactive="EID.7" data-source-span="44:45-44:80" data-entity-parent="EID">
+      <text x="472" y="664" class="white">modal: DiagramModal | null</text>
+    </g>
+    <g data-interactive="EID.8" data-source-span="45:45-45:80" data-entity-parent="EID">
+      <text x="472" y="680" class="white">link: DiagramLink | null</text>
+    </g>
   </g>
 
-  <!-- Arrow: ID.parsedRef → ParsedRef -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.5s">
-    <line x1="690" y1="695" x2="690" y2="730" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Arrow: InteractiveData.parsedRef -> ParsedRef -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-arrow
+     data-arrow-src="EID"
+     data-arrow-target="EPR"
+     data-arrow-desc="InteractiveData.parsedRef is a ParsedRef"
+     data-source-span="39:45-48:2"
+     class="fade-section" style="animation-delay: 0.6s">
+    <path d="M472,584 L440,584 L440,740 L352,740" fill="none" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="385" y="664" class="dim subhead">.parsedRef</text>
   </g>
 
-  <!-- ParsedRef [PR] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- ParsedRef -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="parsed-ref"
-     data-interactive="PR"
+     data-interactive="EPR"
      data-ref="web-ui/src/diagram/types.ts:72-76"
      data-category="type"
      data-label="ParsedRef"
-     class="fade-section" style="animation-delay: 0.5s">
-    <rect x="20" y="735" width="320" height="110" rx="4"
+     data-source-span="48:2-54:31"
+     data-entity-name="parsed-ref"
+     data-entity-kind="box"
+     data-entity-desc="ParsedRef { filePath, startLine, endLine }"
+     data-entity-parent="EIM"
+     data-code-ref-id="CPR"
+     class="fade-section" style="animation-delay: 0.65s">
+    <rect x="20" y="720" width="320" height="90" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1"/>
-    <text x="32" y="757" class="violet heading"
-          data-tt="types.ts:72 — ParsedRef interface">
-      ParsedRef [PR]
-    </text>
-    <text x="40" y="780" class="white">filePath: string</text>
-    <text x="40" y="798" class="white">startLine: number</text>
-    <text x="40" y="816" class="white">endLine: number | null</text>
+    <text x="32" y="742" class="violet heading"
+          data-tt="types.ts:72 — ParsedRef interface">ParsedRef</text>
+    <g data-interactive="EPR.1" data-source-span="51:2-51:28" data-entity-parent="EPR">
+      <text x="32" y="764" class="white">filePath: string</text>
+    </g>
+    <g data-interactive="EPR.2" data-source-span="52:2-52:28" data-entity-parent="EPR">
+      <text x="32" y="780" class="white">startLine: number</text>
+    </g>
+    <g data-interactive="EPR.3" data-source-span="53:2-53:28" data-entity-parent="EPR">
+      <text x="32" y="796" class="white">endLine: number | null</text>
+    </g>
   </g>
 
-  <!-- InteractiveCategory [IC] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- InteractiveCategory -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="interactive-category"
-     data-interactive="IC"
+     data-interactive="EIC"
      data-ref="web-ui/src/diagram/types.ts:26"
      data-category="type"
      data-label="InteractiveCategory"
-     class="fade-section" style="animation-delay: 0.55s">
-    <rect x="370" y="735" width="450" height="110" rx="4"
+     data-source-span="48:36-54:57"
+     data-entity-name="interactive-category"
+     data-entity-kind="box"
+     data-entity-desc="InteractiveCategory union type"
+     data-entity-parent="EIM"
+     data-code-ref-id="CIC"
+     class="fade-section" style="animation-delay: 0.7s">
+    <rect x="370" y="720" width="430" height="90" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1"/>
-    <text x="382" y="757" class="violet heading"
-          data-tt="types.ts:26 — InteractiveCategory union type">
-      InteractiveCategory [IC]
-    </text>
-    <text x="390" y="780" class="white">"module" | "function" | "type"</text>
-    <text x="390" y="798" class="white">"data"   | "flow"     | "call"</text>
-    <text x="390" y="816" class="white">"concept" | "annotation"</text>
+    <text x="382" y="742" class="violet heading"
+          data-tt="types.ts:26 — InteractiveCategory union type">InteractiveCategory</text>
+    <g data-interactive="EIC.1" data-source-span="51:36-51:57" data-entity-parent="EIC">
+      <text x="382" y="764" class="white">"module" | "function" | "type"</text>
+    </g>
+    <g data-interactive="EIC.2" data-source-span="52:36-52:57" data-entity-parent="EIC">
+      <text x="382" y="780" class="white">"data"   | "flow"     | "call"</text>
+    </g>
+    <g data-interactive="EIC.3" data-source-span="53:36-53:57" data-entity-parent="EIC">
+      <text x="382" y="796" class="white">"concept" | "annotation"</text>
+    </g>
   </g>
 
-  <!-- Section: Navigation Targets -->
-  <g data-reflow-group="nav-section" class="fade-section" style="animation-delay: 0.6s">
-    <line x1="20" y1="875" x2="1160" y2="875" stroke="#444C56" stroke-width="1"/>
-    <text x="20" y="895" class="white title">NAVIGATION TARGETS</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Navigation Targets Section Header -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-reflow-group="nav-targets-header"
+     data-interactive="ENT"
+     data-source-span="57:0-57:93"
+     data-entity-name="nav-targets-header"
+     data-entity-kind="section"
+     data-entity-desc="Navigation Targets section header"
+     class="fade-section" style="animation-delay: 0.75s">
+    <line x1="20" y1="845" x2="1080" y2="845" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="863" class="white title">Navigation Targets</text>
+    <line x1="20" y1="871" x2="1080" y2="871" stroke="#444C56" stroke-width="0.5"/>
   </g>
 
-  <!-- Arrow: ID.modal → DiagramModal -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.62s">
-    <line x1="580" y1="695" x2="200" y2="920" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    <text x="350" y="810" class="dim subhead">modal</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Arrow: InteractiveData.modal -> DiagramModal -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-arrow
+     data-arrow-src="EID"
+     data-arrow-target="EDM"
+     data-arrow-desc="InteractiveData.modal is a DiagramModal | null"
+     data-source-span="44:45-59:2"
+     class="fade-section" style="animation-delay: 0.77s">
+    <path d="M600,702 L600,726 L280,726 L280,885" fill="none" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="370" y="720" class="dim subhead">.modal</text>
   </g>
 
-  <!-- Arrow: ID.link → DiagramLink -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.63s">
-    <line x1="800" y1="695" x2="850" y2="920" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    <text x="830" y="810" class="dim subhead">link</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Arrow: InteractiveData.link -> DiagramLink -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-arrow
+     data-arrow-src="EID"
+     data-arrow-target="EDK"
+     data-arrow-desc="InteractiveData.link is a DiagramLink | null"
+     data-source-span="45:45-59:50"
+     class="fade-section" style="animation-delay: 0.79s">
+    <path d="M750,702 L750,726 L810,726 L810,885" fill="none" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="758" y="720" class="dim subhead">.link</text>
   </g>
 
-  <!-- DiagramModal [DM] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DiagramModal -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="diagram-modal"
-     data-interactive="DM"
+     data-interactive="EDM"
      data-ref="web-ui/src/diagram/types.ts:31-40"
      data-category="type"
      data-label="DiagramModal"
-     data-link="03-interaction.html#OP"
-     class="fade-section" style="animation-delay: 0.65s">
-    <rect x="20" y="920" width="530" height="210" rx="4"
-          fill="#24292E" stroke="#A371F7" stroke-width="1"/>
-    <text x="32" y="942" class="violet heading"
-          data-tt="types.ts:31 — DiagramModal interface">
-      DiagramModal [DM]
-    </text>
-    <text x="40" y="968" class="dim subhead">source:</text>
-    <text x="60" y="988" class="white">elementId: string</text>
-    <text x="60" y="1006" class="white">ref: string | null</text>
-    <text x="40" y="1030" class="dim subhead">target:</text>
-    <text x="60" y="1050" class="white">path: string <tspan class="dim">(relative to diagram dir)</tspan></text>
-    <text x="60" y="1068" class="white">position: OverlayPosition</text>
-    <text x="70" y="1088" class="dim subhead">"above-left" | "above-right"</text>
-    <text x="70" y="1103" class="dim subhead">"below-left" | "below-right"</text>
-    <text x="70" y="1118" class="dim subhead">"left" | "right" | "auto"</text>
+     data-source-span="59:2-72:49"
+     data-entity-name="diagram-modal"
+     data-entity-kind="box"
+     data-entity-desc="DiagramModal { source, target.path + position }"
+     data-entity-parent="ENT"
+     data-code-ref-id="CDM"
+     data-link="03-interaction.html#EOP"
+     data-link-target-file="03-interaction.txt"
+     data-link-target-id="EOP"
+     data-link-desc="DiagramModal consumed by openPopup"
+     class="fade-section" style="animation-delay: 0.8s">
+    <rect x="20" y="892" width="520" height="210" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="914" class="blue heading"
+          data-tt="types.ts:31 — DiagramModal interface">DiagramModal</text>
+    <text x="32" y="938" class="dim subhead">source:</text>
+    <g data-interactive="EDM.1" data-source-span="63:2-63:46" data-entity-parent="EDM">
+      <text x="48" y="954" class="white">elementId: string</text>
+    </g>
+    <g data-interactive="EDM.2" data-source-span="64:2-64:46" data-entity-parent="EDM">
+      <text x="48" y="970" class="white">ref: string | null</text>
+    </g>
+    <text x="32" y="994" class="dim subhead">target:</text>
+    <g data-interactive="EDM.3" data-source-span="67:2-67:49" data-entity-parent="EDM">
+      <text x="48" y="1010" class="white">path: string</text>
+      <text x="185" y="1010" class="dim subhead">(relative to diagram dir)</text>
+    </g>
+    <g data-interactive="EDM.4" data-source-span="68:2-68:49" data-entity-parent="EDM">
+      <text x="48" y="1026" class="white">position: OverlayPosition</text>
+    </g>
+    <g data-interactive="EDM.5" data-source-span="69:2-69:46" data-entity-parent="EDM">
+      <text x="62" y="1044" class="dim">"above-left" | "above-right"</text>
+    </g>
+    <g data-interactive="EDM.6" data-source-span="70:2-70:46" data-entity-parent="EDM">
+      <text x="62" y="1060" class="dim">"below-left" | "below-right"</text>
+    </g>
+    <g data-interactive="EDM.7" data-source-span="71:2-71:46" data-entity-parent="EDM">
+      <text x="62" y="1076" class="dim">"left" | "right" | "auto"</text>
+    </g>
   </g>
 
-  <!-- DiagramLink [DK] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DiagramLink -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="diagram-link"
-     data-interactive="DK"
+     data-interactive="EDK"
      data-ref="web-ui/src/diagram/types.ts:43-52"
      data-category="type"
      data-label="DiagramLink"
-     data-link="03-interaction.html#EJ"
-     class="fade-section" style="animation-delay: 0.7s">
-    <rect x="580" y="920" width="530" height="180" rx="4"
-          fill="#24292E" stroke="#A371F7" stroke-width="1"/>
-    <text x="592" y="942" class="violet heading"
-          data-tt="types.ts:43 — DiagramLink interface">
-      DiagramLink [DK]
-    </text>
-    <text x="600" y="968" class="dim subhead">source:</text>
-    <text x="620" y="988" class="white">elementId: string</text>
-    <text x="620" y="1006" class="white">ref: string | null</text>
-    <text x="600" y="1030" class="dim subhead">target:</text>
-    <text x="620" y="1050" class="white">path: string</text>
-    <text x="620" y="1068" class="white">elementId: string | null</text>
-    <text x="600" y="1092" class="dim subhead">Parsed from: "path.html#elementId" or just: "path.html"</text>
+     data-source-span="59:51-72:93"
+     data-entity-name="diagram-link"
+     data-entity-kind="box"
+     data-entity-desc="DiagramLink { source, target.path + elementId }"
+     data-entity-parent="ENT"
+     data-code-ref-id="CDK"
+     data-link="03-interaction.html#EEJ"
+     data-link-target-file="03-interaction.txt"
+     data-link-target-id="EEJ"
+     data-link-desc="DiagramLink consumed by executeJump"
+     class="fade-section" style="animation-delay: 0.85s">
+    <rect x="560" y="892" width="520" height="210" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="572" y="914" class="blue heading"
+          data-tt="types.ts:43 — DiagramLink interface">DiagramLink</text>
+    <text x="572" y="938" class="dim subhead">source:</text>
+    <g data-interactive="EDK.1" data-source-span="63:51-63:90" data-entity-parent="EDK">
+      <text x="588" y="954" class="white">elementId: string</text>
+    </g>
+    <g data-interactive="EDK.2" data-source-span="64:51-64:90" data-entity-parent="EDK">
+      <text x="588" y="970" class="white">ref: string | null</text>
+    </g>
+    <text x="572" y="994" class="dim subhead">target:</text>
+    <g data-interactive="EDK.3" data-source-span="67:51-67:90" data-entity-parent="EDK">
+      <text x="588" y="1010" class="white">path: string</text>
+    </g>
+    <g data-interactive="EDK.4" data-source-span="68:51-68:90" data-entity-parent="EDK">
+      <text x="588" y="1026" class="white">elementId: string | null</text>
+    </g>
+    <text x="572" y="1058" class="dim subhead">Parsed from: "path.html#elementId"</text>
+    <text x="572" y="1074" class="dim subhead">or just: "path.html"</text>
   </g>
 
-  <!-- Section: Overlay Badges -->
-  <g data-reflow-group="badges-section" class="fade-section" style="animation-delay: 0.75s">
-    <line x1="20" y1="1140" x2="1160" y2="1140" stroke="#444C56" stroke-width="1"/>
-    <text x="20" y="1160" class="white title">OVERLAY BADGES</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Overlay Badges Section Header -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-reflow-group="overlay-header"
+     data-interactive="EOV"
+     data-source-span="75:0-75:93"
+     data-entity-name="overlay-header"
+     data-entity-kind="section"
+     data-entity-desc="Overlay Badges section header"
+     class="fade-section" style="animation-delay: 0.9s">
+    <line x1="20" y1="1135" x2="1080" y2="1135" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="1153" class="white title">Overlay Badges</text>
+    <line x1="20" y1="1161" x2="1080" y2="1161" stroke="#444C56" stroke-width="0.5"/>
   </g>
 
-  <!-- OverlayBadge [OB] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- OverlayBadge -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="overlay-badge"
-     data-interactive="OB"
+     data-interactive="EOB"
      data-ref="web-ui/src/diagram/types.ts:176-186"
      data-category="type"
      data-label="OverlayBadge"
-     data-link="02-rendering.html#OL"
-     class="fade-section" style="animation-delay: 0.8s">
-    <rect x="20" y="1175" width="850" height="120" rx="4"
-          fill="#24292E" stroke="#D29922" stroke-width="1"/>
-    <text x="32" y="1197" class="orange heading"
-          data-tt="types.ts:176 — OverlayBadge interface">
-      OverlayBadge [OB]
-    </text>
-    <text x="40" y="1220" class="white">id: string</text>
-    <text x="40" y="1238" class="white">anchor: BadgeAnchor</text>
-    <text x="40" y="1256" class="white">text: string <tspan class="dim">(emoji or symbol, e.g. "⬡", "→")</tspan></text>
-    <text x="40" y="1274" class="white">onClick: () =&gt; void</text>
-    <text x="400" y="1220" class="white">style?: { color, background, borderColor }</text>
+     data-source-span="77:2-85:79"
+     data-entity-name="overlay-badge"
+     data-entity-kind="box"
+     data-entity-desc="OverlayBadge { id, anchor, text, onClick, style }"
+     data-entity-parent="EOV"
+     data-code-ref-id="COB"
+     data-link="02-rendering.html#EOL"
+     data-link-target-file="02-rendering.txt"
+     data-link-target-id="EOL"
+     data-link-desc="OverlayBadge consumed by OverLayer"
+     class="fade-section" style="animation-delay: 0.95s">
+    <rect x="20" y="1178" width="840" height="120" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="1200" class="blue heading"
+          data-tt="types.ts:176 — OverlayBadge interface">OverlayBadge</text>
+    <g data-interactive="EOB.1" data-source-span="80:2-80:60" data-entity-parent="EOB">
+      <text x="32" y="1222" class="white">id: string</text>
+    </g>
+    <g data-interactive="EOB.2" data-source-span="81:2-81:60" data-entity-parent="EOB">
+      <text x="32" y="1238" class="white">anchor: BadgeAnchor</text>
+    </g>
+    <g data-interactive="EOB.3" data-source-span="82:2-82:75" data-entity-parent="EOB">
+      <text x="32" y="1254" class="white">text: string</text>
+      <text x="170" y="1254" class="dim subhead">(emoji or symbol)</text>
+    </g>
+    <g data-interactive="EOB.4" data-source-span="83:2-83:60" data-entity-parent="EOB">
+      <text x="32" y="1270" class="white">onClick: () =&gt; void</text>
+    </g>
+    <g data-interactive="EOB.5" data-source-span="84:2-84:60" data-entity-parent="EOB">
+      <text x="32" y="1286" class="white">style?: { color, background, borderColor }</text>
+    </g>
   </g>
 
-  <!-- Arrow: OB.anchor → BadgeAnchor -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.85s">
-    <line x1="200" y1="1300" x2="200" y2="1330" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- Arrow: OverlayBadge.anchor -> BadgeAnchor -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <g data-arrow
+     data-arrow-src="EOB"
+     data-arrow-target="EBA"
+     data-arrow-desc="OverlayBadge.anchor is a BadgeAnchor"
+     data-source-span="81:2-87:0"
+     class="fade-section" style="animation-delay: 0.97s">
+    <line x1="200" y1="1238" x2="200" y2="1322" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="206" y="1284" class="dim subhead">.anchor</text>
   </g>
 
-  <!-- BadgeAnchor [BA] -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- BadgeAnchor -->
+  <!-- ══════════════════════════════════════════════════════════ -->
   <g data-reflow-group="badge-anchor"
-     data-interactive="BA"
+     data-interactive="EBA"
      data-ref="web-ui/src/diagram/types.ts:166-173"
      data-category="type"
      data-label="BadgeAnchor"
-     data-link="02-rendering.html#BA"
-     class="fade-section" style="animation-delay: 0.9s">
-    <rect x="20" y="1335" width="850" height="130" rx="4"
+     data-source-span="87:2-95:79"
+     data-entity-name="badge-anchor"
+     data-entity-kind="text"
+     data-entity-desc="BadgeAnchor discriminated union (screen/scene/element)"
+     data-entity-parent="EOV"
+     data-code-ref-id="CBA"
+     data-link="02-rendering.html#EBA"
+     data-link-target-file="02-rendering.txt"
+     data-link-target-id="EBA"
+     data-link-desc="BadgeAnchor resolved by resolveAnchor"
+     class="fade-section" style="animation-delay: 1.0s">
+    <text x="20" y="1340" class="violet heading"
+          data-tt="types.ts:166 — BadgeAnchor discriminated union">BadgeAnchor</text>
+    <text x="170" y="1340" class="dim subhead">(discriminated union)</text>
+
+    <!-- Table -->
+    <rect x="20" y="1352" width="840" height="104" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1"/>
-    <text x="32" y="1357" class="violet heading"
-          data-tt="types.ts:166 — BadgeAnchor discriminated union">
-      BadgeAnchor (discriminated union) [BA]
-    </text>
 
-    <!-- Table-like layout -->
-    <line x1="240" y1="1370" x2="240" y2="1455" stroke="#444C56" stroke-width="0.5"/>
+    <!-- Row 1: screen -->
+    <g data-interactive="EBA.1" data-source-span="89:2-89:78" data-entity-parent="EBA">
+      <rect x="20" y="1352" width="230" height="34" fill="none" stroke="#30363D" stroke-width="0.5"/>
+      <text x="32" y="1374" class="green">{ space: "screen" }</text>
+      <rect x="250" y="1352" width="610" height="34" fill="none" stroke="#30363D" stroke-width="0.5"/>
+      <text x="262" y="1374" class="white">Fixed screen position. x, y in pixels.</text>
+    </g>
 
-    <text x="40" y="1390" class="white">{ space: "screen" }</text>
-    <text x="260" y="1390" class="dim subhead">Fixed screen position. x, y in pixels.</text>
+    <!-- Row 2: scene -->
+    <g data-interactive="EBA.2" data-source-span="91:2-91:78" data-entity-parent="EBA">
+      <rect x="20" y="1386" width="230" height="34" fill="none" stroke="#30363D" stroke-width="0.5"/>
+      <text x="32" y="1408" class="green">{ space: "scene" }</text>
+      <rect x="250" y="1386" width="610" height="34" fill="none" stroke="#30363D" stroke-width="0.5"/>
+      <text x="262" y="1408" class="white">Tracks with pan/zoom. x, y in scene coords.</text>
+    </g>
 
-    <line x1="30" y1="1400" x2="860" y2="1400" stroke="#444C56" stroke-width="0.3"/>
-
-    <text x="40" y="1420" class="white">{ space: "scene" }</text>
-    <text x="260" y="1420" class="dim subhead">Tracks with pan/zoom. x, y in scene coords.</text>
-
-    <line x1="30" y1="1430" x2="860" y2="1430" stroke="#444C56" stroke-width="0.3"/>
-
-    <text x="40" y="1450" class="white">{ space: "element" }</text>
-    <text x="260" y="1450" class="dim subhead">Attached to element corner. elementId + corner (center, top-right, etc.)</text>
+    <!-- Row 3: element -->
+    <g data-interactive="EBA.3" data-source-span="93:2-95:78" data-entity-parent="EBA">
+      <rect x="20" y="1420" width="230" height="36" fill="none" stroke="#30363D" stroke-width="0.5"/>
+      <text x="32" y="1442" class="green">{ space: "element" }</text>
+      <rect x="250" y="1420" width="610" height="36" fill="none" stroke="#30363D" stroke-width="0.5"/>
+      <text x="262" y="1436" class="white">Attached to element corner.</text>
+      <text x="262" y="1450" class="dim subhead">elementId + corner (center, top-right, etc.)</text>
+    </g>
   </g>
 
 </svg>

@@ -39,231 +39,608 @@
     <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
       <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
     </marker>
+    <marker id="ar" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#F85149" stroke-width="1"/>
+    </marker>
   </defs>
 
   <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
 
   <!-- Title -->
-  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+  <g data-reflow-group="title"
+     data-interactive="ETI"
+     data-source-span="0:0-0:95"
+     data-entity-name="title"
+     data-entity-kind="text"
+     data-entity-desc="Diagram title"
+     class="fade-section" style="animation-delay: 0s">
     <text x="20" y="28" class="white title">SvgScene IMPLEMENTATION DETAIL</text>
-    <text x="20" y="48" class="dim subhead">Modal expansion of 02-rendering.txt    ** 04-types-and-data-model (composeTransforms, transformRect, rectsIntersect)</text>
   </g>
 
-  <!-- ═══ SvgScene outer box ═══ -->
+  <!-- Cross-reference -->
+  <g data-reflow-group="cross-ref"
+     data-interactive="EXR"
+     data-source-span="2:0-2:95"
+     data-entity-name="cross-ref"
+     data-entity-kind="text"
+     data-entity-desc="Cross-reference to 04-types-and-data-model.txt"
+     data-link="04-types-and-data-model.html"
+     data-link-target-file="04-types-and-data-model.txt"
+     data-link-desc="composeTransforms, transformRect, rectsIntersect, parseInteractiveData"
+     class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="48" class="dim subhead">** 04-types-and-data-model.txt  (composeTransforms, transformRect, rectsIntersect, parseInteractiveData)</text>
+  </g>
+
+  <!-- SvgScene outer box -->
   <g data-reflow-group="svg-scene"
-     data-interactive="SS"
+     data-interactive="ESS"
      data-ref="web-ui/src/diagram/rendering/svg-scene.ts:52-521"
      data-category="module"
      data-label="SvgScene"
-     data-link="02-rendering.html#SS"
-     class="fade-section" style="animation-delay: 0.05s">
+     data-source-span="4:2-94:98"
+     data-entity-name="svg-scene"
+     data-entity-kind="box"
+     data-entity-desc="SvgScene (entire detail box)"
+     data-code-ref-id="CSS"
+     data-link="02-rendering.html#ESS"
+     data-link-target-file="02-rendering.txt"
+     data-link-target-id="ESS"
+     data-link-desc="parent diagram (this is the modal expansion)"
+     class="fade-section" style="animation-delay: 0.1s">
 
     <rect x="20" y="66" width="1060" height="1240" rx="4"
           fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
     <text x="32" y="90" class="blue heading"
           data-tt="svg-scene.ts:52 — SvgScene class (parent diagram)">
-      SvgScene [SS]
+      SvgScene
     </text>
 
-    <!-- ═══ Private State ═══ -->
-    <rect x="44" y="106" width="1016" height="120" rx="3"
-          fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
-    <text x="56" y="126" class="white">Private State</text>
-    <line x1="56" y1="132" x2="280" y2="132" stroke="#444C56" stroke-width="0.5"/>
-    <text x="56" y="150" class="dim subhead">svg:              SVGSVGElement                     &lt;- the root &lt;svg&gt;</text>
-    <text x="56" y="166" class="dim subhead">elements:         Map&lt;string, SceneElement&gt;         &lt;- id → node (full scene graph)</text>
-    <text x="56" y="182" class="dim subhead">domElements:      Map&lt;string, SVGGElement&gt;          &lt;- id → DOM &lt;g&gt; backlink</text>
-    <text x="56" y="198" class="dim subhead">visualRects:      Map&lt;string, SVGRectElement&gt;       &lt;- id → first child &lt;rect&gt;</text>
-    <text x="56" y="214" class="dim subhead">worldBoundsCache: Map&lt;string, Rect&gt;                 &lt;- lazy, invalidated on transform change</text>
+    <!-- Private State -->
+    <g data-interactive="EPS"
+       data-source-span="7:4-14:98"
+       data-entity-name="private-state"
+       data-entity-kind="text"
+       data-entity-desc="Private state fields (svg, elements, domElements, visualRects, worldBoundsCache, rootId)"
+       data-entity-parent="ESS">
+      <rect x="44" y="106" width="1016" height="120" rx="3"
+            fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
+      <text x="56" y="126" class="white">Private State</text>
+      <line x1="56" y1="132" x2="280" y2="132" stroke="#444C56" stroke-width="0.5"/>
 
-    <!-- ═══ buildElementTree ═══ -->
+      <g data-interactive="EPS.1"
+         data-source-span="8:5-8:87"
+         data-entity-parent="EPS">
+        <text x="56" y="150" class="dim subhead">svg:              SVGSVGElement                     &lt;- the root &lt;svg&gt;</text>
+      </g>
+      <g data-interactive="EPS.2"
+         data-source-span="9:5-9:87"
+         data-entity-parent="EPS">
+        <text x="56" y="166" class="dim subhead">elements:         Map&lt;string, SceneElement&gt;         &lt;- id -> node (full scene graph)</text>
+      </g>
+      <g data-interactive="EPS.3"
+         data-source-span="10:5-10:87"
+         data-entity-parent="EPS">
+        <text x="56" y="182" class="dim subhead">domElements:      Map&lt;string, SVGGElement&gt;          &lt;- id -> DOM &lt;g&gt; backlink</text>
+      </g>
+      <g data-interactive="EPS.4"
+         data-source-span="11:5-11:87"
+         data-entity-parent="EPS">
+        <text x="56" y="198" class="dim subhead">visualRects:      Map&lt;string, SVGRectElement&gt;       &lt;- id -> first child &lt;rect&gt;</text>
+      </g>
+      <g data-interactive="EPS.5"
+         data-source-span="12:5-12:87"
+         data-entity-parent="EPS">
+        <text x="56" y="214" class="dim subhead">worldBoundsCache: Map&lt;string, Rect&gt;                 &lt;- lazy, invalidated on transform change</text>
+      </g>
+    </g>
+
+    <!-- buildElementTree section -->
     <g data-reflow-group="build-tree"
-       data-interactive="BT"
+       data-interactive="EBT"
        data-ref="web-ui/src/diagram/rendering/svg-scene.ts:126-206"
        data-category="function"
        data-label="buildElementTree"
-       class="fade-section" style="animation-delay: 0.1s">
+       data-source-span="17:4-40:97"
+       data-entity-name="build-tree"
+       data-entity-kind="text"
+       data-entity-desc="buildElementTree algorithm (section header)"
+       data-entity-parent="ESS"
+       data-code-ref-id="CBT"
+       class="fade-section" style="animation-delay: 0.15s">
 
       <line x1="44" y1="246" x2="1048" y2="246" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
-      <text x="44" y="266" class="orange heading">buildElementTree [BT]</text>
+      <text x="44" y="266" class="orange heading"
+            data-tt="svg-scene.ts:126 — buildElementTree: builds scene graph from DOM">
+        buildElementTree
+      </text>
 
-      <text x="56" y="290" class="white">1. Query: svg.querySelectorAll("[data-reflow-group], [data-interactive], [data-arrow]")</text>
-      <text x="56" y="310" class="white">2. Create root SceneElement (id="root", bounds = svg width x height)</text>
-      <text x="56" y="334" class="white">3. For each tagged &lt;g&gt;:</text>
-
-      <!-- resolveElementId -->
-      <g data-interactive="RI"
-         data-ref="web-ui/src/diagram/rendering/svg-scene.ts:18-29"
-         data-category="function"
-         data-label="resolveElementId">
-        <rect x="72" y="346" width="960" height="130" rx="3"
-              fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
-        <text x="84" y="366" class="orange"
-              data-tt="svg-scene.ts:18 — resolveElementId: data-* → id">
-          resolveElementId(g) [RI]:
-        </text>
-        <text x="96" y="386" class="dim subhead">data-reflow-group → use its value</text>
-        <text x="96" y="400" class="dim subhead">data-interactive  → use its value</text>
-        <text x="96" y="414" class="dim subhead">data-arrow        → "arrow-{counter++}"</text>
-        <text x="84" y="438" class="dim subhead">readMetadata(g) → all data-* attrs as Record&lt;string,string&gt;</text>
-        <text x="84" y="454" class="dim subhead">findVisualRect(g) → first child &lt;rect&gt; or null</text>
-        <text x="84" y="470" class="dim subhead">Parent resolution: walk DOM ancestors until another tagged &lt;g&gt; → parentId, or svg → "root"</text>
+      <!-- Step 1: querySelectorAll -->
+      <g data-interactive="EQ1"
+         data-source-span="19:4-19:95"
+         data-entity-name="query-step"
+         data-entity-kind="text"
+         data-entity-desc="Step 1: querySelectorAll for tagged elements"
+         data-entity-parent="EBT">
+        <text x="56" y="290" class="white">1. Query: svg.querySelectorAll("[data-reflow-group], [data-interactive], [data-arrow]")</text>
       </g>
 
-      <!-- parseInteractiveData -->
-      <g data-interactive="PI"
-         data-ref="web-ui/src/diagram/types.ts:143-161"
-         data-category="function"
-         data-label="parseInteractiveData"
-         data-link="04-types-and-data-model.html#ID">
-        <text x="84" y="498" class="violet"
-              data-tt="types.ts:143 — parseInteractiveData: metadata → InteractiveData">
-          interactive = parseInteractiveData(id, metadata) [PI]
-        </text>
-        <text x="84" y="516" class="dim subhead">reflow = has reflow-group or arrow? → { originalBounds }</text>
+      <!-- Step 2: Create root -->
+      <g data-interactive="EQ2"
+         data-source-span="21:4-21:85"
+         data-entity-name="create-root"
+         data-entity-kind="text"
+         data-entity-desc="Step 2: create root SceneElement"
+         data-entity-parent="EBT">
+        <text x="56" y="310" class="white">2. Create root SceneElement (id="root", bounds = svg width x height)</text>
+      </g>
+
+      <!-- Step 3: For each tagged <g> -->
+      <g data-interactive="EQ3"
+         data-source-span="23:4-40:97"
+         data-entity-name="for-each-g"
+         data-entity-kind="text"
+         data-entity-desc="Step 3: for each tagged &lt;g&gt; (inner box header)"
+         data-entity-parent="EBT">
+        <text x="56" y="334" class="white">3. For each tagged &lt;g&gt;:</text>
+
+        <!-- resolveElementId inner box -->
+        <g data-interactive="ERI"
+           data-ref="web-ui/src/diagram/rendering/svg-scene.ts:18-29"
+           data-category="function"
+           data-label="resolveElementId"
+           data-source-span="24:5-39:82"
+           data-entity-name="resolve-id"
+           data-entity-kind="text"
+           data-entity-desc="resolveElementId: data-* -> id"
+           data-entity-parent="EQ3"
+           data-code-ref-id="CRI">
+          <rect x="72" y="346" width="960" height="130" rx="3"
+                fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+          <text x="84" y="366" class="orange"
+                data-tt="svg-scene.ts:18 — resolveElementId: data-* -> id">
+            resolveElementId(g):
+          </text>
+          <text x="96" y="386" class="dim subhead">data-reflow-group -> use its value</text>
+          <text x="96" y="400" class="dim subhead">data-interactive  -> use its value</text>
+          <text x="96" y="414" class="dim subhead">data-arrow        -> "arrow-{counter++}"</text>
+
+          <!-- readMetadata -->
+          <g data-interactive="ERM"
+             data-source-span="30:5-31:80"
+             data-entity-name="read-metadata"
+             data-entity-kind="text"
+             data-entity-desc="readMetadata + findVisualRect"
+             data-entity-parent="EQ3">
+            <text x="84" y="438" class="dim subhead">readMetadata(g) -> all data-* attrs as Record&lt;string,string&gt;</text>
+            <text x="84" y="454" class="dim subhead">findVisualRect(g) -> first child &lt;rect&gt; or null</text>
+          </g>
+
+          <!-- Parent resolution -->
+          <g data-interactive="EPA"
+             data-source-span="33:5-35:80"
+             data-entity-name="parent-resolution"
+             data-entity-kind="text"
+             data-entity-desc="Parent resolution: walk DOM ancestors"
+             data-entity-parent="EQ3">
+            <text x="84" y="470" class="dim subhead">Parent resolution: walk DOM ancestors until another tagged &lt;g&gt; -> parentId, or svg -> "root"</text>
+          </g>
+        </g>
+
+        <!-- parseInteractiveData -->
+        <g data-interactive="EPI"
+           data-ref="web-ui/src/diagram/types.ts:143-161"
+           data-category="function"
+           data-label="parseInteractiveData"
+           data-source-span="37:5-39:82"
+           data-entity-name="parse-interactive"
+           data-entity-kind="text"
+           data-entity-desc="parseInteractiveData: metadata -> roles (interactive + reflow)"
+           data-entity-parent="EQ3"
+           data-code-ref-id="CPI"
+           data-link="04-types-and-data-model.html#EID"
+           data-link-target-file="04-types-and-data-model.txt"
+           data-link-target-id="EID"
+           data-link-desc="parseInteractiveData produces InteractiveData">
+          <text x="84" y="498" class="violet"
+                data-tt="types.ts:143 — parseInteractiveData: metadata -> InteractiveData">
+            interactive = parseInteractiveData(id, metadata)
+          </text>
+          <text x="84" y="516" class="dim subhead">reflow = has reflow-group or arrow? -> { originalBounds }</text>
+        </g>
       </g>
     </g>
 
-    <!-- ═══ Bounds Computation ═══ -->
-    <g data-reflow-group="bounds-computation" class="fade-section" style="animation-delay: 0.15s">
+    <!-- Bounds Computation section -->
+    <g data-reflow-group="bounds-computation"
+       data-interactive="EBC"
+       data-source-span="43:4-56:82"
+       data-entity-name="bounds-computation"
+       data-entity-kind="text"
+       data-entity-desc="Bounds Computation section header"
+       data-entity-parent="ESS"
+       class="fade-section" style="animation-delay: 0.2s">
       <line x1="44" y1="540" x2="1048" y2="540" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
       <text x="44" y="560" class="orange heading">Bounds Computation</text>
 
-      <text x="56" y="584" class="dim subhead">getLocalBounds(id) → element.localBounds  (from getBBox at construction)</text>
+      <!-- getLocalBounds -->
+      <g data-interactive="EGL"
+         data-source-span="45:4-45:85"
+         data-entity-name="get-local-bounds"
+         data-entity-kind="text"
+         data-entity-desc="getLocalBounds: element.localBounds from getBBox"
+         data-entity-parent="EBC">
+        <text x="56" y="584" class="dim subhead">getLocalBounds(id) -> element.localBounds  (from getBBox at construction)</text>
+      </g>
 
       <!-- getWorldBounds -->
-      <g data-interactive="WB"
+      <g data-interactive="EWB"
          data-ref="web-ui/src/diagram/rendering/svg-scene.ts:238-249"
          data-category="function"
-         data-label="getWorldBounds">
+         data-label="getWorldBounds"
+         data-source-span="47:4-51:62"
+         data-entity-name="get-world-bounds"
+         data-entity-kind="text"
+         data-entity-desc="getWorldBounds (cached, ancestor compose)"
+         data-entity-parent="EBC"
+         data-code-ref-id="CWB">
         <text x="56" y="608" class="white"
               data-tt="svg-scene.ts:238 — getWorldBounds: cached ancestor transform composition">
-          getWorldBounds(id) [WB]:
+          getWorldBounds(id):
         </text>
-        <text x="72" y="628" class="dim subhead">cached? → return</text>
-        <text x="72" y="644" class="dim subhead">else: getAncestorTransform(id) → compose parent chain (skip root)</text>
-        <text x="72" y="660" class="dim subhead">      transformRect(localBounds, ancestorTransform) → cache result</text>
+        <g data-interactive="EWB.1"
+           data-source-span="48:6-48:30"
+           data-entity-parent="EWB">
+          <text x="72" y="628" class="dim subhead">cached? -> return</text>
+        </g>
+        <g data-interactive="EWB.2"
+           data-source-span="49:6-49:72"
+           data-entity-parent="EWB">
+          <text x="72" y="644" class="dim subhead">else: getAncestorTransform(id) -> compose parent chain (skip root)</text>
+        </g>
+        <g data-interactive="EWB.3"
+           data-source-span="50:11-51:62"
+           data-entity-parent="EWB">
+          <text x="72" y="660" class="dim subhead">      transformRect(localBounds, ancestorTransform) -> cache result</text>
+        </g>
       </g>
 
       <!-- composeTransforms -->
-      <g data-interactive="CT"
+      <g data-interactive="ECT"
          data-ref="web-ui/src/diagram/types.ts:203-210"
          data-category="function"
          data-label="composeTransforms"
-         data-link="04-types-and-data-model.html#CT">
+         data-source-span="53:4-56:62"
+         data-entity-name="compose-transforms"
+         data-entity-kind="text"
+         data-entity-desc="composeTransforms formula"
+         data-entity-parent="EBC"
+         data-code-ref-id="CCT"
+         data-link="04-types-and-data-model.html#ECT"
+         data-link-target-file="04-types-and-data-model.txt"
+         data-link-target-id="ECT"
+         data-link-desc="composeTransforms defined in types.ts">
         <text x="56" y="688" class="violet"
               data-tt="types.ts:203 — composeTransforms(parent, child)">
-          composeTransforms(parent, child) [CT]:
+          composeTransforms(parent, child):
         </text>
-        <text x="72" y="706" class="dim subhead">tx = parent.tx + child.tx * parent.scale</text>
-        <text x="72" y="722" class="dim subhead">ty = parent.ty + child.ty * parent.scale</text>
-        <text x="72" y="738" class="dim subhead">scale = parent.scale * child.scale</text>
+        <g data-interactive="ECT.1"
+           data-source-span="54:6-54:52"
+           data-entity-parent="ECT">
+          <text x="72" y="706" class="dim subhead">tx = parent.tx + child.tx * parent.scale</text>
+        </g>
+        <g data-interactive="ECT.2"
+           data-source-span="55:6-55:52"
+           data-entity-parent="ECT">
+          <text x="72" y="722" class="dim subhead">ty = parent.ty + child.ty * parent.scale</text>
+        </g>
+        <g data-interactive="ECT.3"
+           data-source-span="56:6-56:42"
+           data-entity-parent="ECT">
+          <text x="72" y="738" class="dim subhead">scale = parent.scale * child.scale</text>
+        </g>
       </g>
     </g>
 
-    <!-- ═══ Transforms ═══ -->
-    <g data-reflow-group="transforms" class="fade-section" style="animation-delay: 0.2s">
+    <!-- Transforms section -->
+    <g data-reflow-group="transforms"
+       data-interactive="ETX"
+       data-source-span="59:4-69:82"
+       data-entity-name="transforms"
+       data-entity-kind="text"
+       data-entity-desc="Transforms section header"
+       data-entity-parent="ESS"
+       class="fade-section" style="animation-delay: 0.25s">
       <line x1="44" y1="758" x2="1048" y2="758" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
       <text x="44" y="778" class="orange heading">Transforms</text>
 
       <!-- setTransform -->
-      <g data-interactive="ST"
+      <g data-interactive="EST"
          data-ref="web-ui/src/diagram/rendering/svg-scene.ts:271-286"
          data-category="function"
          data-label="setTransform"
-         data-link="02-rendering.html#VP">
+         data-source-span="61:4-66:77"
+         data-entity-name="set-transform"
+         data-entity-kind="text"
+         data-entity-desc="setTransform + cache invalidation + CSS"
+         data-entity-parent="ETX"
+         data-code-ref-id="CST"
+         data-link="02-rendering.html#EVP"
+         data-link-target-file="02-rendering.txt"
+         data-link-target-id="EVP"
+         data-link-desc="root transform managed by Viewport's CSS">
         <text x="56" y="802" class="white"
-              data-tt="svg-scene.ts:271 — setTransform: update + CSS + cache invalidation → root transform managed by Viewport">
-          setTransform(id, t) [ST]:
+              data-tt="svg-scene.ts:271 — setTransform: update + CSS + cache invalidation">
+          setTransform(id, t):
         </text>
-        <text x="72" y="822" class="dim subhead">element.transform = t</text>
-        <text x="72" y="838" class="dim subhead">invalidateWorldBoundsCache(id) &lt;- recursive: clears id + all descendants</text>
-        <text x="72" y="854" class="dim subhead">if id != root:</text>
-        <text x="88" y="870" class="dim subhead">domElement.style.transform = translate(tx,ty)  &lt;- CSS displacement</text>
-        <text x="72" y="888" class="dim subhead">(root transform is managed by Viewport's transformDiv)</text>
+        <g data-interactive="EST.1"
+           data-source-span="62:6-62:30"
+           data-entity-parent="EST">
+          <text x="72" y="822" class="dim subhead">element.transform = t</text>
+        </g>
+        <g data-interactive="EST.2"
+           data-source-span="63:6-63:82"
+           data-entity-parent="EST">
+          <text x="72" y="838" class="dim subhead">invalidateWorldBoundsCache(id) &lt;- recursive: clears id + all descendants</text>
+        </g>
+        <g data-interactive="EST.3"
+           data-source-span="64:6-64:26"
+           data-entity-parent="EST">
+          <text x="72" y="854" class="dim subhead">if id != root:</text>
+        </g>
+        <g data-interactive="EST.4"
+           data-source-span="65:8-65:80"
+           data-entity-parent="EST">
+          <text x="88" y="870" class="dim subhead">domElement.style.transform = translate(tx,ty)  &lt;- CSS displacement</text>
+        </g>
+        <g data-interactive="EST.5"
+           data-source-span="66:6-66:66"
+           data-entity-parent="EST">
+          <text x="72" y="888" class="dim subhead">(root transform is managed by Viewport's transformDiv)</text>
+        </g>
       </g>
 
-      <text x="56" y="914" class="dim subhead">getWorldTransform(id): walk parent chain → collect all transforms → composeTransforms in order</text>
+      <!-- getWorldTransform -->
+      <g data-interactive="EGW"
+         data-source-span="68:4-69:82"
+         data-entity-name="get-world-transform"
+         data-entity-kind="text"
+         data-entity-desc="getWorldTransform: walk parent chain -> compose"
+         data-entity-parent="ETX">
+        <text x="56" y="914" class="dim subhead">getWorldTransform(id): walk parent chain -> collect all transforms -> composeTransforms in order</text>
+      </g>
     </g>
 
-    <!-- ═══ Hit Testing ═══ -->
-    <g data-reflow-group="hit-testing" class="fade-section" style="animation-delay: 0.25s">
+    <!-- Hit Testing section -->
+    <g data-reflow-group="hit-testing"
+       data-interactive="EHS"
+       data-source-span="72:4-85:82"
+       data-entity-name="hit-testing"
+       data-entity-kind="text"
+       data-entity-desc="Hit Testing section header"
+       data-entity-parent="ESS"
+       class="fade-section" style="animation-delay: 0.3s">
       <line x1="44" y1="934" x2="1048" y2="934" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
       <text x="44" y="954" class="orange heading">Hit Testing</text>
 
       <!-- hitTest -->
-      <g data-interactive="HT"
+      <g data-interactive="EHT"
          data-ref="web-ui/src/diagram/rendering/svg-scene.ts:347-358"
          data-category="function"
          data-label="hitTest"
-         data-link="03-interaction.html#HC">
+         data-source-span="74:4-78:62"
+         data-entity-name="hit-test"
+         data-entity-kind="text"
+         data-entity-desc="hitTest: elementFromPoint -> closest"
+         data-entity-parent="EHS"
+         data-code-ref-id="CHT"
+         data-link="03-interaction.html#EHC"
+         data-link-target-file="03-interaction.txt"
+         data-link-target-id="EHC"
+         data-link-desc="hitTest called from handleSceneClick">
         <text x="56" y="978" class="white"
               data-tt="svg-scene.ts:347 — hitTest called from handleSceneClick">
-          hitTest(screenPt) [HT]:
+          hitTest(screenPt):
         </text>
-        <text x="72" y="998" class="dim subhead">document.elementFromPoint(x, y)</text>
-        <text x="72" y="1014" class="dim subhead">├─ not in our svg? → null</text>
-        <text x="72" y="1030" class="dim subhead">└─ .closest("[data-reflow-group], [data-interactive], [data-arrow]")</text>
-        <text x="88" y="1046" class="dim subhead">match against domElements map → return id</text>
+        <g data-interactive="EHT.1"
+           data-source-span="75:6-75:40"
+           data-entity-parent="EHT">
+          <text x="72" y="998" class="dim subhead">document.elementFromPoint(x, y)</text>
+        </g>
+        <g data-interactive="EHT.2"
+           data-source-span="76:6-76:42"
+           data-entity-parent="EHT">
+          <text x="72" y="1014" class="dim subhead">|- not in our svg? -> null</text>
+        </g>
+        <g data-interactive="EHT.3"
+           data-source-span="77:6-78:62"
+           data-entity-parent="EHT">
+          <text x="72" y="1030" class="dim subhead">|- .closest("[data-reflow-group], [data-interactive], [data-arrow]")</text>
+          <text x="88" y="1046" class="dim subhead">match against domElements map -> return id</text>
+        </g>
       </g>
 
       <!-- hitTestRect -->
-      <g data-interactive="HR"
+      <g data-interactive="EHR"
          data-ref="web-ui/src/diagram/rendering/svg-scene.ts:360-375"
          data-category="function"
          data-label="hitTestRect"
-         data-link="03-interaction.html#SD">
+         data-source-span="80:4-84:72"
+         data-entity-name="hit-test-rect"
+         data-entity-kind="text"
+         data-entity-desc="hitTestRect: AABB intersect/contain"
+         data-entity-parent="EHS"
+         data-code-ref-id="CHR"
+         data-link="03-interaction.html#ESD"
+         data-link-target-file="03-interaction.txt"
+         data-link-target-id="ESD"
+         data-link-desc="hitTestRect called from handleSelectionDrag">
         <text x="56" y="1074" class="white"
               data-tt="svg-scene.ts:360 — hitTestRect: intersect/contain against interactives">
-          hitTestRect(sceneRect, mode) [HR]:
+          hitTestRect(sceneRect, mode):
         </text>
-        <text x="72" y="1094" class="dim subhead">for each element with .interactive:</text>
-        <text x="88" y="1110" class="dim subhead">getWorldBounds(id) → test intersection/containment</text>
-        <text x="88" y="1126" class="dim subhead">mode "intersect": rectsIntersect(sceneRect, worldBounds)</text>
-        <text x="88" y="1142" class="dim subhead">mode "contain":   rectContains(sceneRect, worldBounds)</text>
+        <g data-interactive="EHR.1"
+           data-source-span="81:6-81:50"
+           data-entity-parent="EHR">
+          <text x="72" y="1094" class="dim subhead">for each element with .interactive:</text>
+        </g>
+        <g data-interactive="EHR.2"
+           data-source-span="82:8-82:62"
+           data-entity-parent="EHR">
+          <text x="88" y="1110" class="dim subhead">getWorldBounds(id) -> test intersection/containment</text>
+        </g>
+        <g data-interactive="EHR.3"
+           data-source-span="83:8-83:64"
+           data-entity-parent="EHR">
+          <text x="88" y="1126" class="dim subhead">mode "intersect": rectsIntersect(sceneRect, worldBounds)</text>
+        </g>
+        <g data-interactive="EHR.4"
+           data-source-span="84:8-84:64"
+           data-entity-parent="EHR">
+          <text x="88" y="1142" class="dim subhead">mode "contain":   rectContains(sceneRect, worldBounds)</text>
+        </g>
       </g>
     </g>
 
-    <!-- ═══ Dynamic Mutations ═══ -->
-    <g data-reflow-group="dynamic-mutations" class="fade-section" style="animation-delay: 0.3s">
+    <!-- Dynamic Mutations section -->
+    <g data-reflow-group="dynamic-mutations"
+       data-interactive="EMT"
+       data-source-span="87:4-93:82"
+       data-entity-name="dynamic-mutations"
+       data-entity-kind="text"
+       data-entity-desc="Dynamic Mutations section header"
+       data-entity-parent="ESS"
+       class="fade-section" style="animation-delay: 0.35s">
       <line x1="44" y1="1162" x2="1048" y2="1162" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
       <text x="44" y="1182" class="orange heading">Dynamic Mutations</text>
 
-      <text x="56" y="1206" class="dim subhead">addElement(id, domNode, parentId)    → create SceneElement, link to parent</text>
-      <text x="56" y="1224" class="dim subhead">removeElement(id)                    → recursive: remove descendants, unlink from parent</text>
-      <text x="56" y="1242" class="dim subhead">addSubtree(rootDomNode, parentId)    → querySelectorAll in subtree, resolve parents, batch add</text>
-      <text x="56" y="1260" class="dim subhead">growVisualBounds(id, dw, dh)         → resize SVGRectElement + update localBounds</text>
+      <!-- mutations body -->
+      <g data-interactive="EMB"
+         data-source-span="89:4-92:88"
+         data-entity-name="mutations-body"
+         data-entity-kind="text"
+         data-entity-desc="addElement/removeElement/addSubtree/growVisualBounds"
+         data-entity-parent="EMT">
+        <g data-interactive="EMB.1"
+           data-source-span="89:4-89:88"
+           data-entity-parent="EMB">
+          <text x="56" y="1206" class="dim subhead">addElement(id, domNode, parentId)    -> create SceneElement, link to parent</text>
+        </g>
+        <g data-interactive="EMB.2"
+           data-source-span="90:4-90:88"
+           data-entity-parent="EMB">
+          <text x="56" y="1224" class="dim subhead">removeElement(id)                    -> recursive: remove descendants, unlink from parent</text>
+        </g>
+        <g data-interactive="EMB.3"
+           data-source-span="91:4-91:88"
+           data-entity-parent="EMB">
+          <text x="56" y="1242" class="dim subhead">addSubtree(rootDomNode, parentId)    -> querySelectorAll in subtree, resolve parents, batch add</text>
+        </g>
+        <g data-interactive="EMB.4"
+           data-source-span="92:4-92:88"
+           data-entity-parent="EMB">
+          <text x="56" y="1260" class="dim subhead">growVisualBounds(id, dw, dh)         -> resize SVGRectElement + update localBounds</text>
+        </g>
+      </g>
     </g>
   </g>
 
-  <!-- ═══ INTERNAL ARROWS ═══ -->
+  <!-- INTERNAL ARROWS -->
 
-  <!-- querySelectorAll → resolveElementId -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.35s">
+  <!-- querySelectorAll -> resolveElementId per <g> -->
+  <g data-arrow
+     data-arrow-src="EBT"
+     data-arrow-target="ERI"
+     data-arrow-desc="querySelectorAll -> resolveElementId per &lt;g&gt;"
+     data-source-span="19:4-24:5"
+     class="fade-section" style="animation-delay: 0.4s">
     <line x1="420" y1="292" x2="420" y2="346" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
     <text x="430" y="322" class="dim subhead">per &lt;g&gt;</text>
   </g>
 
-  <!-- resolveId → parseInteractive -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.4s">
+  <!-- resolveId -> readMetadata, findVisualRect, walk parents -->
+  <g data-arrow
+     data-arrow-src="ERI"
+     data-arrow-target="EBT"
+     data-arrow-desc="resolved id -> readMetadata, findVisualRect, walk parents"
+     data-source-span="25:5-33:5"
+     class="fade-section" style="animation-delay: 0.45s">
+    <line x1="200" y1="416" x2="200" y2="436" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="210" y="430" class="dim subhead">metadata + parent</text>
+  </g>
+
+  <!-- if data-interactive -> parseInteractiveData -->
+  <g data-arrow
+     data-arrow-src="EBT"
+     data-arrow-target="EPI"
+     data-arrow-desc="if data-interactive -> parseInteractiveData"
+     data-source-span="37:5-37:72"
+     class="fade-section" style="animation-delay: 0.5s">
     <line x1="200" y1="476" x2="200" y2="490" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
     <text x="210" y="486" class="dim subhead">if data-interactive</text>
   </g>
 
-  <!-- getWorldBounds cache miss → composeTransforms -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.45s">
+  <!-- cache miss -> composeTransforms chain -->
+  <g data-arrow
+     data-arrow-src="EWB"
+     data-arrow-target="ECT"
+     data-arrow-desc="cache miss -> getAncestorTransform -> composeTransforms chain"
+     data-source-span="49:6-53:4"
+     class="fade-section" style="animation-delay: 0.55s">
     <line x1="200" y1="662" x2="200" y2="680" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    <text x="210" y="674" class="dim subhead">cache miss → compose</text>
+    <text x="210" y="674" class="dim subhead">cache miss -> compose</text>
   </g>
 
-  <!-- setTransform → invalidate worldBoundsCache -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.5s">
-    <line x1="800" y1="840" x2="800" y2="628" stroke="#F85149" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
+  <!-- composeTransforms -> transformRect -> cache -->
+  <g data-arrow
+     data-arrow-src="ECT"
+     data-arrow-target="EWB"
+     data-arrow-desc="composed transform -> transformRect(localBounds) -> cache"
+     data-source-span="53:4-50:62"
+     class="fade-section" style="animation-delay: 0.6s">
+    <line x1="260" y1="680" x2="260" y2="662" stroke="#4C9AFF" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ab)"/>
+    <text x="270" y="674" class="dim subhead">result -> cache</text>
+  </g>
+
+  <!-- setTransform -> invalidateWorldBoundsCache -->
+  <g data-arrow
+     data-arrow-src="EST"
+     data-arrow-target="EWB"
+     data-arrow-desc="setTransform -> invalidateWorldBoundsCache (recursive)"
+     data-source-span="63:6-63:82"
+     class="fade-section" style="animation-delay: 0.65s">
+    <line x1="800" y1="840" x2="800" y2="628" stroke="#F85149" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ar)"/>
     <text x="810" y="740" class="dim subhead">invalidate cache (recursive)</text>
   </g>
 
-  <!-- hitTestRect → getWorldBounds -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.55s">
+  <!-- setTransform nonroot -> CSS translate on domElement -->
+  <g data-arrow
+     data-arrow-src="EST"
+     data-arrow-target="DOM"
+     data-arrow-desc="if id != root -> domElement.style.transform = translate(tx,ty)"
+     data-source-span="65:8-65:80"
+     class="fade-section" style="animation-delay: 0.7s">
+    <line x1="900" y1="870" x2="1040" y2="870" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="942" y="862" class="dim subhead">CSS translate</text>
+  </g>
+
+  <!-- hitTest -> elementFromPoint (screen-space DOM) -->
+  <g data-arrow
+     data-arrow-src="EHT"
+     data-arrow-target="DOM"
+     data-arrow-desc="hitTest uses document.elementFromPoint (screen-space)"
+     data-source-span="75:6-75:40"
+     class="fade-section" style="animation-delay: 0.75s">
+    <line x1="900" y1="998" x2="1040" y2="998" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="942" y="990" class="dim subhead">DOM query</text>
+  </g>
+
+  <!-- hitTestRect -> getWorldBounds per interactive element -->
+  <g data-arrow
+     data-arrow-src="EHR"
+     data-arrow-target="EWB"
+     data-arrow-desc="hitTestRect calls getWorldBounds per interactive element"
+     data-source-span="82:8-82:62"
+     class="fade-section" style="animation-delay: 0.8s">
     <line x1="900" y1="1110" x2="900" y2="660" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
     <text x="910" y="890" class="dim subhead">calls getWorldBounds</text>
   </g>

@@ -10,10 +10,11 @@
 </head>
 <body>
 <svg id="diagram" xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 1100 1300"
+  viewBox="0 0 1100 1700"
   font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
   font-size="11">
 
+  <!-- SVG styles -->
   <style>
     text { fill: #8B949E; }
     .white { fill: #E6EDF3; }
@@ -32,6 +33,7 @@
     @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 
+  <!-- Arrow markers -->
   <defs>
     <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
       <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
@@ -39,181 +41,521 @@
     <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
       <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
     </marker>
+    <marker id="ag" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#3FB950" stroke-width="1"/>
+    </marker>
   </defs>
 
+  <!-- Background -->
   <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
 
-  <!-- Title -->
-  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+  <!-- ============================================================ -->
+  <!-- Title                                                        -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="title"
+     data-interactive="ETI"
+     data-source-span="0:0-1:60"
+     data-entity-name="title"
+     data-entity-kind="text"
+     data-entity-desc="Diagram title"
+     class="fade-section" style="animation-delay: 0s">
     <text x="20" y="28" class="white title">POPUP OVERLAY DETAIL</text>
-    <text x="20" y="48" class="dim subhead">Modal expansion of 03-interaction.txt — a fully interactive nested diagram viewer in a popup</text>
+    <text x="20" y="48" class="dim subhead">modal expansion of 03-interaction.txt</text>
   </g>
 
-  <!-- DiagramScene context (popupStack) -->
-  <g data-reflow-group="diagram-scene-context" class="fade-section" style="animation-delay: 0.05s">
-    <rect x="20" y="70" width="1060" height="220" rx="4"
-          fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
-    <text x="32" y="92" class="blue heading">DiagramScene</text>
-    <text x="32" y="115" class="white">popupStack: PopupEntry[]</text>
-
-    <!-- PopupEntry shape -->
-    <rect x="50" y="130" width="480" height="140" rx="3"
-          fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
-    <text x="62" y="152" class="white heading">PopupEntry:</text>
-    <text x="72" y="175" class="white">path: string       <tspan class="dim">(resolved diagram)</tspan></text>
-    <text x="72" y="193" class="white">content: string    <tspan class="dim">(fetched HTML)</tspan></text>
-    <text x="72" y="211" class="white">position: OverlayPosition</text>
-    <text x="72" y="229" class="white">anchorBounds: Rect <tspan class="dim">(source el bounds)</tspan></text>
-
-    <text x="560" y="152" class="dim subhead">Stacking: zIndex = 50 + i*2 (each popup above previous)</text>
-    <text x="560" y="172" class="dim subhead">Close: onClose slices stack at index i (closes this + all above)</text>
+  <!-- Cross-reference to 02-rendering.txt -->
+  <g data-reflow-group="cross-refs"
+     data-interactive="EXR"
+     data-source-span="3:0-3:95"
+     data-entity-name="cross-refs"
+     data-entity-kind="text"
+     data-entity-desc="Cross-reference to 02-rendering.txt"
+     data-link="02-rendering.html"
+     data-link-target-file="02-rendering.txt"
+     data-link-desc="each popup creates its own useDiagram / Scene / SceneInput / Viewport stack"
+     class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="72" class="blue">** 02-rendering.txt</text>
+    <text x="175" y="72" class="dim subhead">(each popup creates its own useDiagram &#x2192; Scene &#x2192; SceneInput &#x2192; Viewport stack)</text>
   </g>
 
-  <!-- PopupDiagramOverlay [PO] -->
+  <!-- Description -->
+  <g data-reflow-group="description"
+     data-interactive="EDC"
+     data-source-span="5:2-5:85"
+     data-entity-name="description"
+     data-entity-kind="text"
+     data-entity-desc="One-line summary of PopupDiagramOverlay"
+     class="fade-section" style="animation-delay: 0.1s">
+    <text x="20" y="96" class="white">PopupDiagramOverlay &#x2014; a fully interactive nested diagram viewer in a popup.</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- DiagramScene context box                                     -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="diagram-scene-context"
+     data-interactive="EDS"
+     data-source-span="7:2-22:99"
+     data-entity-name="diagram-scene-context"
+     data-entity-kind="box"
+     data-entity-desc="DiagramScene box showing popup stack state"
+     class="fade-section" style="animation-delay: 0.15s">
+
+    <rect x="20" y="114" width="1060" height="200" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="32" y="136" class="blue heading">DiagramScene</text>
+    <text x="988" y="136" class="dim subhead">EDS</text>
+
+    <!-- popupStack declaration [EST] -->
+    <g data-interactive="EST"
+       data-source-span="10:2-10:55"
+       data-entity-parent="EDS"
+       data-entity-name="popup-stack-decl"
+       data-entity-kind="text"
+       data-entity-desc="popupStack: PopupEntry[] declaration">
+      <text x="40" y="162" class="white">popupStack: PopupEntry[]</text>
+    </g>
+
+    <!-- PopupEntry struct [EPE] -->
+    <g data-interactive="EPE"
+       data-source-span="11:4-17:60"
+       data-entity-parent="EDS"
+       data-entity-name="popup-entry-struct"
+       data-entity-kind="box"
+       data-entity-desc="PopupEntry struct: path, content, position, anchorBounds">
+      <rect x="50" y="174" width="570" height="96" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="62" y="192" class="blue">PopupEntry:</text>
+      <text x="566" y="192" class="dim subhead">EPE</text>
+
+      <g data-interactive="EPE.1" data-source-span="13:6-13:50" data-entity-parent="EPE">
+        <text x="72" y="210" class="white">path: string</text>
+        <text x="200" y="210" class="dim">(resolved diagram)</text>
+      </g>
+      <g data-interactive="EPE.2" data-source-span="14:6-14:52" data-entity-parent="EPE">
+        <text x="72" y="226" class="white">content: string</text>
+        <text x="220" y="226" class="dim">(fetched HTML)</text>
+      </g>
+      <g data-interactive="EPE.3" data-source-span="15:6-15:42" data-entity-parent="EPE">
+        <text x="72" y="242" class="white">position: OverlayPosition</text>
+      </g>
+      <g data-interactive="EPE.4" data-source-span="16:6-16:50" data-entity-parent="EPE">
+        <text x="72" y="258" class="white">anchorBounds: Rect</text>
+        <text x="248" y="258" class="dim">(source el bounds)</text>
+      </g>
+    </g>
+
+    <!-- Stacking rules [ESR] -->
+    <g data-interactive="ESR"
+       data-source-span="19:2-20:80"
+       data-entity-parent="EDS"
+       data-entity-name="stacking-rules"
+       data-entity-kind="text"
+       data-entity-desc="Stacking (zIndex = 50 + i*2) and close (slice at i) behavior">
+      <text x="40" y="290" class="white">Stacking: zIndex = 50 + i*2</text>
+      <text x="280" y="290" class="dim">(each popup above previous)</text>
+      <text x="40" y="306" class="white">Close: onClose slices stack at index i</text>
+      <text x="325" y="306" class="dim">(closes this + all above)</text>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- PopupDiagramOverlay (outer box) [EPO]                        -->
+  <!-- ============================================================ -->
   <g data-reflow-group="popup-overlay"
-     data-interactive="PO"
+     data-interactive="EPO"
      data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145"
      data-category="module"
      data-label="PopupDiagramOverlay"
-     data-link="03-interaction.html#PS"
-     class="fade-section" style="animation-delay: 0.1s">
+     data-source-span="24:2-70:99"
+     data-entity-name="popup-overlay"
+     data-entity-kind="box"
+     data-entity-desc="PopupDiagramOverlay (full component)"
+     data-code-ref-id="CPO"
+     data-link="03-interaction.html#EPS"
+     data-link-target-file="03-interaction.txt"
+     data-link-target-id="EPS"
+     data-link-desc="parent diagram (this is the modal expansion)"
+     class="fade-section" style="animation-delay: 0.2s">
 
-    <rect x="20" y="310" width="1060" height="540" rx="4"
+    <rect x="20" y="334" width="1060" height="580" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1.2"/>
-    <text x="32" y="332" class="violet heading"
-          data-tt="popup-diagram-overlay.tsx:63 — PopupDiagramOverlay component">
-      PopupDiagramOverlay [PO]
-    </text>
+    <text x="32" y="356" class="violet heading"
+          data-tt="popup-diagram-overlay.tsx:63 &#x2014; PopupDiagramOverlay component">PopupDiagramOverlay</text>
+    <text x="988" y="356" class="dim subhead">EPO</text>
 
-    <!-- Backdrop layer -->
-    <rect x="40" y="350" width="1020" height="480" rx="3"
-          fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
-    <text x="52" y="372" class="dim heading">absolute inset-0</text>
-    <text x="52" y="392" class="dim subhead">backdrop: bg-surface-0/50 backdrop-blur(2px)</text>
-    <text x="52" y="410" class="dim subhead">click backdrop → onClose</text>
+    <!-- Backdrop wrapper (absolute inset-0) -->
+    <rect x="40" y="370" width="1020" height="524" rx="3"
+          fill="none" stroke="#30363D" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="52" y="386" class="dim subhead">absolute inset-0</text>
 
-    <!-- Positioned popup [PP] -->
-    <g data-interactive="PP"
+    <!-- Backdrop description [EBK] -->
+    <g data-interactive="EBK"
+       data-source-span="28:4-29:50"
+       data-entity-parent="EPO"
+       data-entity-name="backdrop-desc"
+       data-entity-kind="text"
+       data-entity-desc="Backdrop styling (bg-surface-0/50, blur) and click-to-close">
+      <text x="56" y="404" class="white">backdrop: bg-surface-0/50 backdrop-blur(2px)</text>
+      <text x="56" y="420" class="white">click backdrop &#x2192; onClose</text>
+    </g>
+
+    <!-- Positioned popup [EPP] -->
+    <g data-interactive="EPP"
        data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:114-143"
        data-category="module"
-       data-label="positionedPopup">
-      <rect x="70" y="425" width="970" height="385" rx="3"
-            fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
-      <text x="82" y="447" class="orange heading"
-            data-tt="popup-diagram-overlay.tsx:114 — Positioned popup div with close btn">
-        Positioned popup [PP]
-      </text>
+       data-label="positionedPopup"
+       data-source-span="31:5-65:80"
+       data-entity-parent="EPO"
+       data-entity-name="positioned-popup"
+       data-entity-kind="box"
+       data-entity-desc="Positioned popup div (visual container)"
+       data-code-ref-id="CPP">
 
-      <!-- computePopupLayout [PL] -->
-      <g data-interactive="PL"
+      <rect x="60" y="434" width="960" height="412" rx="4"
+            fill="#24292E" stroke="#D29922" stroke-width="1"/>
+      <text x="72" y="456" class="orange heading"
+            data-tt="popup-diagram-overlay.tsx:114 &#x2014; Positioned popup div with close btn">positioned popup</text>
+      <text x="940" y="456" class="dim subhead">EPP</text>
+
+      <!-- computePopupLayout [EPL] -->
+      <g data-interactive="EPL"
          data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:36-60"
          data-category="function"
-         data-label="computePopupLayout">
-        <text x="92" y="472" class="white"
-              data-tt="popup-diagram-overlay.tsx:36 — computePopupLayout: size to fit diagram">
-          Layout: computePopupLayout [PL]
-        </text>
-        <text x="110" y="492" class="dim subhead">input: container size, diagram natural size (root localBounds)</text>
-        <text x="110" y="507" class="dim subhead">output: { top: 24, left: 24, width, height }</text>
-        <text x="110" y="527" class="dim subhead">sizing logic:</text>
-        <text x="130" y="542" class="dim subhead">maxW = 85% of container</text>
-        <text x="130" y="557" class="dim subhead">maxH = 85% of container</text>
-        <text x="130" y="572" class="dim subhead">min: 200 x 150</text>
-        <text x="130" y="587" class="dim subhead">if diagram fits: use diagram size + 24px padding</text>
-        <text x="130" y="602" class="dim subhead">else: scale to fit within max</text>
+         data-label="computePopupLayout"
+         data-source-span="33:5-35:70"
+         data-entity-parent="EPP"
+         data-entity-name="popup-layout"
+         data-entity-kind="text"
+         data-entity-desc="computePopupLayout: input (container + diagram size), output"
+         data-code-ref-id="CPL">
+        <text x="80" y="478" class="orange"
+              data-tt="popup-diagram-overlay.tsx:36 &#x2014; computePopupLayout: size to fit diagram">Layout: computePopupLayout</text>
+        <g data-interactive="EPL.1" data-source-span="34:7-34:70" data-entity-parent="EPL">
+          <text x="96" y="494" class="dim">input: container size, diagram natural size (root localBounds)</text>
+        </g>
+        <g data-interactive="EPL.2" data-source-span="35:7-35:55" data-entity-parent="EPL">
+          <text x="96" y="510" class="dim">output: { top: 24, left: 24, width, height }</text>
+        </g>
       </g>
 
-      <!-- Close button -->
-      <rect x="920" y="435" width="100" height="30" rx="3"
-            fill="#2D3339" stroke="#F85149" stroke-width="0.6"/>
-      <text x="932" y="455" class="red">X close (z:10)</text>
+      <!-- Sizing logic [ESZ] -->
+      <g data-interactive="ESZ"
+         data-source-span="37:5-42:65"
+         data-entity-parent="EPP"
+         data-entity-name="sizing-logic"
+         data-entity-kind="text"
+         data-entity-desc="Sizing logic: maxW/H 85%, min 200x150, fit or scale">
+        <text x="80" y="530" class="orange">sizing logic:</text>
+        <g data-interactive="ESZ.1" data-source-span="38:7-38:40" data-entity-parent="ESZ">
+          <text x="96" y="546" class="white">maxW = 85% of container</text>
+        </g>
+        <g data-interactive="ESZ.2" data-source-span="39:7-39:40" data-entity-parent="ESZ">
+          <text x="96" y="562" class="white">maxH = 85% of container</text>
+        </g>
+        <g data-interactive="ESZ.3" data-source-span="40:7-40:30" data-entity-parent="ESZ">
+          <text x="96" y="578" class="white">min:  200 x 150</text>
+        </g>
+        <g data-interactive="ESZ.4" data-source-span="41:7-41:65" data-entity-parent="ESZ">
+          <text x="96" y="594" class="white">if diagram fits: use diagram size + 24px padding</text>
+        </g>
+        <g data-interactive="ESZ.5" data-source-span="42:7-42:50" data-entity-parent="ESZ">
+          <text x="96" y="610" class="white">else: scale to fit within max</text>
+        </g>
+      </g>
 
-      <!-- PopupScene [PS] -->
-      <g data-interactive="PS"
+      <!-- Close button [ECB] -->
+      <g data-interactive="ECB"
+         data-source-span="44:5-46:45"
+         data-entity-parent="EPP"
+         data-entity-name="close-button"
+         data-entity-kind="box"
+         data-entity-desc="Close button (top-right, z:10, X icon)">
+        <rect x="80" y="622" width="360" height="28" rx="3"
+              fill="#2D3339" stroke="#F85149" stroke-width="0.6"/>
+        <text x="92" y="640" class="red">close button (top-right, z:10)</text>
+        <text x="330" y="640" class="dim">&lt;X size={16}&gt;</text>
+      </g>
+
+      <!-- PopupScene [EPS] -->
+      <g data-interactive="EPS"
          data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155"
          data-category="module"
          data-label="PopupScene"
-         data-link="02-rendering.html#VP">
-        <rect x="90" y="618" width="930" height="175" rx="3"
-              fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
-        <text x="102" y="640" class="blue heading"
-              data-tt="popup-diagram-overlay.tsx:147 — PopupScene: SceneInput with parent's onNavigate">
-          PopupScene [PS]
-        </text>
-        <text x="110" y="663" class="white">useDiagram(content) → Scene</text>
-        <text x="110" y="683" class="dim subhead">SceneInput</text>
-        <text x="130" y="700" class="dim subhead">scene = popup's own Scene</text>
-        <text x="130" y="715" class="dim subhead">onNavigate = parent's handleNavigate</text>
-        <text x="130" y="730" class="dim subhead">(clicks inside popup fire same nav dispatch)</text>
-        <text x="110" y="753" class="white">This means a popup can:</text>
-        <text x="130" y="770" class="dim subhead">- trigger code jumps (Alt+click)</text>
-        <text x="130" y="785" class="dim subhead">- open nested popups (modal click → push to popupStack)</text>
+         data-source-span="48:5-63:75"
+         data-entity-parent="EPP"
+         data-entity-name="popup-scene"
+         data-entity-kind="box"
+         data-entity-desc="PopupScene wrapper (SceneInput + own Scene)"
+         data-code-ref-id="CPS"
+         data-link="02-rendering.html#EVP"
+         data-link-target-file="02-rendering.txt"
+         data-link-target-id="EVP"
+         data-link-desc="each popup has its own SceneInput / Viewport stack">
+
+        <rect x="80" y="660" width="920" height="172" rx="4"
+              fill="#2D3339" stroke="#3FB950" stroke-width="1"/>
+        <text x="92" y="680" class="green heading"
+              data-tt="popup-diagram-overlay.tsx:147 &#x2014; PopupScene: SceneInput with parent's onNavigate">PopupScene</text>
+        <text x="928" y="680" class="dim subhead">EPS</text>
+
+        <!-- useDiagram call [EUD] -->
+        <g data-interactive="EUD"
+           data-source-span="50:5-50:45"
+           data-entity-parent="EPS"
+           data-entity-name="use-diagram-call"
+           data-entity-kind="text"
+           data-entity-desc="useDiagram(content) -> Scene">
+          <text x="100" y="702" class="green">useDiagram(content) &#x2192; Scene</text>
+        </g>
+
+        <!-- Internal arrow: useDiagram -> SceneInput -->
+        <line x1="180" y1="708" x2="180" y2="724" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+        <!-- SceneInput config [ESI] -->
+        <g data-interactive="ESI"
+           data-source-span="53:5-56:60"
+           data-entity-parent="EPS"
+           data-entity-name="scene-input-config"
+           data-entity-kind="text"
+           data-entity-desc="SceneInput wiring: own Scene, parent's handleNavigate">
+          <text x="100" y="740" class="green">SceneInput</text>
+          <g data-interactive="ESI.1" data-source-span="54:7-54:40" data-entity-parent="ESI">
+            <text x="116" y="756" class="white">scene = popup's own Scene</text>
+          </g>
+          <g data-interactive="ESI.2" data-source-span="55:7-55:50" data-entity-parent="ESI">
+            <text x="116" y="772" class="white">onNavigate = parent's handleNavigate</text>
+          </g>
+          <g data-interactive="ESI.3" data-source-span="56:7-56:55" data-entity-parent="ESI">
+            <text x="116" y="788" class="dim">(clicks inside popup fire same nav dispatch)</text>
+          </g>
+        </g>
+
+        <!-- Capabilities [ECA] -->
+        <g data-interactive="ECA"
+           data-source-span="58:5-61:60"
+           data-entity-parent="EPS"
+           data-entity-name="capabilities"
+           data-entity-kind="text"
+           data-entity-desc="Popup capabilities: code jumps, nested popups, link following"
+           data-link="03-interaction.html#EHN"
+           data-link-target-file="03-interaction.txt"
+           data-link-target-id="EHN"
+           data-link-desc="clicks inside popup relay onNavigate / parent handleNavigate">
+          <text x="100" y="808" class="white">This means a popup can:</text>
+          <g data-interactive="ECA.1" data-source-span="59:6-59:50" data-entity-parent="ECA">
+            <text x="116" y="824" class="white">- trigger code jumps (Alt+click)</text>
+          </g>
+        </g>
       </g>
+      <!-- end PopupScene -->
+
+    </g>
+    <!-- end positioned popup -->
+
+    <!-- ESC handler [EEK] -->
+    <g data-interactive="EEK"
+       data-source-span="67:5-67:60"
+       data-entity-parent="EPO"
+       data-entity-name="esc-handler"
+       data-entity-kind="text"
+       data-entity-desc="ESC key / onClose (window keydown listener)">
+      <text x="56" y="870" class="white">ESC key &#x2192; onClose</text>
+      <text x="225" y="870" class="dim">(window keydown listener)</text>
     </g>
 
-    <text x="52" y="820" class="dim subhead">ESC key → onClose (window keydown listener)</text>
+  </g>
+  <!-- end PopupDiagramOverlay -->
+
+  <!-- ============================================================ -->
+  <!-- Arrows: structural connections                               -->
+  <!-- ============================================================ -->
+
+  <!-- Arrow: onClose -> EDS (slices popup stack) -->
+  <g data-arrow
+     data-arrow-src="EPO"
+     data-arrow-target="EDS"
+     data-arrow-desc="onClose slices stack at index (closes this + above)"
+     data-source-span="20:2-20:80"
+     class="fade-section" style="animation-delay: 0.25s">
+    <path d="M1080,550 L1094,550 L1094,214 L1080,214" fill="none" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="1078" y="400" class="dim subhead" transform="rotate(-90,1078,400)">onClose &#x2192; slice stack</text>
   </g>
 
-  <!-- Section: Popup trigger flow -->
-  <g data-reflow-group="trigger-flow-section" class="fade-section" style="animation-delay: 0.15s">
-    <line x1="20" y1="870" x2="1060" y2="870" stroke="#444C56" stroke-width="1"/>
-    <text x="20" y="893" class="white title">POPUP TRIGGER FLOW</text>
+  <!-- Arrow: backdrop click -> onClose (inline annotation) -->
+  <g data-arrow
+     data-arrow-src="EBK"
+     data-arrow-target="EPO"
+     data-arrow-desc="backdrop click / onClose"
+     data-source-span="29:4-29:50"
+     class="fade-section" style="animation-delay: 0.3s">
+    <text x="290" y="420" class="dim subhead">&#x2192; triggers onClose</text>
   </g>
 
-  <!-- Trigger flow steps -->
-  <g data-reflow-group="trigger-flow" class="fade-section" style="animation-delay: 0.2s">
+  <!-- Arrow: ESC key -> onClose -->
+  <g data-arrow
+     data-arrow-src="EEK"
+     data-arrow-target="EPO"
+     data-arrow-desc="ESC key / onClose"
+     data-source-span="67:5-67:60"
+     class="fade-section" style="animation-delay: 0.35s">
+    <text x="428" y="870" class="dim subhead">&#x2192; triggers onClose (closes overlay)</text>
+  </g>
 
-    <!-- Step 1: user clicks -->
-    <rect x="20" y="910" width="380" height="35" rx="3"
+  <!-- ============================================================ -->
+  <!-- Trigger Flow Section                                         -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="trigger-flow-header"
+     data-interactive="ETF"
+     data-source-span="73:2-73:20"
+     data-entity-name="trigger-flow"
+     data-entity-kind="text"
+     data-entity-desc="Popup trigger flow section header"
+     class="fade-section" style="animation-delay: 0.4s">
+    <line x1="20" y1="928" x2="1060" y2="928" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="952" class="white title">Popup trigger flow:</text>
+  </g>
+
+  <!-- ET1: user clicks element with data-modal -->
+  <g data-reflow-group="trigger-click"
+     data-interactive="ET1"
+     data-source-span="75:2-75:42"
+     data-entity-name="trigger-click"
+     data-entity-kind="text"
+     data-entity-desc="User clicks element with data-modal"
+     data-entity-parent="ETF"
+     class="fade-section" style="animation-delay: 0.45s">
+    <rect x="80" y="972" width="500" height="32" rx="3"
           fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
-    <text x="32" y="932" class="orange">user clicks element with data-modal</text>
-
-    <!-- Arrow -->
-    <g data-arrow>
-      <line x1="210" y1="950" x2="210" y2="970" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    </g>
-
-    <!-- Step 2: handleNavigate -->
-    <rect x="20" y="975" width="380" height="35" rx="3"
-          fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
-    <text x="32" y="997" class="orange">handleNavigate → interactive.modal exists</text>
-
-    <!-- Arrow -->
-    <g data-arrow>
-      <line x1="210" y1="1015" x2="210" y2="1035" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    </g>
-
-    <!-- Step 3: openPopup -->
-    <rect x="20" y="1040" width="380" height="35" rx="3"
-          fill="#24292E" stroke="#A371F7" stroke-width="0.6"/>
-    <text x="32" y="1062" class="violet">openPopup(interactive)</text>
-
-    <!-- Arrow -->
-    <g data-arrow>
-      <line x1="210" y1="1080" x2="210" y2="1100" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    </g>
-
-    <!-- Step 4: resolve + fetch -->
-    <rect x="20" y="1105" width="600" height="90" rx="3"
-          fill="#24292E" stroke="#444C56" stroke-width="0.6"/>
-    <text x="32" y="1127" class="dim subhead">├─ resolveDiagramPath(selectedPath, modal.target.path)</text>
-    <text x="32" y="1147" class="dim subhead">├─ scene.getWorldBounds(modal.source.elementId) → anchorBounds</text>
-    <text x="32" y="1167" class="dim subhead">└─ TRPC diagrams.getContent.query({ path: resolvedPath })</text>
-
-    <!-- Arrow -->
-    <g data-arrow>
-      <line x1="210" y1="1200" x2="210" y2="1220" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    </g>
-
-    <!-- Step 5: setPopupStack -->
-    <rect x="20" y="1225" width="700" height="35" rx="3"
-          fill="#24292E" stroke="#A371F7" stroke-width="0.6"/>
-    <text x="32" y="1247" class="violet">setPopupStack(prev =&gt; [...prev, { path, content, position, anchorBounds }])</text>
+    <text x="92" y="993" class="orange">user clicks element with data-modal</text>
   </g>
 
-  <!-- Final note -->
-  <g data-reflow-group="final-note" class="fade-section" style="animation-delay: 0.25s">
-    <text x="20" y="1285" class="dim subhead">PopupDiagramOverlay rendered with fetched HTML → its own useDiagram → its own Scene → its own SceneInput → fully interactive</text>
+  <!-- Arrow: ET1 -> ET2 -->
+  <g data-arrow
+     data-arrow-src="ET1"
+     data-arrow-target="ET2"
+     data-arrow-desc="user clicks data-modal element &#x2192; handleNavigate"
+     data-source-span="76:7-77:7"
+     class="fade-section" style="animation-delay: 0.5s">
+    <line x1="330" y1="1004" x2="330" y2="1024" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ET2: handleNavigate -->
+  <g data-reflow-group="trigger-navigate"
+     data-interactive="ET2"
+     data-source-span="78:2-78:52"
+     data-entity-name="trigger-navigate"
+     data-entity-kind="text"
+     data-entity-desc="handleNavigate / interactive.modal exists"
+     data-entity-parent="ETF"
+     class="fade-section" style="animation-delay: 0.55s">
+    <rect x="80" y="1028" width="500" height="32" rx="3"
+          fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="92" y="1049" class="orange">handleNavigate &#x2192; interactive.modal exists</text>
+  </g>
+
+  <!-- Arrow: ET2 -> ET3 -->
+  <g data-arrow
+     data-arrow-src="ET2"
+     data-arrow-target="ET3"
+     data-arrow-desc="handleNavigate &#x2192; openPopup"
+     data-source-span="79:7-80:7"
+     class="fade-section" style="animation-delay: 0.6s">
+    <line x1="330" y1="1060" x2="330" y2="1080" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ET3: openPopup(interactive) -->
+  <g data-reflow-group="trigger-open-popup"
+     data-interactive="ET3"
+     data-source-span="81:2-86:60"
+     data-entity-name="trigger-open-popup"
+     data-entity-kind="text"
+     data-entity-desc="openPopup: resolveDiagramPath, getWorldBounds, TRPC getContent"
+     data-entity-parent="ETF"
+     class="fade-section" style="animation-delay: 0.65s">
+    <rect x="80" y="1084" width="700" height="94" rx="3"
+          fill="#24292E" stroke="#A371F7" stroke-width="0.6"/>
+    <text x="92" y="1105" class="violet">openPopup(interactive)</text>
+
+    <g data-interactive="ET3.1" data-source-span="83:8-83:60" data-entity-parent="ET3">
+      <text x="104" y="1125" class="white">&#x251C;&#x2500; resolveDiagramPath(selectedPath, modal.target.path)</text>
+    </g>
+    <g data-interactive="ET3.2" data-source-span="84:8-84:65" data-entity-parent="ET3">
+      <text x="104" y="1143" class="white">&#x251C;&#x2500; scene.getWorldBounds(modal.source.elementId) &#x2192; anchorBounds</text>
+    </g>
+    <g data-interactive="ET3.3" data-source-span="85:8-85:60" data-entity-parent="ET3">
+      <text x="104" y="1161" class="white">&#x2514;&#x2500; TRPC diagrams.getContent.query({ path: resolvedPath })</text>
+    </g>
+  </g>
+
+  <!-- Arrow: ET3 -> ET4 -->
+  <g data-arrow
+     data-arrow-src="ET3"
+     data-arrow-target="ET4"
+     data-arrow-desc="resolvePath + TRPC getContent &#x2192; push PopupEntry to stack"
+     data-source-span="86:12-87:12"
+     class="fade-section" style="animation-delay: 0.7s">
+    <line x1="330" y1="1178" x2="330" y2="1198" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ET4: setPopupStack -->
+  <g data-reflow-group="trigger-set-stack"
+     data-interactive="ET4"
+     data-source-span="88:7-88:85"
+     data-entity-name="trigger-set-stack"
+     data-entity-kind="text"
+     data-entity-desc="setPopupStack(prev => [...prev, entry])"
+     data-entity-parent="ETF"
+     class="fade-section" style="animation-delay: 0.75s">
+    <rect x="80" y="1202" width="700" height="32" rx="3"
+          fill="#24292E" stroke="#A371F7" stroke-width="0.6"/>
+    <text x="92" y="1223" class="violet">setPopupStack(prev =&gt; [...prev, { path, content, position, anchorBounds }])</text>
+  </g>
+
+  <!-- Arrow: ET4 -> ET5 -->
+  <g data-arrow
+     data-arrow-src="ET4"
+     data-arrow-target="ET5"
+     data-arrow-desc="setPopupStack &#x2192; PopupDiagramOverlay rendered"
+     data-source-span="89:12-90:12"
+     class="fade-section" style="animation-delay: 0.8s">
+    <line x1="330" y1="1234" x2="330" y2="1254" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ET5: PopupDiagramOverlay rendered -->
+  <g data-reflow-group="trigger-result"
+     data-interactive="ET5"
+     data-source-span="91:7-93:55"
+     data-entity-name="trigger-result"
+     data-entity-kind="text"
+     data-entity-desc="PopupDiagramOverlay rendered, fully interactive"
+     data-entity-parent="ETF"
+     class="fade-section" style="animation-delay: 0.85s">
+    <rect x="80" y="1258" width="700" height="62" rx="3"
+          fill="#24292E" stroke="#3FB950" stroke-width="0.6"/>
+    <text x="92" y="1279" class="green">PopupDiagramOverlay rendered with fetched HTML</text>
+    <text x="92" y="1295" class="dim">its own useDiagram &#x2192; its own Scene &#x2192; its own SceneInput</text>
+    <text x="92" y="1311" class="dim">fully interactive (zoom, pan, click, tooltips)</text>
+  </g>
+
+  <!-- Arrow: ET5 -> EPS (rendered popup links back to PopupScene) -->
+  <g data-arrow
+     data-arrow-src="ET5"
+     data-arrow-target="EPS"
+     data-arrow-desc="rendered popup has own useDiagram &#x2192; Scene &#x2192; SceneInput"
+     data-source-span="91:7-93:55"
+     class="fade-section" style="animation-delay: 0.9s">
+    <path d="M780,1289 L870,1289 L870,830 L1000,830" fill="none" stroke="#4C9AFF" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ab)"/>
+    <text x="880" y="1070" class="dim subhead" transform="rotate(-90,880,1070)">links to PopupScene</text>
+  </g>
+
+  <!-- Arrow: EPO.content -> EPS.useDiagram (entry.content -> useDiagram) -->
+  <g data-arrow
+     data-arrow-src="EPO"
+     data-arrow-target="EUD"
+     data-arrow-desc="entry.content &#x2192; useDiagram &#x2192; own Scene"
+     data-source-span="50:5-50:45"
+     class="fade-section" style="animation-delay: 0.95s">
+    <path d="M40,702 L80,702" fill="none" stroke="#3FB950" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ag)"/>
   </g>
 
 </svg>

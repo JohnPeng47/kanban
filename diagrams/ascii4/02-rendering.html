@@ -10,7 +10,7 @@
 </head>
 <body>
 <svg id="diagram" xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 1200 1680"
+  viewBox="0 0 1200 1700"
   font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
   font-size="11">
 
@@ -43,347 +43,667 @@
 
   <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
 
-  <!-- Title -->
-  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+  <!-- ═══ Title ═══ -->
+  <g data-reflow-group="title"
+     data-interactive="ETI"
+     data-source-span="0:0-0:52"
+     data-entity-name="title"
+     data-entity-kind="text"
+     data-entity-desc="Diagram title"
+     class="fade-section" style="animation-delay: 0s">
     <text x="20" y="28" class="white title">RENDERING PIPELINE — Scene, Viewport, OverLayer</text>
+  </g>
+
+  <!-- Cross-refs -->
+  <g data-reflow-group="cross-refs"
+     data-interactive="EXR"
+     data-source-span="2:0-4:80"
+     data-entity-name="cross-refs"
+     data-entity-kind="text"
+     data-entity-desc="Cross-reference file links"
+     class="fade-section" style="animation-delay: 0.05s">
     <text x="20" y="48" class="dim subhead">** 01-architecture-and-data-flow  (how HTML arrives)   ** 03-interaction  (user input)   ** 04-types-and-data-model  (Transform, Rect)</text>
   </g>
 
-  <!-- useDiagram entry point -->
+  <!-- ═══ useDiagram entry point ═══ -->
   <g data-reflow-group="use-diagram"
-     data-interactive="UD"
+     data-interactive="EUD"
      data-ref="web-ui/src/diagram/use-diagram.ts:8-52"
      data-category="function"
      data-label="useDiagram"
-     data-link="01-architecture-and-data-flow.html#DA"
-     class="fade-section" style="animation-delay: 0.05s">
+     data-source-span="7:2-7:20"
+     data-entity-name="use-diagram"
+     data-entity-kind="text"
+     data-entity-desc="useDiagram hook entry point"
+     data-code-ref-id="CUD"
+     data-link="01-architecture-and-data-flow.html#EDA"
+     data-link-target-file="01-architecture-and-data-flow.txt"
+     data-link-target-id="EDA"
+     data-link-desc="useDiagram called from DiagramContentArea"
+     class="fade-section" style="animation-delay: 0.1s">
     <rect x="20" y="66" width="240" height="32" rx="3"
           fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
     <text x="32" y="86" class="orange"
           data-tt="use-diagram.ts:8 — useDiagram: HTML→SvgScene lifecycle">
-      useDiagram(html) [UD]
+      useDiagram(html)
     </text>
   </g>
 
   <!-- Arrow: useDiagram → DOMParser -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.1s">
+  <g data-arrow
+     data-arrow-src="EUD"
+     data-arrow-target="ESS"
+     data-arrow-desc="useDiagram → new SvgScene(svg)"
+     data-source-span="8:7-9:7"
+     class="fade-section" style="animation-delay: 0.15s">
     <line x1="140" y1="98" x2="140" y2="116" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
   </g>
 
   <!-- DOMParser step -->
-  <g data-reflow-group="dom-parser" class="fade-section" style="animation-delay: 0.15s">
+  <g data-reflow-group="dom-parser"
+     data-interactive="EPR"
+     data-source-span="10:2-10:64"
+     data-entity-name="dom-parser"
+     data-entity-kind="text"
+     data-entity-desc="DOMParser → temp SVG for getBBox"
+     class="fade-section" style="animation-delay: 0.2s">
     <text x="32" y="132" class="dim subhead">DOMParser → &lt;svg&gt; → body.appendChild (temp, for getBBox)</text>
   </g>
 
   <!-- Arrow: DOMParser → SvgScene -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.2s">
+  <g data-arrow
+     data-arrow-src="EUD"
+     data-arrow-target="ESS"
+     data-arrow-desc="useDiagram → new SvgScene(svg)"
+     data-source-span="11:7-12:7"
+     class="fade-section" style="animation-delay: 0.25s">
     <line x1="140" y1="140" x2="140" y2="162" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
     <text x="150" y="156" class="dim subhead">useDiagram → new SvgScene(svg)</text>
   </g>
 
-  <!-- ═══ SvgScene ═══ -->
+  <!-- ═══ SvgScene constructor ═══ -->
   <g data-reflow-group="svg-scene"
-     data-interactive="SS"
+     data-interactive="ESS"
      data-ref="web-ui/src/diagram/rendering/svg-scene.ts:52-521"
      data-category="module"
      data-label="SvgScene"
+     data-source-span="13:2-22:125"
+     data-entity-name="svg-scene"
+     data-entity-kind="box"
+     data-entity-desc="SvgScene constructor + steps"
+     data-code-ref-id="CSS"
      data-modal="02-rendering-svgscene-detail.html"
      data-modal-position="below-right"
-     class="fade-section" style="animation-delay: 0.25s">
+     data-link-target-file="02-rendering-svgscene-detail.txt"
+     data-link-desc="SvgScene modal expansion (full implementation)"
+     class="fade-section" style="animation-delay: 0.3s">
 
     <rect x="20" y="168" width="1160" height="120" rx="4"
           fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
     <text x="32" y="190" class="blue heading"
           data-tt="svg-scene.ts:52 — SvgScene: click to expand full implementation detail">
-      new SvgScene(svg) [SS]
+      new SvgScene(svg)
     </text>
 
     <!-- Step 1: viewBox removal -->
-    <g data-interactive="SI"
+    <g data-interactive="ESI"
        data-ref="web-ui/src/diagram/rendering/svg-scene.ts:60-74"
        data-category="function"
-       data-label="viewBox removal">
+       data-label="viewBox removal"
+       data-source-span="15:5-15:45"
+       data-entity-name="viewbox-removal"
+       data-entity-kind="text"
+       data-entity-desc="Step 1: viewBox removal"
+       data-entity-parent="ESS"
+       data-code-ref-id="CSI">
       <text x="44" y="218" class="white"
             data-tt="svg-scene.ts:60 — Remove viewBox, set w/h 1:1">
-        1. Remove viewBox, set w/h 1:1 [SI]
+        1. Remove viewBox, set w/h 1:1
       </text>
     </g>
 
     <!-- Step 2: injectInteractionStyles -->
-    <g data-interactive="SY"
+    <g data-interactive="ESY"
        data-ref="web-ui/src/diagram/rendering/svg-scene.ts:82-124"
        data-category="function"
-       data-label="injectStyles">
+       data-label="injectStyles"
+       data-source-span="15:52-21:56"
+       data-entity-name="inject-styles"
+       data-entity-kind="text"
+       data-entity-desc="Step 2: CSS injection"
+       data-entity-parent="ESS"
+       data-code-ref-id="CSY">
       <rect x="380" y="198" width="300" height="76" rx="3"
             fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
       <text x="392" y="218" class="violet"
             data-tt="svg-scene.ts:82 — injectInteractionStyles: CSS for hover/select/modal/link">
-        2. injectInteractionStyles [SY]
+        2. injectInteractionStyles
       </text>
-      <text x="392" y="236" class="dim subhead">[data-interactive] → pointer</text>
-      <text x="392" y="250" class="dim subhead">.selected > rect  → blue glow</text>
-      <text x="392" y="264" class="dim subhead">[data-modal] → purple ╌╌  [data-link] → gold ╌╌</text>
+
+      <!-- Styles sub-box detail -->
+      <g data-interactive="ESB"
+         data-source-span="16:23-20:56"
+         data-entity-name="styles-box"
+         data-entity-kind="text"
+         data-entity-desc="Step 2 styles sub-box (pointer, glow, purple, gold)"
+         data-entity-parent="ESS">
+        <text x="392" y="236" class="dim subhead">[data-interactive] → pointer</text>
+        <text x="392" y="250" class="dim subhead">.selected > rect  → blue glow</text>
+        <text x="392" y="264" class="dim subhead">[data-modal] → purple ╌╌  [data-link] → gold ╌╌</text>
+      </g>
     </g>
 
     <!-- Step 3: buildElementTree -->
-    <g data-interactive="BT"
+    <g data-interactive="EBT"
        data-ref="web-ui/src/diagram/rendering/svg-scene.ts:126-206"
        data-category="function"
-       data-label="buildElementTree">
+       data-label="buildElementTree"
+       data-source-span="15:83-21:71"
+       data-entity-name="build-tree"
+       data-entity-kind="text"
+       data-entity-desc="Step 3: element tree construction"
+       data-entity-parent="ESS"
+       data-code-ref-id="CBT">
       <text x="720" y="218" class="white"
             data-tt="svg-scene.ts:126 — buildElementTree: querySelectorAll tagged &lt;g&gt;s">
-        3. buildElementTree [BT]
+        3. buildElementTree
       </text>
-      <text x="720" y="236" class="dim subhead">querySelectorAll(SELECTOR)</text>
-      <text x="720" y="250" class="dim subhead">resolveId → readMetadata → findVisualRect</text>
-      <text x="720" y="264" class="dim subhead">→ walk parents → getBBox → parseInteractive</text>
+
+      <!-- build-tree-detail -->
+      <g data-interactive="EBD"
+         data-source-span="16:62-19:58"
+         data-entity-name="build-tree-detail"
+         data-entity-kind="text"
+         data-entity-desc="Step 3 detail: querySelectorAll → resolveId → getBBox"
+         data-entity-parent="ESS">
+        <text x="720" y="236" class="dim subhead">querySelectorAll(SELECTOR)</text>
+        <text x="720" y="250" class="dim subhead">resolveId → readMetadata → findVisualRect</text>
+        <text x="720" y="264" class="dim subhead">→ walk parents → getBBox → parseInteractive</text>
+      </g>
     </g>
+
+    <text x="960" y="274" class="dim subhead">see modal: 02-rendering-svgscene-detail.txt</text>
   </g>
 
-  <!-- Arrows from SvgScene -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.3s">
-    <line x1="300" y1="288" x2="300" y2="320" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    <text x="310" y="310" class="dim subhead">returns Scene</text>
-  </g>
-  <g data-arrow class="fade-section" style="animation-delay: 0.3s">
-    <line x1="900" y1="288" x2="900" y2="320" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
-    <text x="910" y="310" class="dim subhead">populates</text>
+  <!-- return-connections: body.removeChild / returns Scene / populates -->
+  <g data-reflow-group="return-connections"
+     data-interactive="ERC"
+     data-source-span="23:2-26:18"
+     data-entity-name="return-connections"
+     data-entity-kind="text"
+     data-entity-desc="body.removeChild / returns Scene / populates"
+     class="fade-section" style="animation-delay: 0.35s">
+
+    <!-- Arrow: SvgScene returns Scene -->
+    <g data-arrow
+       data-arrow-src="ESS"
+       data-arrow-target="ESC"
+       data-arrow-desc="SvgScene returns Scene interface (implements)"
+       data-source-span="23:31-25:31">
+      <line x1="300" y1="288" x2="300" y2="320" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+      <text x="310" y="310" class="dim subhead">returns Scene</text>
+    </g>
+
+    <!-- Arrow: SvgScene populates SceneElements -->
+    <g data-arrow
+       data-arrow-src="ESS"
+       data-arrow-target="ESE"
+       data-arrow-desc="buildElementTree populates SceneElements"
+       data-source-span="23:89-25:89">
+      <line x1="900" y1="288" x2="900" y2="320" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+      <text x="910" y="310" class="dim subhead">populates</text>
+    </g>
+
+    <text x="32" y="310" class="dim subhead">body.removeChild(svg)</text>
   </g>
 
   <!-- ═══ Scene interface ═══ -->
   <g data-reflow-group="scene-interface"
-     data-interactive="SC"
+     data-interactive="ESC"
      data-ref="web-ui/src/diagram/rendering/scene.ts:47-94"
      data-category="type"
      data-label="Scene"
-     data-link="03-interaction.html#SI"
-     class="fade-section" style="animation-delay: 0.35s">
+     data-source-span="27:2-42:125"
+     data-entity-name="scene-interface"
+     data-entity-kind="box"
+     data-entity-desc="Scene interface (all method groups)"
+     data-code-ref-id="CSC"
+     data-link="03-interaction.html#ESI"
+     data-link-target-file="03-interaction.txt"
+     data-link-target-id="ESI"
+     data-link-desc="Scene consumed by SceneInput (hitTest, getElement)"
+     class="fade-section" style="animation-delay: 0.4s">
 
     <rect x="20" y="328" width="1160" height="200" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1.5"/>
     <text x="32" y="352" class="violet heading"
           data-tt="scene.ts:47 — Scene interface (element tree, bounds, hit test)">
-      Scene (interface) [SC]
+      Scene (interface)
     </text>
 
     <!-- Element Tree column -->
-    <text x="44" y="380" class="white">Element Tree</text>
-    <line x1="44" y1="386" x2="180" y2="386" stroke="#444C56" stroke-width="0.5"/>
-    <text x="44" y="402" class="dim subhead">getRoot()</text>
-    <text x="44" y="416" class="dim subhead">getElement(id)</text>
-    <text x="44" y="430" class="dim subhead">getAllElements()</text>
-    <text x="44" y="444" class="dim subhead">getChildren(id)</text>
-    <text x="44" y="466" class="white">Mutations</text>
-    <text x="44" y="482" class="dim subhead">growVisualBounds()</text>
-    <text x="44" y="496" class="dim subhead">addElement() / removeElement()</text>
-    <text x="44" y="510" class="dim subhead">addSubtree()</text>
+    <g data-interactive="EET"
+       data-source-span="30:5-35:18"
+       data-entity-name="element-tree"
+       data-entity-kind="text"
+       data-entity-desc="Element Tree methods (getRoot, getElement, etc.)"
+       data-entity-parent="ESC">
+      <text x="44" y="380" class="white">Element Tree</text>
+      <line x1="44" y1="386" x2="180" y2="386" stroke="#444C56" stroke-width="0.5"/>
+      <text x="44" y="402" class="dim subhead">getRoot()</text>
+      <text x="44" y="416" class="dim subhead">getElement(id)</text>
+      <text x="44" y="430" class="dim subhead">getAllElements()</text>
+      <text x="44" y="444" class="dim subhead">getChildren(id)</text>
+    </g>
+
+    <!-- Mutations sub-section -->
+    <g data-interactive="EMU"
+       data-source-span="37:5-41:22"
+       data-entity-name="mutations"
+       data-entity-kind="text"
+       data-entity-desc="Mutations (growVisualBounds, add/removeElement, addSubtree)"
+       data-entity-parent="ESC">
+      <text x="44" y="466" class="white">Mutations</text>
+      <text x="44" y="482" class="dim subhead">growVisualBounds()</text>
+      <text x="44" y="496" class="dim subhead">addElement() / removeElement()</text>
+      <text x="44" y="510" class="dim subhead">addSubtree()</text>
+    </g>
 
     <!-- Bounds column -->
-    <text x="320" y="380" class="white">Bounds</text>
-    <line x1="320" y1="386" x2="460" y2="386" stroke="#444C56" stroke-width="0.5"/>
-    <text x="320" y="402" class="dim subhead">getLocalBounds(id)</text>
-    <text x="320" y="416" class="dim subhead">getWorldBounds(id) ─┐</text>
-    <text x="320" y="430" class="dim subhead">  (cached) ◄────────┤</text>
-    <text x="320" y="444" class="dim subhead">         invalidate ▲</text>
-    <text x="320" y="466" class="dim subhead">getSvgElement() ────┤</text>
+    <g data-interactive="EBN"
+       data-source-span="30:29-37:30"
+       data-entity-name="bounds"
+       data-entity-kind="text"
+       data-entity-desc="Bounds methods (getLocalBounds, getWorldBounds)"
+       data-entity-parent="ESC">
+      <text x="320" y="380" class="white">Bounds</text>
+      <line x1="320" y1="386" x2="460" y2="386" stroke="#444C56" stroke-width="0.5"/>
+      <text x="320" y="402" class="dim subhead">getLocalBounds(id)</text>
+      <text x="320" y="416" class="dim subhead">getWorldBounds(id) ─┐</text>
+      <text x="320" y="430" class="dim subhead">  (cached) ◄────────┤</text>
+      <text x="320" y="444" class="dim subhead">         invalidate ▲</text>
+      <text x="320" y="466" class="dim subhead">getSvgElement() ────┤</text>
+    </g>
 
     <!-- Transforms column -->
-    <text x="600" y="380" class="white">Transforms</text>
-    <line x1="600" y1="386" x2="760" y2="386" stroke="#444C56" stroke-width="0.5"/>
-    <text x="600" y="402" class="dim subhead">setTransform(id, t)</text>
-    <text x="600" y="416" class="dim subhead">getTransform(id)</text>
-    <text x="600" y="430" class="dim subhead">getWorldTransform(id)</text>
+    <g data-interactive="ETR"
+       data-source-span="30:60-34:30"
+       data-entity-name="transforms"
+       data-entity-kind="text"
+       data-entity-desc="Transform methods (set/get/getWorld)"
+       data-entity-parent="ESC">
+      <text x="600" y="380" class="white">Transforms</text>
+      <line x1="600" y1="386" x2="760" y2="386" stroke="#444C56" stroke-width="0.5"/>
+      <text x="600" y="402" class="dim subhead">setTransform(id, t)</text>
+      <text x="600" y="416" class="dim subhead">getTransform(id)</text>
+      <text x="600" y="430" class="dim subhead">getWorldTransform(id)</text>
+    </g>
 
     <!-- Hit Testing column -->
-    <g data-interactive="HT"
+    <g data-interactive="EHT"
        data-ref="web-ui/src/diagram/rendering/svg-scene.ts:347-358"
        data-category="function"
-       data-label="hitTest">
+       data-label="hitTest"
+       data-source-span="30:86-34:46"
+       data-entity-name="hit-test"
+       data-entity-kind="text"
+       data-entity-desc="hitTest(screenPoint), hitTestRect"
+       data-entity-parent="ESC"
+       data-code-ref-id="CHT">
       <text x="880" y="380" class="white"
             data-tt="svg-scene.ts:347 — hitTest: elementFromPoint → closest [data-interactive]">
         Hit Testing
       </text>
       <line x1="880" y1="386" x2="1020" y2="386" stroke="#444C56" stroke-width="0.5"/>
-      <text x="880" y="402" class="dim subhead">hitTest() [HT]</text>
+      <text x="880" y="402" class="dim subhead">hitTest()</text>
       <text x="880" y="416" class="dim subhead">hitTestRect()</text>
     </g>
 
-    <text x="880" y="466" class="dim subhead">destroy()</text>
+    <!-- getSvgElement / destroy -->
+    <g data-interactive="EGD"
+       data-source-span="37:45-37:60"
+       data-entity-name="get-svg-destroy"
+       data-entity-kind="text"
+       data-entity-desc="getSvgElement() / destroy()"
+       data-entity-parent="ESC">
+      <text x="880" y="466" class="dim subhead">destroy()</text>
+    </g>
   </g>
 
   <!-- Arrow: Scene → SceneElement -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.4s">
+  <g data-arrow
+     data-arrow-src="ESC"
+     data-arrow-target="ESE"
+     data-arrow-desc="Scene interface contains SceneElements"
+     data-source-span="43:31-45:31"
+     class="fade-section" style="animation-delay: 0.45s">
     <line x1="300" y1="528" x2="300" y2="560" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
   </g>
 
   <!-- ═══ SceneElement ═══ -->
   <g data-reflow-group="scene-element"
-     data-interactive="SE"
+     data-interactive="ESE"
      data-ref="web-ui/src/diagram/rendering/scene.ts:10-44"
      data-category="type"
      data-label="SceneElement"
-     data-link="03-interaction.html#HN"
-     class="fade-section" style="animation-delay: 0.45s">
+     data-source-span="46:5-60:82"
+     data-entity-name="scene-element"
+     data-entity-kind="box"
+     data-entity-desc="SceneElement universal node"
+     data-code-ref-id="CSE"
+     data-link="03-interaction.html#EHN"
+     data-link-target-file="03-interaction.txt"
+     data-link-target-id="EHN"
+     data-link-desc="SceneElement.interactive drives handleNavigate dispatch"
+     class="fade-section" style="animation-delay: 0.5s">
 
     <rect x="20" y="566" width="1160" height="220" rx="4"
           fill="#24292E" stroke="#A371F7" stroke-width="1.2"/>
     <text x="32" y="590" class="violet heading"
           data-tt="scene.ts:10 — SceneElement: universal node structure">
-      SceneElement (the universal node) [SE]
+      SceneElement (the universal node)
     </text>
 
-    <text x="44" y="616" class="white">id ── "root" | data-reflow-group | data-interactive | "arrow-N"</text>
-    <text x="44" y="634" class="dim subhead">parentId / childIds</text>
-    <text x="44" y="652" class="dim subhead">localBounds: Rect ── getBBox()</text>
-    <text x="44" y="670" class="dim subhead">transform: Transform ── { tx, ty, scale }  ◄── setTransform invalidates worldBoundsCache</text>
-    <text x="44" y="688" class="dim subhead">metadata: Record&lt;str,str&gt;</text>
+    <!-- id field -->
+    <g data-interactive="ESN"
+       data-source-span="48:5-48:86"
+       data-entity-name="node-id"
+       data-entity-kind="text"
+       data-entity-desc="id field (root | data-reflow-group | data-interactive | arrow-N)"
+       data-entity-parent="ESE">
+      <text x="44" y="616" class="white">id ── "root" | data-reflow-group | data-interactive | "arrow-N"</text>
+    </g>
+
+    <!-- parentId / childIds -->
+    <g data-interactive="EPC"
+       data-source-span="49:5-49:32"
+       data-entity-name="parent-child-ids"
+       data-entity-kind="text"
+       data-entity-desc="parentId / childIds"
+       data-entity-parent="ESE">
+      <text x="44" y="634" class="dim subhead">parentId / childIds</text>
+    </g>
+
+    <!-- localBounds -->
+    <g data-interactive="ELB"
+       data-source-span="50:5-50:44"
+       data-entity-name="local-bounds"
+       data-entity-kind="text"
+       data-entity-desc="localBounds: Rect from getBBox()"
+       data-entity-parent="ESE">
+      <text x="44" y="652" class="dim subhead">localBounds: Rect ── getBBox()</text>
+    </g>
+
+    <!-- transform -->
+    <g data-interactive="ETX"
+       data-source-span="51:5-53:46"
+       data-entity-name="transform"
+       data-entity-kind="text"
+       data-entity-desc="transform: Transform { tx, ty, scale }"
+       data-entity-parent="ESE">
+      <text x="44" y="670" class="dim subhead">transform: Transform ── { tx, ty, scale }  ◄── setTransform invalidates worldBoundsCache</text>
+    </g>
+
+    <!-- metadata -->
+    <g data-interactive="EMD"
+       data-source-span="52:5-52:37"
+       data-entity-name="metadata"
+       data-entity-kind="text"
+       data-entity-desc="metadata: Record&lt;str,str&gt;"
+       data-entity-parent="ESE">
+      <text x="44" y="688" class="dim subhead">metadata: Record&lt;str,str&gt;</text>
+    </g>
 
     <!-- InteractiveData sub-box -->
-    <rect x="44" y="700" width="520" height="60" rx="3"
-          fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
-    <text x="56" y="718" class="violet">interactive: InteractiveData | null</text>
-    <text x="56" y="734" class="dim subhead">ref, category, label, tooltip, navTarget, modal, link</text>
-    <text x="580" y="718" class="dim subhead">── drives badges ── (modal? link?)</text>
-    <text x="580" y="734" class="dim subhead">** 03-interaction   ** 04-types-and-data-model</text>
+    <g data-interactive="EIN"
+       data-source-span="54:5-57:45"
+       data-entity-name="interactive"
+       data-entity-kind="text"
+       data-entity-desc="interactive: InteractiveData sub-box (ref, category, label, etc.)"
+       data-entity-parent="ESE">
+      <rect x="44" y="700" width="520" height="60" rx="3"
+            fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="56" y="718" class="violet">interactive: InteractiveData | null</text>
+      <text x="56" y="734" class="dim subhead">ref, category, label, tooltip, navTarget, modal, link</text>
+      <text x="580" y="718" class="dim subhead">── drives badges ── (modal? link?)</text>
+      <text x="580" y="734" class="dim subhead">** 03-interaction   ** 04-types-and-data-model</text>
+    </g>
 
-    <text x="44" y="770" class="dim subhead">reflow: ReflowState | null  { originalBounds }</text>
+    <!-- reflow -->
+    <g data-interactive="ERW"
+       data-source-span="58:5-58:62"
+       data-entity-name="reflow"
+       data-entity-kind="text"
+       data-entity-desc="reflow: ReflowState | null { originalBounds }"
+       data-entity-parent="ESE">
+      <text x="44" y="770" class="dim subhead">reflow: ReflowState | null  { originalBounds }</text>
+    </g>
   </g>
 
   <!-- Arrow: SceneElement → Viewport -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.5s">
+  <g data-arrow
+     data-arrow-src="ESE"
+     data-arrow-target="EVP"
+     data-arrow-desc="SceneElement flows into Viewport rendering"
+     data-source-span="60:10-62:10"
+     class="fade-section" style="animation-delay: 0.55s">
     <line x1="300" y1="786" x2="300" y2="830" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
   </g>
 
   <!-- ═══ Viewport ═══ -->
   <g data-reflow-group="viewport"
-     data-interactive="VP"
+     data-interactive="EVP"
      data-ref="web-ui/src/diagram/rendering/viewport.tsx:48-463"
      data-category="module"
      data-label="Viewport"
-     class="fade-section" style="animation-delay: 0.55s">
+     data-source-span="63:2-120:125"
+     data-entity-name="viewport"
+     data-entity-kind="box"
+     data-entity-desc="Viewport container div"
+     data-code-ref-id="CVP"
+     class="fade-section" style="animation-delay: 0.6s">
 
-    <rect x="20" y="836" width="1160" height="830" rx="4"
+    <rect x="20" y="836" width="1160" height="840" rx="4"
           fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
     <text x="32" y="860" class="blue heading"
           data-tt="viewport.tsx:48 — Viewport: pan/zoom/selection container">
-      Viewport (container div, overflow:hidden, touch-none) [VP]
+      Viewport (container div, overflow:hidden, touch-none)
     </text>
 
     <!-- transformDiv -->
-    <g data-interactive="TD"
+    <g data-interactive="ETD"
        data-ref="web-ui/src/diagram/rendering/viewport.tsx:428"
        data-category="module"
-       data-label="transformDiv">
+       data-label="transformDiv"
+       data-source-span="66:7-74:72"
+       data-entity-name="transform-div"
+       data-entity-kind="box"
+       data-entity-desc="transformDiv (CSS transform carrier)"
+       data-entity-parent="EVP"
+       data-code-ref-id="CTD">
       <rect x="44" y="876" width="700" height="100" rx="3"
             fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
       <text x="56" y="896" class="blue"
             data-tt="viewport.tsx:428 — transformDiv: CSS transform carrier">
-        transformDiv (origin:0 0, will-change:transform) [TD]
+        transformDiv (origin:0 0, will-change:transform)
       </text>
-      <text x="56" y="916" class="dim subhead">CSS: translate({tx}px,{ty}px) scale({scale})</text>
+
+      <!-- CSS transform line -->
+      <g data-interactive="ECS"
+         data-source-span="68:7-68:60"
+         data-entity-name="css-transform"
+         data-entity-kind="text"
+         data-entity-desc="CSS translate/scale line inside transformDiv"
+         data-entity-parent="ETD">
+        <text x="56" y="916" class="dim subhead">CSS: translate({tx}px,{ty}px) scale({scale})</text>
+      </g>
 
       <!-- SVG mount -->
-      <g data-interactive="SV"
+      <g data-interactive="ESV"
          data-ref="web-ui/src/diagram/rendering/viewport.tsx:77-88"
          data-category="module"
-         data-label="SVG mount">
+         data-label="SVG mount"
+         data-source-span="70:10-73:72"
+         data-entity-name="svg-mount"
+         data-entity-kind="box"
+         data-entity-desc="SVG element mount"
+         data-entity-parent="ETD"
+         data-code-ref-id="CSV">
         <rect x="64" y="930" width="660" height="30" rx="3"
               fill="#24292E" stroke="#4C9AFF" stroke-width="0.6"/>
         <text x="76" y="950" class="blue"
               data-tt="viewport.tsx:77 — SVG mount/unmount into transformDiv via useEffect">
-          SVG element — mounted via useEffect: transformDiv.appendChild(svg) [SV]
+          SVG element — mounted via useEffect: transformDiv.appendChild(svg)
         </text>
       </g>
     </g>
 
     <!-- OverLayer -->
     <g data-reflow-group="over-layer"
-       data-interactive="OL"
+       data-interactive="EOL"
        data-ref="web-ui/src/diagram/rendering/over-layer.tsx:64-127"
        data-category="module"
        data-label="OverLayer"
-       data-link="03-interaction.html#AB"
-       class="fade-section" style="animation-delay: 0.6s">
+       data-source-span="76:7-92:72"
+       data-entity-name="over-layer"
+       data-entity-kind="box"
+       data-entity-desc="OverLayer badge rendering"
+       data-entity-parent="EVP"
+       data-code-ref-id="COL"
+       data-link="03-interaction.html#EAB"
+       data-link-target-file="03-interaction.txt"
+       data-link-target-id="EAB"
+       data-link-desc="OverLayer renders badges created by DiagramScene"
+       class="fade-section" style="animation-delay: 0.65s">
 
       <rect x="44" y="990" width="700" height="240" rx="3"
             fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
       <text x="56" y="1012" class="orange"
             data-tt="over-layer.tsx:64 — OverLayer: rAF badge rendering">
-        OverLayer (z:10, absolute inset-0) [OL]
+        OverLayer (z:10, absolute inset-0)
       </text>
       <text x="56" y="1032" class="dim subhead">Props: badges[], scene, transformRef ◄── shared</text>
 
       <!-- rAF loop -->
-      <g data-interactive="RF"
+      <g data-interactive="ERF"
          data-ref="web-ui/src/diagram/rendering/over-layer.tsx:68-89"
          data-category="function"
-         data-label="rAF loop">
+         data-label="rAF loop"
+         data-source-span="80:7-80:60"
+         data-entity-name="raf-loop"
+         data-entity-kind="text"
+         data-entity-desc="rAF sync loop"
+         data-entity-parent="EOL"
+         data-code-ref-id="CRF">
         <text x="56" y="1056" class="white"
               data-tt="over-layer.tsx:68 — rAF sync loop: transform → badge positions">
-          rAF loop [RF]: every frame read transformRef
+          rAF loop: every frame read transformRef
         </text>
       </g>
 
       <!-- resolveAnchor -->
-      <g data-interactive="BA"
+      <g data-interactive="EBA"
          data-ref="web-ui/src/diagram/rendering/over-layer.tsx:6-52"
          data-category="function"
-         data-label="resolveAnchor">
+         data-label="resolveAnchor"
+         data-source-span="81:7-82:60"
+         data-entity-name="resolve-anchor"
+         data-entity-kind="text"
+         data-entity-desc="resolveAnchor dispatch"
+         data-entity-parent="EOL"
+         data-code-ref-id="CBA">
         <text x="56" y="1076" class="white"
               data-tt="over-layer.tsx:6 — resolveAnchor: screen/scene/element → px">
-          → resolveAnchor(anchor, t, scene) [BA]
+          → resolveAnchor(anchor, t, scene)
         </text>
         <text x="56" y="1092" class="dim subhead">→ dom.style.left/top  (no React re-render)</text>
       </g>
 
       <!-- Anchor space table -->
-      <rect x="64" y="1106" width="660" height="100" rx="3"
-            fill="#24292E" stroke="#444C56" stroke-width="0.6"/>
-      <text x="76" y="1126" class="white">"screen"</text>
-      <text x="200" y="1126" class="dim subhead">{x,y} as-is</text>
-      <line x1="76" y1="1132" x2="710" y2="1132" stroke="#30363D" stroke-width="0.5"/>
-      <text x="76" y="1150" class="white">"scene"</text>
-      <text x="200" y="1150" class="dim subhead">x*scale + tx,  y*scale + ty</text>
-      <line x1="76" y1="1156" x2="710" y2="1156" stroke="#30363D" stroke-width="0.5"/>
-      <text x="76" y="1174" class="white">"element"</text>
-      <text x="200" y="1174" class="dim subhead">getWorldBounds(id) → pick corner → *scale + t</text>
+      <g data-interactive="EAM"
+         data-source-span="84:7-90:72"
+         data-entity-name="anchor-modes"
+         data-entity-kind="text"
+         data-entity-desc="Anchor mode table (screen/scene/element)"
+         data-entity-parent="EOL">
+        <rect x="64" y="1106" width="660" height="100" rx="3"
+              fill="#24292E" stroke="#444C56" stroke-width="0.6"/>
+        <text x="76" y="1126" class="white">"screen"</text>
+        <text x="200" y="1126" class="dim subhead">{x,y} as-is</text>
+        <line x1="76" y1="1132" x2="710" y2="1132" stroke="#30363D" stroke-width="0.5"/>
+        <text x="76" y="1150" class="white">"scene"</text>
+        <text x="200" y="1150" class="dim subhead">x*scale + tx,  y*scale + ty</text>
+        <line x1="76" y1="1156" x2="710" y2="1156" stroke="#30363D" stroke-width="0.5"/>
+        <text x="76" y="1174" class="white">"element"</text>
+        <text x="200" y="1174" class="dim subhead">getWorldBounds(id) → pick corner → *scale + t</text>
+      </g>
 
-      <text x="56" y="1210" class="dim subhead">Badge DOM: 18x18px, -9px margin, hover: scale(1.25)</text>
+      <!-- Badge DOM -->
+      <g data-interactive="EBG"
+         data-source-span="87:60-88:44"
+         data-entity-name="badge-dom"
+         data-entity-kind="text"
+         data-entity-desc="Badge DOM sizing (18x18px, -9px margin, hover)"
+         data-entity-parent="EOL">
+        <text x="56" y="1210" class="dim subhead">Badge DOM: 18x18px, -9px margin, hover: scale(1.25)</text>
+      </g>
     </g>
 
     <!-- Selection lasso -->
-    <g data-interactive="SD"
+    <g data-interactive="ESL"
        data-ref="web-ui/src/diagram/rendering/viewport.tsx:295-320"
        data-category="function"
-       data-label="Ctrl+drag lasso">
+       data-label="Selection lasso"
+       data-source-span="94:7-96:44"
+       data-entity-name="selection-lasso"
+       data-entity-kind="text"
+       data-entity-desc="Selection lasso (Ctrl+drag, border-accent)"
+       data-entity-parent="EVP"
+       data-code-ref-id="CSD">
       <rect x="44" y="1244" width="260" height="32" rx="3"
             fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
       <text x="56" y="1264" class="orange"
             data-tt="viewport.tsx:295 — Ctrl+drag selection lasso">
-        Selection lasso (Ctrl+drag) [SD]
+        Selection lasso (Ctrl+drag)
       </text>
+      <text x="320" y="1264" class="dim subhead">{children} slot</text>
     </g>
 
     <!-- Transform type -->
-    <g data-interactive="TF"
+    <g data-interactive="ETF"
        data-ref="web-ui/src/diagram/types.ts:17-22"
        data-category="type"
        data-label="Transform"
-       data-link="04-types-and-data-model.html#TF">
+       data-source-span="98:7-98:50"
+       data-entity-name="transform-type"
+       data-entity-kind="text"
+       data-entity-desc="Transform { tx, ty, scale }"
+       data-entity-parent="EVP"
+       data-code-ref-id="CTF"
+       data-link="04-types-and-data-model.html#ETF"
+       data-link-target-file="04-types-and-data-model.txt"
+       data-link-target-id="ETF"
+       data-link-desc="Transform type defined in types.ts">
       <text x="44" y="1306" class="violet"
             data-tt="types.ts:17 — Transform: { tx, ty, scale }">
-        Transform [TF]: { tx, ty, scale }
+        Transform: { tx, ty, scale }
       </text>
     </g>
 
-    <!-- screenToScene -->
-    <g data-interactive="S2"
+    <!-- screenToScene / sceneToScreen -->
+    <g data-interactive="ES2"
        data-ref="web-ui/src/diagram/rendering/viewport.tsx:98-107"
        data-category="function"
-       data-label="screenToScene">
+       data-label="screenToScene"
+       data-source-span="100:7-102:80"
+       data-entity-name="screen-to-scene"
+       data-entity-kind="text"
+       data-entity-desc="screenToScene / sceneToScreen conversion"
+       data-entity-parent="EVP"
+       data-code-ref-id="CS2">
       <text x="44" y="1338" class="white"
             data-tt="viewport.tsx:98 — screenToScene coordinate conversion">
-        screenToScene(screenPt) [S2]
+        screenToScene(screenPt)
       </text>
       <text x="56" y="1356" class="dim subhead">x = (screen.x - rect.left - tx) / scale</text>
       <text x="56" y="1370" class="dim subhead">y = (screen.y - rect.top  - ty) / scale</text>
@@ -392,68 +712,118 @@
       <text x="452" y="1370" class="dim subhead">sy = pt.y * scale + ty</text>
     </g>
 
-    <!-- applyTransform -->
-    <text x="44" y="1400" class="dim subhead">applyTransform(t) → transformDiv.style.transform = translate(tx,ty) scale(s)</text>
-    <text x="56" y="1418" class="dim subhead">└→ syncRootTransform(t) → scene.setTransform("root", t) → invalidates worldBoundsCache</text>
+    <!-- applyTransform + syncRootTransform -->
+    <g data-interactive="EAT"
+       data-source-span="104:7-107:100"
+       data-entity-name="apply-transform"
+       data-entity-kind="text"
+       data-entity-desc="applyTransform + syncRootTransform"
+       data-entity-parent="EVP">
+      <text x="44" y="1400" class="dim subhead">applyTransform(t) → transformDiv.style.transform = translate(tx,ty) scale(s)</text>
+      <text x="56" y="1418" class="dim subhead">└→ syncRootTransform(t) → scene.setTransform("root", t) → invalidates worldBoundsCache</text>
+    </g>
 
     <!-- Gestures table -->
-    <g data-reflow-group="gestures" class="fade-section" style="animation-delay: 0.65s">
+    <g data-reflow-group="gestures"
+       data-interactive="EGS"
+       data-source-span="108:7-119:80"
+       data-entity-name="gestures-label"
+       data-entity-kind="text"
+       data-entity-desc="Gestures section header"
+       data-entity-parent="EVP"
+       class="fade-section" style="animation-delay: 0.7s">
+
       <text x="44" y="1450" class="white">Gestures:</text>
       <rect x="44" y="1458" width="800" height="176" rx="3"
             fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
 
       <!-- Wheel zoom -->
-      <g data-interactive="WZ"
+      <g data-interactive="EWZ"
          data-ref="web-ui/src/diagram/rendering/viewport.tsx:151-176"
          data-category="function"
-         data-label="Wheel zoom">
+         data-label="Wheel zoom"
+         data-source-span="110:7-110:75"
+         data-entity-name="wheel-zoom"
+         data-entity-kind="text"
+         data-entity-desc="Wheel zoom gesture"
+         data-entity-parent="EVP"
+         data-code-ref-id="CWZ">
         <text x="56" y="1478" class="orange"
               data-tt="viewport.tsx:151 — Wheel zoom handler">
-          Wheel zoom [WZ]
+          Wheel zoom
         </text>
         <text x="260" y="1478" class="dim subhead">delta → newScale (0.1..5), pivot at cursor</text>
       </g>
       <line x1="56" y1="1486" x2="830" y2="1486" stroke="#30363D" stroke-width="0.5"/>
 
       <!-- Drag pan -->
-      <g data-interactive="DP"
+      <g data-interactive="EDP"
          data-ref="web-ui/src/diagram/rendering/viewport.tsx:235-334"
          data-category="function"
-         data-label="Drag pan">
+         data-label="Drag pan"
+         data-source-span="112:7-112:75"
+         data-entity-name="drag-pan"
+         data-entity-kind="text"
+         data-entity-desc="Drag pan gesture"
+         data-entity-parent="EVP"
+         data-code-ref-id="CDP">
         <text x="56" y="1506" class="orange"
               data-tt="viewport.tsx:235 — Drag pan / selection lasso in onPointerMove">
-          Drag pan [DP]
+          Drag pan
         </text>
         <text x="260" y="1506" class="dim subhead">tx = start.tx + dx, ty = start.ty + dy (4px threshold)</text>
       </g>
       <line x1="56" y1="1514" x2="830" y2="1514" stroke="#30363D" stroke-width="0.5"/>
 
       <!-- Pinch zoom -->
-      <g data-interactive="PZ"
+      <g data-interactive="EPZ"
          data-ref="web-ui/src/diagram/rendering/viewport.tsx:243-279"
          data-category="function"
-         data-label="Pinch zoom">
+         data-label="Pinch zoom"
+         data-source-span="114:7-114:75"
+         data-entity-name="pinch-zoom"
+         data-entity-kind="text"
+         data-entity-desc="Pinch-to-zoom gesture"
+         data-entity-parent="EVP"
+         data-code-ref-id="CPZ">
         <text x="56" y="1534" class="orange"
               data-tt="viewport.tsx:243 — Pinch-to-zoom (2-finger touch)">
-          Pinch zoom [PZ]
+          Pinch zoom
         </text>
         <text x="260" y="1534" class="dim subhead">dist ratio → scale, midpoint → pan offset</text>
       </g>
       <line x1="56" y1="1542" x2="830" y2="1542" stroke="#30363D" stroke-width="0.5"/>
 
       <!-- Ctrl+drag -->
-      <text x="56" y="1562" class="orange">Ctrl+drag [SD]</text>
-      <text x="260" y="1562" class="dim subhead">screen rect → overlay, scene rect → onSelectionDrag</text>
+      <g data-interactive="ESD"
+         data-ref="web-ui/src/diagram/rendering/viewport.tsx:295-320"
+         data-category="function"
+         data-label="Ctrl+drag"
+         data-source-span="116:7-116:75"
+         data-entity-name="ctrl-drag"
+         data-entity-kind="text"
+         data-entity-desc="Ctrl+drag selection lasso"
+         data-entity-parent="EVP"
+         data-code-ref-id="CSD">
+        <text x="56" y="1562" class="orange">Ctrl+drag</text>
+        <text x="260" y="1562" class="dim subhead">screen rect → overlay, scene rect → onSelectionDrag</text>
+      </g>
       <line x1="56" y1="1570" x2="830" y2="1570" stroke="#30363D" stroke-width="0.5"/>
 
       <!-- centerOn -->
-      <g data-interactive="CO"
+      <g data-interactive="ECO"
          data-ref="web-ui/src/diagram/rendering/viewport.tsx:118-148"
          data-category="function"
-         data-label="centerOn">
+         data-label="centerOn"
+         data-source-span="118:7-118:75"
+         data-entity-name="center-on"
+         data-entity-kind="text"
+         data-entity-desc="centerOn imperative handle"
+         data-entity-parent="EVP"
+         data-code-ref-id="CCO">
         <text x="56" y="1590" class="orange"
               data-tt="viewport.tsx:118 — centerOn imperative method">
-          centerOn [CO]
+          centerOn
         </text>
         <text x="260" y="1590" class="dim subhead">tx = w/2 - pt.x*s, ty = h/2 - pt.y*s (220ms animate)</text>
       </g>
@@ -464,24 +834,91 @@
     </g>
   </g>
 
-  <!-- ═══ ARROWS between major sections ═══ -->
+  <!-- ═══ INTER-SECTION ARROWS ═══ -->
 
   <!-- getSvgElement → SVG mount -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.7s">
+  <g data-arrow
+     data-arrow-src="ESC.getSvgElement"
+     data-arrow-target="ESV"
+     data-arrow-desc="scene.getSvgElement() mounted into transformDiv"
+     data-source-span="37:28-72:52"
+     class="fade-section" style="animation-delay: 0.75s">
     <line x1="780" y1="466" x2="780" y2="944" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
     <text x="790" y="700" class="dim subhead">scene.getSvgElement()</text>
   </g>
 
-  <!-- worldBounds → OverLayer -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.75s">
+  <!-- worldBounds → OverLayer (for "element" anchors) -->
+  <g data-arrow
+     data-arrow-src="ESC.worldBounds"
+     data-arrow-target="EOL"
+     data-arrow-desc="OverLayer reads getWorldBounds for &quot;element&quot; anchors"
+     data-source-span="33:35-89:30"
+     class="fade-section" style="animation-delay: 0.8s">
     <line x1="900" y1="528" x2="900" y2="1174" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
     <text x="910" y="850" class="dim subhead">getWorldBounds for "element" anchors</text>
   </g>
 
+  <!-- transformRef → OverLayer -->
+  <g data-arrow
+     data-arrow-src="EVP.transformRef"
+     data-arrow-target="EOL"
+     data-arrow-desc="OverLayer reads shared transformRef via rAF"
+     data-source-span="78:46-78:72"
+     class="fade-section" style="animation-delay: 0.82s">
+    <text x="760" y="1000" class="dim subhead">◄── shared transformRef</text>
+  </g>
+
   <!-- InteractiveData → OverLayer badges -->
-  <g data-arrow class="fade-section" style="animation-delay: 0.8s">
+  <g data-arrow
+     data-arrow-src="ESE.interactive"
+     data-arrow-target="EOL"
+     data-arrow-desc="InteractiveData.modal/link drives badge creation"
+     data-source-span="55:62-55:110"
+     class="fade-section" style="animation-delay: 0.85s">
     <line x1="564" y1="760" x2="564" y2="990" stroke="#A371F7" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
     <text x="574" y="870" class="dim subhead">modal/link → badges</text>
+  </g>
+
+  <!-- setTransform → SceneElement.transform -->
+  <g data-arrow
+     data-arrow-src="ESC.setTransform"
+     data-arrow-target="ESE.transform"
+     data-arrow-desc="setTransform updates element.transform"
+     data-source-span="32:60-51:65"
+     class="fade-section" style="animation-delay: 0.87s">
+    <line x1="660" y1="430" x2="660" y2="670" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
+    <text x="670" y="550" class="dim subhead">setTransform</text>
+  </g>
+
+  <!-- transform change → invalidates worldBoundsCache -->
+  <g data-arrow
+     data-arrow-src="ESE.transform"
+     data-arrow-target="ESC.worldBounds"
+     data-arrow-desc="transform change invalidates worldBoundsCache"
+     data-source-span="51:50-35:40"
+     class="fade-section" style="animation-delay: 0.89s">
+    <line x1="540" y1="670" x2="540" y2="430" stroke="#D29922" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
+    <text x="550" y="550" class="dim subhead">invalidates cache</text>
+  </g>
+
+  <!-- Gesture arrows: wheel/drag/pinch/center → transformDiv CSS -->
+  <g data-arrow
+     data-arrow-src="EWZ"
+     data-arrow-target="ETD"
+     data-arrow-desc="wheel zoom → applyTransform → CSS on transformDiv"
+     data-source-span="110:7-68:7"
+     class="fade-section" style="animation-delay: 0.91s">
+    <line x1="850" y1="1478" x2="850" y2="916" stroke="#4C9AFF" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ab)"/>
+  </g>
+
+  <!-- Gesture arrows → syncRootTransform → scene.setTransform -->
+  <g data-arrow
+     data-arrow-src="EWZ"
+     data-arrow-target="ESC.setTransform"
+     data-arrow-desc="wheel zoom → syncRootTransform → scene.setTransform(&quot;root&quot;)"
+     data-source-span="110:7-106:90"
+     class="fade-section" style="animation-delay: 0.93s">
+    <line x1="870" y1="1478" x2="870" y2="430" stroke="#4C9AFF" stroke-width="0.5" stroke-dasharray="3,4" marker-end="url(#ab)"/>
   </g>
 
 </svg>

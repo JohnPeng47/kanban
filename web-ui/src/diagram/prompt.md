@@ -131,10 +131,15 @@ A decorative section or structural block that needs to move during reflow but is
 
 ### Arrows (between groups)
 
-Arrows are siblings of the groups they connect, never children:
+Arrows are siblings of the groups they connect, never children. Use semantic `data-arrow-src` and `data-arrow-target` attributes to identify the entities an arrow connects:
 
 ```xml
-<g data-arrow class="fade-section" style="animation-delay: 0.3s">
+<g data-arrow
+   data-arrow-src="ET1"
+   data-arrow-target="ET2"
+   data-arrow-desc="user clicks data-modal element → handleNavigate"
+   data-source-span="76:7-78:7"
+   class="fade-section" style="animation-delay: 0.3s">
   <line x1="500" y1="288" x2="500" y2="338" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
   <text x="510" y="320" class="dim subhead">creates task object</text>
 </g>
@@ -297,6 +302,110 @@ The generated element becomes:
 
 ---
 
+## Source Span Mapping
+
+Every element that corresponds to a region in the ASCII source diagram must carry a `data-source-span` attribute so the viewer can map SVG selections back to source text positions.
+
+### Format
+
+```
+data-source-span="<startLine>:<startCol>-<endLine>:<endCol>"
+```
+
+Line and column numbers are **0-based**, referring to positions in the ASCII `diagram` block (not the entire `.txt` file). The span covers the visual extent of the element in the source.
+
+### Entity metadata attributes
+
+Elements that correspond to named entities from the input `entities` block carry additional attributes that embed the entity metadata directly on the SVG element:
+
+| Attribute | Example | Purpose |
+|---|---|---|
+| `data-entity-name` | `"popup-overlay"` | Entity name from the entities block |
+| `data-entity-kind` | `"box"` | `"box"` or `"text"` |
+| `data-entity-desc` | `"PopupDiagramOverlay component"` | Description string |
+| `data-entity-parent` | `"EPO"` | Parent entity ID (omit if top-level) |
+| `data-code-ref-id` | `"CPO"` | ID of the corresponding code-ref entry |
+
+**Example — a box entity with full metadata:**
+
+```xml
+<g data-reflow-group="popup-overlay"
+   data-interactive="EPO"
+   data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145"
+   data-category="module"
+   data-label="PopupDiagramOverlay"
+   data-source-span="25:2-71:100"
+   data-entity-name="popup-overlay"
+   data-entity-kind="box"
+   data-entity-desc="PopupDiagramOverlay (full component)"
+   data-code-ref-id="CPO"
+   class="fade-section" style="animation-delay: 0.2s">
+  <rect x="20" y="250" width="1060" height="400" rx="4"
+        fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+  <text x="32" y="275" class="blue heading">PopupDiagramOverlay</text>
+  <!-- ...content... -->
+</g>
+```
+
+### Sub-line mapping
+
+Entities in the `entities` block describe coarse regions (a whole box, a paragraph of text). Individual lines within an entity should get their own `data-interactive` ID using the convention `<parentId>.N` (1-indexed):
+
+```xml
+<g data-interactive="EPO"
+   data-source-span="25:2-71:100"
+   data-entity-name="popup-overlay"
+   data-entity-kind="box"
+   data-code-ref-id="CPO"
+   data-ref="src/components/popup-diagram-overlay.tsx:63-145">
+  <rect .../>
+
+  <!-- Line 1 within EPO -->
+  <g data-interactive="EPO.1"
+     data-source-span="28:4-28:70"
+     data-entity-parent="EPO">
+    <text ...>backdrop: bg-surface-0/50 backdrop-blur(2px)</text>
+  </g>
+
+  <!-- Line 2 within EPO -->
+  <g data-interactive="EPO.2"
+     data-source-span="29:4-29:45"
+     data-entity-parent="EPO">
+    <text ...>click backdrop → onClose</text>
+  </g>
+</g>
+```
+
+Sub-line elements inherit their parent's `data-ref` and `data-code-ref-id`. They only need `data-interactive`, `data-source-span`, and `data-entity-parent`.
+
+### Arrow source spans
+
+Arrow elements carry `data-source-span` covering the drawn path (box-drawing characters like `│`, `▼`, `──►`) in the ASCII source, plus semantic IDs identifying the connected entities:
+
+```xml
+<g data-arrow
+   data-arrow-src="ET1"
+   data-arrow-target="ET2"
+   data-arrow-desc="user clicks data-modal element → handleNavigate"
+   data-source-span="76:7-78:7">
+  <line x1="..." y1="..." x2="..." y2="..." stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+</g>
+```
+
+The `data-arrow-src` and `data-arrow-target` values match entity IDs from the `arrows` block in the input. These replace auto-assigned arrow IDs, enabling selection to map arrows back to their source metadata. The `data-arrow-desc` carries the arrow's description.
+
+### Cross-link metadata
+
+Elements that link to other diagrams (via `data-link` or `data-modal`) can also carry explicit cross-link metadata for the viewer's data layer:
+
+| Attribute | Example | Purpose |
+|---|---|---|
+| `data-link-target-file` | `"02-rendering.txt"` | Original target file from the links block |
+| `data-link-target-id` | `"VP"` | Target entity ID on the other diagram |
+| `data-link-desc` | `"Viewport (pan/zoom detail)"` | Description of the cross-link |
+
+---
+
 ## Visual Conventions
 
 ### Box styles
@@ -330,22 +439,34 @@ Use `class="fade-section"` with incremental `style="animation-delay: {N}s"` (sta
 
 ```xml
 <!-- Title -->
-<g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+<g data-reflow-group="title"
+   data-source-span="0:0-1:40"
+   class="fade-section" style="animation-delay: 0s">
   <text x="20" y="28" class="white title">SYSTEM NAME</text>
   <text x="20" y="52" class="dim subhead">Description of the system</text>
 </g>
 
 <!-- Arrow: title → first section -->
-<g data-arrow class="fade-section" style="animation-delay: 0.05s">
+<g data-arrow
+   data-arrow-src="title"
+   data-arrow-target="sys-entry"
+   data-arrow-desc="title → entry point"
+   data-source-span="3:6-5:6"
+   class="fade-section" style="animation-delay: 0.05s">
   <line x1="550" y1="60" x2="550" y2="100" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
 </g>
 
-<!-- First section — reflow group + interactive -->
+<!-- First section — reflow group + interactive + entity metadata -->
 <g data-reflow-group="entry-point"
    data-interactive="sys-entry"
    data-ref="src/main.ts:10-50"
    data-category="function"
    data-label="main"
+   data-source-span="7:2-12:60"
+   data-entity-name="entry-point"
+   data-entity-kind="box"
+   data-entity-desc="Application entry point"
+   data-code-ref-id="CE"
    class="fade-section" style="animation-delay: 0.1s">
 
   <rect x="20" y="110" width="1060" height="80" rx="4"
@@ -357,28 +478,44 @@ Use `class="fade-section"` with incremental `style="animation-delay: {N}s"` (sta
   <text x="32" y="155" class="dim subhead">Initializes the system and starts processing</text>
 </g>
 
-<!-- Arrow -->
-<g data-arrow class="fade-section" style="animation-delay: 0.15s">
+<!-- Arrow with semantic IDs -->
+<g data-arrow
+   data-arrow-src="sys-entry"
+   data-arrow-target="sys-processor"
+   data-arrow-desc="entry → processor"
+   data-source-span="14:6-16:6"
+   class="fade-section" style="animation-delay: 0.15s">
   <line x1="550" y1="200" x2="550" y2="240" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
 </g>
 
-<!-- Section with nested interactive elements -->
+<!-- Section with nested interactive elements and sub-line mapping -->
 <g data-reflow-group="processor"
    data-interactive="sys-processor"
    data-ref="src/processor.ts:1-200"
    data-category="module"
    data-label="Processor"
+   data-source-span="18:2-30:60"
+   data-entity-name="processor"
+   data-entity-kind="box"
+   data-entity-desc="Main processing module"
+   data-code-ref-id="CP"
    class="fade-section" style="animation-delay: 0.2s">
 
   <rect x="20" y="250" width="1060" height="160" rx="4"
         fill="#24292E" stroke="#D29922" stroke-width="1"/>
   <text x="32" y="275" class="orange heading">► processor</text>
 
-  <!-- Nested interactive: a specific function -->
+  <!-- Nested interactive with entity metadata -->
   <g data-interactive="sys-process-item"
      data-ref="src/processor.ts:45-80"
      data-category="function"
-     data-label="processItem">
+     data-label="processItem"
+     data-source-span="21:4-24:50"
+     data-entity-name="process-item"
+     data-entity-kind="box"
+     data-entity-desc="Processes a single work item"
+     data-entity-parent="sys-processor"
+     data-code-ref-id="CPI">
     <rect x="40" y="290" width="480" height="50" rx="3"
           fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
     <text x="52" y="315" class="orange"
@@ -387,11 +524,24 @@ Use `class="fade-section"` with incremental `style="animation-delay: {N}s"` (sta
     </text>
   </g>
 
+  <!-- Sub-line elements within a text entity -->
+  <g data-interactive="sys-processor.1"
+     data-source-span="26:4-26:45"
+     data-entity-parent="sys-processor">
+    <text x="40" y="370" class="white">validates input before dispatching</text>
+  </g>
+
   <!-- Another nested interactive -->
   <g data-interactive="sys-validate"
      data-ref="src/processor.ts:90-120"
      data-category="function"
-     data-label="validate">
+     data-label="validate"
+     data-source-span="27:4-29:50"
+     data-entity-name="validate"
+     data-entity-kind="box"
+     data-entity-desc="Validates input before processing"
+     data-entity-parent="sys-processor"
+     data-code-ref-id="CV">
     <rect x="540" y="290" width="480" height="50" rx="3"
           fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
     <text x="552" y="315" class="green"

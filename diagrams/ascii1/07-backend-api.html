@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Backend API &amp; Code Viz Integration</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 860"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">BACKEND API &amp; CODE VIZ INTEGRATION</text>
+    <text x="20" y="48" class="dim subhead">TRPC router, diagrams-api implementation, Code Viz client, status polling</text>
+  </g>
+
+  <!-- ═══ Row 1: TRPC Router + diagrams-api ═══ -->
+  <g data-reflow-group="section-1" class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="78" class="white heading">TRPC Router &amp; diagrams-api Implementation</text>
+  </g>
+
+  <!-- Left: TRPC Router -->
+  <g data-reflow-group="trpc-router"
+     data-interactive="trpc-router"
+     data-ref="src/trpc/app-router.ts:680-702"
+     data-category="module"
+     data-label="TRPC router"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="20" y="90" width="520" height="280" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="112" class="blue heading" data-tt="app-router.ts:680 — workspace-scoped diagram procedures">TRPC Router (workspace-scoped)</text>
+
+    <g data-interactive="query-list"
+       data-ref="src/trpc/app-router.ts:682-686"
+       data-category="function"
+       data-label="diagrams.list">
+      <rect x="40" y="125" width="480" height="45" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="145" class="blue" data-tt="app-router.ts:682 — query: list diagram files">diagrams.list (Query)</text>
+      <text x="60" y="162" class="dim subhead">input: {} · output: { diagramsRoot, rootExists, tree[] }</text>
+    </g>
+
+    <g data-interactive="query-content"
+       data-ref="src/trpc/app-router.ts:688-692"
+       data-category="function"
+       data-label="diagrams.getContent">
+      <rect x="40" y="185" width="480" height="40" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="203" class="blue" data-tt="app-router.ts:688 — query: read diagram HTML">diagrams.getContent (Query)</text>
+      <text x="60" y="218" class="dim subhead">input: { path } · output: { content }</text>
+    </g>
+
+    <g data-interactive="mutation-navigate"
+       data-ref="src/trpc/app-router.ts:694-698"
+       data-category="function"
+       data-label="diagrams.navigate">
+      <rect x="40" y="240" width="480" height="40" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="258" class="orange" data-tt="app-router.ts:694 — mutation: open file in editor">diagrams.navigate (Mutation)</text>
+      <text x="60" y="273" class="dim subhead">input: { root, filePath, line?, newTab? } · output: { ok, error? }</text>
+    </g>
+
+    <g data-interactive="query-extension"
+       data-ref="src/trpc/app-router.ts:700-702"
+       data-category="function"
+       data-label="diagrams.checkExtension">
+      <rect x="40" y="295" width="480" height="40" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="52" y="313" class="green" data-tt="app-router.ts:700 — query: check Code Viz extension status">diagrams.checkExtension (Query)</text>
+      <text x="60" y="328" class="dim subhead">output: { extensionRunning, workspaceRegistered }</text>
+    </g>
+  </g>
+
+  <!-- Right: diagrams-api implementation -->
+  <g data-reflow-group="diagrams-api"
+     data-interactive="diagrams-api"
+     data-ref="src/trpc/diagrams-api.ts:75-153"
+     data-category="module"
+     data-label="diagrams-api"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="560" y="90" width="520" height="280" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="572" y="112" class="orange heading" data-tt="diagrams-api.ts:75 — server-side implementation">diagrams-api.ts</text>
+
+    <g data-interactive="list-diagrams"
+       data-ref="src/trpc/diagrams-api.ts:75-103"
+       data-category="function"
+       data-label="listDiagrams">
+      <rect x="580" y="125" width="480" height="55" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="145" class="orange" data-tt="diagrams-api.ts:75 — fs.readdir + filter + validate + tree">listDiagrams(workspacePath)</text>
+      <text x="600" y="162" class="dim subhead">root = wsPath + "/diagrams"</text>
+      <text x="600" y="175" class="dim subhead">!exists? → { rootExists: false } · else fs.readdir + filter .html</text>
+    </g>
+
+    <g data-interactive="get-diagram-content"
+       data-ref="src/trpc/diagrams-api.ts:105-130"
+       data-category="function"
+       data-label="getDiagramContent">
+      <rect x="580" y="195" width="480" height="45" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="213" class="orange" data-tt="diagrams-api.ts:105 — validate, stat, readFile">getDiagramContent(wsPath, path)</text>
+      <text x="600" y="230" class="dim subhead">validate: no "..", no null bytes · stat &gt; 5MB → error · fs.readFile</text>
+    </g>
+
+    <g data-interactive="navigate-source"
+       data-ref="src/trpc/diagrams-api.ts:132-137"
+       data-category="function"
+       data-label="navigateToSource">
+      <rect x="580" y="255" width="480" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="275" class="orange" data-tt="diagrams-api.ts:132 — delegates to codeVizClient.navigate()">navigateToDiagramSource → codeVizClient.navigate()</text>
+    </g>
+
+    <g data-interactive="check-ext-status"
+       data-ref="src/trpc/diagrams-api.ts:139-153"
+       data-category="function"
+       data-label="checkExtStatus">
+      <rect x="580" y="300" width="480" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="320" class="orange" data-tt="diagrams-api.ts:139 — checkHealth + checkWorkspace">checkExtensionStatus → checkHealth + checkWorkspace</text>
+    </g>
+  </g>
+
+  <!-- Arrows: router to api -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.12s">
+    <line x1="520" y1="147" x2="560" y2="152" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <line x1="520" y1="205" x2="560" y2="217" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <line x1="520" y1="260" x2="560" y2="270" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <line x1="520" y1="315" x2="560" y2="315" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══ Row 2: Code Viz Client + Status Polling ═══ -->
+  <g data-reflow-group="section-2" class="fade-section" style="animation-delay: 0.15s">
+    <text x="20" y="400" class="white heading">Code Viz Client &amp; Status Polling</text>
+  </g>
+
+  <!-- Left: Code Viz Client -->
+  <g data-reflow-group="code-viz-client"
+     data-interactive="code-viz-client"
+     data-ref="src/diagram/code-viz-client.ts"
+     data-category="module"
+     data-label="CodeVizClient"
+     class="fade-section" style="animation-delay: 0.2s">
+    <rect x="20" y="415" width="520" height="220" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1"/>
+    <text x="32" y="437" class="green heading" data-tt="code-viz-client.ts — HTTP client for Code Viz extension">CodeVizClient (HTTP, :24680 or CODE_VIZ_PORT)</text>
+    <text x="40" y="460" class="dim subhead">All requests: 2.5s timeout, graceful error handling</text>
+
+    <g data-interactive="check-health"
+       data-ref="src/diagram/code-viz-client.ts:45-54"
+       data-category="function"
+       data-label="checkHealth">
+      <rect x="40" y="475" width="480" height="30" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="52" y="495" class="green" data-tt="code-viz-client.ts:45 — GET /api/health → true | false">checkHealth() — GET /api/health → true | false</text>
+    </g>
+
+    <g data-interactive="check-workspace"
+       data-ref="src/diagram/code-viz-client.ts:66-82"
+       data-category="function"
+       data-label="checkWorkspace">
+      <rect x="40" y="520" width="480" height="35" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="52" y="538" class="green" data-tt="code-viz-client.ts:66 — GET /api/workspaces, realpath compare">checkWorkspace(wsPath) — GET /api/workspaces</text>
+      <text x="60" y="550" class="dim subhead">compare by fs.realpath (resolves symlinks)</text>
+    </g>
+
+    <g data-interactive="navigate-endpoint"
+       data-ref="src/diagram/code-viz-client.ts:84-106"
+       data-category="function"
+       data-label="navigate">
+      <rect x="40" y="570" width="480" height="40" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="52" y="588" class="green" data-tt="code-viz-client.ts:84 — POST /api/navigate, opens file in VSCode">navigate(root, filePath, line?, newTab?)</text>
+      <text x="60" y="604" class="dim subhead">POST /api/navigate → opens file in VSCode at line</text>
+    </g>
+  </g>
+
+  <!-- Right: Status Polling -->
+  <g data-reflow-group="status-polling" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="560" y="415" width="520" height="220" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="572" y="437" class="violet heading">Status Polling (frontend)</text>
+
+    <g data-interactive="use-code-viz-status"
+       data-ref="web-ui/src/hooks/use-code-viz-status.ts:1-50"
+       data-category="function"
+       data-label="useCodeVizStatus">
+      <rect x="580" y="450" width="480" height="30" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="592" y="470" class="violet" data-tt="use-code-viz-status.ts:1 — polls every 30s via diagrams.checkExtension">useCodeVizStatus(wsId) — polls every 30s</text>
+    </g>
+
+    <text x="580" y="510" class="white">running &amp;&amp; registered</text>
+    <circle cx="830" cy="506" r="4" fill="#3FB950"/>
+    <text x="842" y="510" class="green">"connected"</text>
+
+    <text x="580" y="535" class="white">running &amp;&amp; !registered</text>
+    <circle cx="830" cy="531" r="4" fill="#D29922"/>
+    <text x="842" y="535" class="orange">"workspace-not-registered"</text>
+
+    <text x="580" y="560" class="white">!running</text>
+    <circle cx="830" cy="556" r="4" fill="#6E7681"/>
+    <text x="842" y="560" class="dim">"disconnected"</text>
+
+    <g data-interactive="status-indicator"
+       data-ref="web-ui/src/components/diagram-panels/code-viz-status-indicator.tsx"
+       data-category="module"
+       data-label="StatusIndicator">
+      <text x="580" y="600" data-tt="code-viz-status-indicator.tsx — Radix popover, top-right of content area">CodeVizStatusIndicator — Radix popover, top-right</text>
+    </g>
+  </g>
+
+  <!-- ═══ Row 3: Type Contracts ═══ -->
+  <g data-reflow-group="section-3" class="fade-section" style="animation-delay: 0.25s">
+    <text x="20" y="665" class="white heading">Type Contracts</text>
+  </g>
+
+  <g data-reflow-group="type-contracts"
+     data-interactive="type-contracts"
+     data-ref="src/core/api-contract.ts:1109-1158"
+     data-category="type"
+     data-label="diagram types"
+     class="fade-section" style="animation-delay: 0.3s">
+    <rect x="20" y="680" width="1060" height="140" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="32" y="702" class="violet heading" data-tt="api-contract.ts:1109 — shared type definitions">api-contract.ts</text>
+
+    <text x="40" y="730" class="white">RuntimeDiagramNode { name, path, type: "file"|"directory", children }</text>
+    <text x="40" y="750" class="white">RuntimeDiagramListResponse { diagramsRoot, diagramsRootExists, tree }</text>
+    <text x="40" y="770" class="white">RuntimeDiagramContentResponse { content }</text>
+    <text x="40" y="790" class="white">RuntimeDiagramNavigateRequest { root, filePath, line?, newTab? }</text>
+    <text x="40" y="810" class="white">RuntimeDiagramExtensionStatusResponse { extensionRunning, workspaceRegistered }</text>
+  </g>
+
+</svg>
+</body>
+</html>

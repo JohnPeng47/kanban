@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Flow — useDiagramViewer</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 860"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">DATA FLOW — useDiagramViewer</text>
+    <text x="20" y="48" class="dim subhead">State management, effects, cross-diagram jump protocol, URL sync</text>
+  </g>
+
+  <!-- ═══ Row 1: State + Effects ═══ -->
+  <g data-reflow-group="section-1" class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="78" class="white heading">Hook State &amp; Effects</text>
+  </g>
+
+  <!-- Left: State -->
+  <g data-reflow-group="hook-state"
+     data-interactive="hook-state"
+     data-ref="web-ui/src/hooks/use-diagram-viewer.ts:50-65"
+     data-category="data"
+     data-label="state"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="20" y="90" width="520" height="290" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="32" y="112" class="violet heading" data-tt="use-diagram-viewer.ts:50 — hook state declarations">useDiagramViewer State</text>
+
+    <text x="40" y="140" class="white">tree: FileTreeNode[]                  ← diagrams.list</text>
+    <text x="40" y="160" class="white">diagramsRootExists: boolean           ← diagrams.list</text>
+    <text x="40" y="180" class="white">isTreeLoading: boolean</text>
+    <text x="40" y="200" class="white">workspacePath: string|null            ← derived</text>
+    <text x="40" y="228" class="white">selectedPath: string|null</text>
+    <text x="40" y="246" class="dim subhead">  ← onSelectPath / requestJump</text>
+    <text x="40" y="266" class="white">expandedFolders: Set&lt;string&gt;</text>
+    <text x="40" y="286" class="white">content: string|null                  ← getContent</text>
+    <text x="40" y="306" class="white">isContentLoading / contentError</text>
+    <text x="40" y="330" class="white">pendingJumpElementId: string|null</text>
+    <text x="40" y="348" class="dim subhead">  ← requestJump / consumeJump</text>
+  </g>
+
+  <!-- Right: Effects -->
+  <g data-reflow-group="effects" class="fade-section" style="animation-delay: 0.1s">
+    <rect x="560" y="90" width="520" height="290" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="572" y="112" class="orange heading">Effects</text>
+
+    <g data-interactive="effect-tree"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:68-116"
+       data-category="flow"
+       data-label="tree fetch">
+      <rect x="580" y="125" width="480" height="70" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="143" class="orange" data-tt="use-diagram-viewer.ts:68 — trpc.diagrams.list on workspace change">workspaceId changes → trpc.diagrams.list()</text>
+      <text x="600" y="162" class="dim subhead">→ setTree, setDiagramsRootExists</text>
+      <text x="600" y="178" class="dim subhead">→ derive workspacePath · auto-expand top dirs</text>
+    </g>
+
+    <g data-interactive="effect-content"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:119-148"
+       data-category="flow"
+       data-label="content fetch">
+      <rect x="580" y="210" width="480" height="50" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="228" class="orange" data-tt="use-diagram-viewer.ts:119 — trpc.diagrams.getContent on path change">selectedPath changes → trpc.diagrams.getContent(path)</text>
+      <text x="600" y="248" class="dim subhead">→ setContent / setContentError</text>
+    </g>
+
+    <g data-interactive="effect-url"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:151-153"
+       data-category="flow"
+       data-label="URL sync">
+      <rect x="580" y="275" width="480" height="40" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="293" class="orange" data-tt="use-diagram-viewer.ts:151 — replaceState: ?view=diagram&amp;path=...">selectedPath changes → syncUrlState(replaceState)</text>
+      <text x="600" y="308" class="dim subhead">?view=diagram&amp;path=...</text>
+    </g>
+  </g>
+
+  <!-- ═══ Row 2: Actions + Jump Protocol ═══ -->
+  <g data-reflow-group="section-2" class="fade-section" style="animation-delay: 0.15s">
+    <text x="20" y="410" class="white heading">Actions &amp; Cross-Diagram Jump Protocol</text>
+  </g>
+
+  <!-- Left: Actions -->
+  <g data-reflow-group="actions" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="20" y="425" width="520" height="260" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1"/>
+    <text x="32" y="447" class="green heading">Actions</text>
+
+    <g data-interactive="on-select-path"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:155-157"
+       data-category="function"
+       data-label="onSelectPath">
+      <text x="40" y="475" class="white" data-tt="use-diagram-viewer.ts:155 — setSelectedPath(path)">onSelectPath(path) → setSelectedPath</text>
+    </g>
+
+    <g data-interactive="on-toggle-folder"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:178-188"
+       data-category="function"
+       data-label="onToggleFolder">
+      <text x="40" y="500" class="white" data-tt="use-diagram-viewer.ts:178 — toggle in expandedFolders set">onToggleFolder(path) → toggle in expandedFolders</text>
+    </g>
+
+    <g data-interactive="request-jump"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:159-172"
+       data-category="function"
+       data-label="requestJump">
+      <rect x="40" y="515" width="480" height="60" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="52" y="535" class="green" data-tt="use-diagram-viewer.ts:159 — pushState + pendingJumpElementId">requestJump(path, elementId)</text>
+      <text x="60" y="553" class="dim subhead">setPendingJumpElementId(elId)</text>
+      <text x="60" y="568" class="dim subhead">setSelectedPath(path) · pushState: ?view=diagram&amp;path&amp;at=elId</text>
+    </g>
+
+    <g data-interactive="consume-jump"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:174-176"
+       data-category="function"
+       data-label="consumeJump">
+      <text x="40" y="600" class="white" data-tt="use-diagram-viewer.ts:174 — clear pendingJumpElementId">consumeJump() → setPendingJumpElementId(null)</text>
+    </g>
+
+    <g data-interactive="same-diagram-jump"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:117-129"
+       data-category="flow"
+       data-label="same-diagram jump">
+      <text x="40" y="635" class="dim subhead" data-tt="diagram-content-area.tsx:117 — smooth pan, no state change">Same-diagram jump: viewportRef.centerOn(center, {animate})</text>
+    </g>
+  </g>
+
+  <!-- Right: Jump Protocol -->
+  <g data-reflow-group="jump-protocol" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="560" y="425" width="520" height="260" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="572" y="447" class="blue heading">Cross-Diagram Jump Protocol</text>
+
+    <text x="580" y="475" class="white">1. DiagramScene.executeJump()</text>
+    <text x="600" y="493" class="dim subhead">interactive.link clicked, resolvedPath ≠ selectedPath</text>
+
+    <text x="580" y="518" class="white">2. onRequestJump(path, elId)</text>
+    <text x="600" y="536" class="dim subhead">→ setSelectedPath → setPendingJumpElId → pushState</text>
+
+    <text x="580" y="561" class="white">3. content fetch triggers → new HTML loaded</text>
+
+    <g data-interactive="jump-consumption"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:300-312"
+       data-category="flow"
+       data-label="jump consumption">
+      <text x="580" y="586" class="white" data-tt="diagram-content-area.tsx:300 — wait 50ms for Viewport mount">4. useDiagram(content) → Scene</text>
+      <text x="600" y="604" class="dim subhead">scene + pendingJumpElId both present → wait 50ms</text>
+    </g>
+
+    <text x="580" y="629" class="white">5. consumeJump() → clear pendingJumpElId</text>
+  </g>
+
+</svg>
+</body>
+</html>

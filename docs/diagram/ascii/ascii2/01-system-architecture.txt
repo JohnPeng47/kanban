@@ -1,0 +1,81 @@
+```diagram
+DIAGRAM FEATURE — 3-TIER SYSTEM ARCHITECTURE
+
+                       BROWSER                                    NODE.JS SERVER                            CODE VIZ EXTENSION
+              ┌──────────────────────────────┐           ┌─────────────────────────────────┐       ┌──────────────────────────────────┐
+              │                              │           │                                 │       │  VSCode Extension (optional)     │
+              │  App.tsx [AP]                │           │  TRPC Router [TR]               │       │  localhost:24680                 │
+              │  ?view=diagram → open        │           │  app-router.ts L680-702         │       │                                  │
+              │  isDiagramViewerOpen state    │   HTTP    │                                 │       │                                  │
+              │         │                    │ ────────► │  diagrams.* procedures          │       │                                  │
+              │         ▼                    │           │    │                            │       │                                  │
+              │  ┌────────────────────────┐  │           │    ├─ list          ──→ fs [DL] │       │                                  │
+              │  │ DiagramViewer [DV]     │  │           │    ├─ getContent    ──→ fs [DC] │       │                                  │
+              │  │  ** 02-viewer-and-hooks.txt │  │           │    ├─ navigate      ──→ CV [DN] │──────►│  /api/navigate  [CN]             │
+              │  │                        │  │           │    └─ checkExtension──→ CV [DE] │──────►│  /api/health    [CH]             │
+              │  │ Hooks:                 │  │           │                                 │──────►│  /api/workspaces[CW]             │
+              │  │  useDiagramViewer [UV] │  │           │  diagrams-api.ts [DA]           │       │                                  │
+              │  │  useCodeVizStatus [CS] │  │           │    path safety: isPathSafe,     │       │  Capabilities:                   │
+              │  │  useDiagramAgentPanel  │  │           │    hasUnsafeSegments             │       │    open file at line in editor   │
+              │  │                    DV  │  │           │    5MB file size limit           │       │    workspace registration check  │
+              │  └────────────────────────┘  │           │                             TR  │       │    health monitoring         CZ  │
+              │                          AP  │           │  code-viz-client.ts [CC]        │       └──────────────────────────────────┘
+              └──────────────────────────────┘           │    checkHealth()   → :24680     │
+                                                         │    checkWorkspace() → :24680    │
+                                                         │    navigate()       → :24680    │
+                                                         │                             CC  │
+                                                         └─────────────────────────────────┘
+
+═══ Data Flow ═════════════════════════════════════════════════════════════════════════════════════════════════
+
+ Browser                              Server                              Code Viz Extension
+ ───────                              ──────                              ──────────────────
+
+ 1. Mount / URL has ?view=diagram
+    App.tsx sets isDiagramViewerOpen
+    ──→ renders <DiagramViewer>
+
+ 2. Tree loading                      diagrams.list.query
+    useDiagramViewer ───────────────► listDiagrams [DL]
+                     ◄─────────────── FileTreeNode[]
+                                      (reads {workspace}/diagrams/)
+
+ 3. File selection                    diagrams.getContent.query
+    onSelectPath(path) ────────────► getDiagramContent [DC]
+                       ◄──────────── { content: string (HTML) }
+                                      (reads file, 5MB cap)
+
+ 4. Code navigation                  diagrams.navigate.mutate            /api/navigate
+    fireCodeJump ──────────────────► navigateToDiagramSource [DN] ─────► navigate(root, file, line) [CN]
+                                                                  ◄───── { ok: boolean }
+
+ 5. Extension health poll (30s)      diagrams.checkExtension.query       /api/health + /api/workspaces
+    useCodeVizStatus [CS] ─────────► checkExtensionStatus [DE] ────────► checkHealth() [CH]
+                                                                ────────► checkWorkspace(path) [CW]
+                     ◄─────────────── { available, workspaceRegistered }
+
+ 6. Cross-diagram jump
+    requestJump(path, elementId)
+    → setSelectedPath → triggers #3
+    → setPendingJumpElementId
+    → pushState (browser back support)
+    ** 02-viewer-and-hooks.txt
+```
+
+```code-refs
+AP  web-ui/src/App.tsx:92-95                         isDiagramViewerOpen state init from URL
+DV  web-ui/src/components/diagram-viewer.tsx:19-156  DiagramViewer 3-panel component
+UV  web-ui/src/hooks/use-diagram-viewer.ts:49-224    useDiagramViewer hook (tree, content, jumps)
+CS  web-ui/src/hooks/use-code-viz-status.ts:14-50    useCodeVizStatus polling hook (30s interval)
+TR  src/trpc/app-router.ts:680-702                   TRPC diagrams router (4 procedures)
+DA  src/trpc/diagrams-api.ts:73-155                  createDiagramsApi factory
+DL  src/trpc/diagrams-api.ts:75-103                  listDiagrams — fs.readdir tree builder
+DC  src/trpc/diagrams-api.ts:105-130                 getDiagramContent — fs.readFile with 5MB cap
+DN  src/trpc/diagrams-api.ts:132-137                 navigateToDiagramSource — delegates to CodeVizClient
+DE  src/trpc/diagrams-api.ts:139-153                 checkExtensionStatus — health + workspace check
+CC  src/diagram/code-viz-client.ts:108-112           codeVizClient exported object
+CH  src/diagram/code-viz-client.ts:45-54             checkHealth — GET /api/health
+CW  src/diagram/code-viz-client.ts:66-82             checkWorkspace — GET /api/workspaces + path match
+CN  src/diagram/code-viz-client.ts:84-106            navigate — POST /api/navigate
+CZ  (external) Code Viz VSCode Extension             VSCode extension on localhost:24680
+```

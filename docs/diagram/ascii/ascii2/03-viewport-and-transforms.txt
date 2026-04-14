@@ -1,0 +1,122 @@
+```diagram
+                                             VIEWPORT & COORDINATE TRANSFORMS
+                                             ================================
+
+    ┌─ Viewport (container div) [VP] ────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    │  className="relative w-full h-full overflow-hidden select-none touch-none"                                                        │
+    │  Pointer events: onPointerDown, onPointerMove, onPointerCancel, onContextMenu                                                     │
+    │                                                                                                                                    │
+    │  ┌─ transformDiv ─────────────────────────┐  ┌─ OverLayer** 04-over-layer.txt (sibling, z:10) ────────┐  ┌─ selectionRect overlay ──────────────┐    │
+    │  │  style: transform-origin: 0 0          │  │  absolute inset-0                     │  │  absolute, pointer-events-none       │    │
+    │  │         will-change: transform          │  │  Renders <button> badges at           │  │  border-accent bg-accent/8           │    │
+    │  │         translate(tx,ty) scale(s) [AT]  │  │  screen-space positions                │  │  Only shown during Ctrl+drag     [SR]│    │
+    │  │                                         │  │  rAF loop syncs with pan/zoom     [OL]│  └──────────────────────────────────────┘    │
+    │  │  Children:                              │  └──────────────────────────────────────┘                                              │
+    │  │    scene.getSvgElement() [MN]           │                                              ┌─ selectionOverlayPaths ──────────────┐  │
+    │  │    (mounted via useEffect)              │                                              │  Mono labels left of lasso       [SP]│  │
+    │  │                                         │  ┌─ {children} ────────────────────────┐    └──────────────────────────────────────┘  │
+    │  └─────────────────────────────────────────┘  │  passed through (toolbar, etc.)  [CH]│                                             │
+    │                                                └─────────────────────────────────────┘                                             │
+    └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+    TYPES [TY]                              COORDINATE MATH                                    IMPERATIVE HANDLE [IH]
+    ═══════════                             ════════════════                                    ═══════════════════════
+    Transform { tx, ty, scale }             screenToScene(screenPt) [SS]                       centerOn(scenePoint, opts?)
+    Point { x, y }                          ┌────────────────────────────────┐                  ┌──────────────────────────────────┐
+    Rect { x, y, width, height }            │  container = getBoundingRect() │                  │  scale = opts.scale ?? current   │
+    IDENTITY = { 0, 0, 1 }                  │  { tx, ty, scale } = transform │                  │  tx = W/2 - pt.x * scale        │
+                                            │                                │                  │  ty = H/2 - pt.y * scale        │
+    composeTransforms(parent, child) [CT]   │  sceneX = (scrX - left - tx)   │                  │                                  │
+    ┌───────────────────────────────────┐    │           / scale              │                  │  if animate:                     │
+    │  tx: p.tx + c.tx * p.scale       │    │  sceneY = (scrY - top  - ty)   │                  │    transition 220ms ease         │
+    │  ty: p.ty + c.ty * p.scale       │    │           / scale              │                  │    rAF → applyTransform          │
+    │  scale: p.scale * c.scale        │    └────────────────────────────────┘                  │    setTimeout 240ms clear        │
+    └───────────────────────────────────┘                                                       └──────────────────────────────────┘
+                                            applyTransform(t) [AF]
+    transformRect(rect, t) [TR]             ┌────────────────────────────────┐
+    ┌───────────────────────────────────┐    │  transformRef.current = t      │
+    │  x: r.x * t.scale + t.tx         │    │  el.style.transform =          │
+    │  y: r.y * t.scale + t.ty         │    │   translate(tx,ty) scale(s)    │
+    │  w: r.width * t.scale            │    └────────────────────────────────┘
+    │  h: r.height * t.scale           │
+    └───────────────────────────────────┘    syncRootTransform(t) [SY]
+                                            ┌────────────────────────────────┐
+                                            │  scene.setTransform("root", t) │
+                                            │  Keeps Scene bounds in sync    │
+                                            └────────────────────────────────┘
+
+
+    INTERACTION MODES
+    ═════════════════
+
+    ┌─ Wheel Zoom (pivot around cursor) [WZ] ─────────────────────────┐          ┌─ Pinch-to-Zoom (multi-touch) [PZ] ────────────────────────────────────┐
+    │                                                                  │          │                                                                        │
+    │  delta = -deltaY * ZOOM_SENSITIVITY (0.002)                      │          │  activePointersRef: Map<pointerId, {x,y}>                              │
+    │  (deltaMode===1 line-scroll → * 0.05 instead)                    │          │  pinchStartRef: { distance, midpoint, transform }                      │
+    │                                                                  │          │                                                                        │
+    │  newScale = clamp(scale * (1 + delta), 0.1, 5)                   │          │  2nd finger down:                                                      │
+    │                                                                  │          │    distance = sqrt((b.x-a.x)^2 + (b.y-a.y)^2)                          │
+    │  Pivot formula (cursor stays fixed):                              │          │    midpoint = avg of two pointers                                      │
+    │  ┌─────────────────────────────────────────────┐                 │          │    save current transform                                              │
+    │  │  cursorX = clientX - rect.left              │                 │          │                                                                        │
+    │  │  cursorY = clientY - rect.top               │                 │          │  On move (2 pointers):                                                 │
+    │  │                                             │                 │          │    scaleFactor = currentDist / startDist                                │
+    │  │  newTx = cursorX - (cursorX - tx)           │                 │          │    newScale = clamp(start.scale * scaleFactor, 0.1, 5)                  │
+    │  │          * (newScale / scale)               │                 │          │    Zoom around midpoint + pan by midpoint delta                         │
+    │  │  newTy = cursorY - (cursorY - ty)           │                 │          │                                                                        │
+    │  │          * (newScale / scale)               │                 │          │  Finger up: clear pinchStartRef, suppress click                         │
+    │  └─────────────────────────────────────────────┘                 │          │                                                                        │
+    │                                                                  │          │  Constants: MIN_SCALE=0.1  MAX_SCALE=5                             [ZC] │
+    │  → applyTransform + syncRootTransform                            │          └────────────────────────────────────────────────────────────────────────┘
+    └──────────────────────────────────────────────────────────────────┘
+
+
+    ┌─ Pan (normal drag) [PD] ─────────────────────────┐          ┌─ Selection Lasso (Ctrl+drag) [SL] ─────────────────────────────────────┐
+    │                                                   │          │                                                                        │
+    │  pointerDown: save { x, y, transform, ctrl }     │          │  Trigger: ctrl/meta key OR (selectMode + touch)                         │
+    │  pointerMove:                                     │          │                                                                        │
+    │    dx = clientX - start.x                         │          │  Screen rect (for visual overlay):                                     │
+    │    dy = clientY - start.y                         │          │    x = min(startX, curX) relative to container                          │
+    │    if distance > DRAG_THRESHOLD (4px):            │          │    y = min(startY, curY) relative to container                          │
+    │      didDrag = true                               │          │    w = |curX - startX|                                                 │
+    │      capture pointer                              │          │    h = |curY - startY|                                                 │
+    │                                                   │          │                                                                        │
+    │  newTx = start.tx + dx                            │          │  Scene rect (for hit testing):                                         │
+    │  newTy = start.ty + dy                            │          │    Convert start & current via screenToScene                            │
+    │  scale unchanged                                  │          │    Build Rect from min/max of both points                               │
+    │                                                   │          │                                                                        │
+    │  → applyTransform + syncRootTransform             │          │  onSelectionDrag(sceneRect)    ── live updates during drag              │
+    │                                                   │          │  onSelectionDragEnd(sceneRect) ── final on pointerup                    │
+    │  pointerUp (no drag): fire onSceneClick [SC]      │          │                                                                        │
+    │    screenPoint + scenePoint + domEvent             │          │  pointerUp: clear selectionRect state                                  │
+    └───────────────────────────────────────────────────┘          └────────────────────────────────────────────────────────────────────────┘
+
+    Window pointerup listener [WP]
+    Cleans up state even if event target is inside dynamically-appended content (nested SVGs from expand).
+    Releases pointer capture, fires onSelectionDragEnd or onSceneClick as appropriate.
+```
+
+```code-refs
+VP  web-ui/src/diagram/rendering/viewport.tsx:48-61      Viewport component signature and props destructuring
+AT  web-ui/src/diagram/rendering/viewport.tsx:90-96      applyTransform: set CSS transform on transformDiv
+MN  web-ui/src/diagram/rendering/viewport.tsx:78-88      Mount SVG element into transformDiv via useEffect
+OL  web-ui/src/diagram/rendering/over-layer.tsx:64-127   OverLayer component (see over-layer diagram)
+SR  web-ui/src/diagram/rendering/viewport.tsx:431-441    Selection rect overlay div
+SP  web-ui/src/diagram/rendering/viewport.tsx:442-460    Selection overlay path labels
+CH  web-ui/src/diagram/rendering/viewport.tsx:430        Children pass-through
+TY  web-ui/src/diagram/types.ts:1-24                     Transform, Point, Rect, IDENTITY_TRANSFORM
+SS  web-ui/src/diagram/rendering/viewport.tsx:98-107     screenToScene coordinate conversion
+CT  web-ui/src/diagram/types.ts:204-210                  composeTransforms helper
+TR  web-ui/src/diagram/types.ts:213-220                  transformRect helper
+AF  web-ui/src/diagram/rendering/viewport.tsx:90-96      applyTransform writes CSS transform
+SY  web-ui/src/diagram/rendering/viewport.tsx:110-115    syncRootTransform keeps Scene in sync
+IH  web-ui/src/diagram/rendering/viewport.tsx:118-148    centerOn imperative handle
+WZ  web-ui/src/diagram/rendering/viewport.tsx:151-176    Wheel zoom with cursor pivot
+PZ  web-ui/src/diagram/rendering/viewport.tsx:198-280    Pinch-to-zoom pointer handling
+ZC  web-ui/src/diagram/rendering/viewport.tsx:15-18      Zoom constants (MIN/MAX_SCALE, SENSITIVITY, DRAG_THRESHOLD)
+PD  web-ui/src/diagram/rendering/viewport.tsx:282-331    Pan via normal drag
+SL  web-ui/src/diagram/rendering/viewport.tsx:295-320    Selection lasso (Ctrl+drag)
+SC  web-ui/src/diagram/rendering/viewport.tsx:386-394    Scene click on pointerup without drag
+WP  web-ui/src/diagram/rendering/viewport.tsx:338-399    Window-level pointerup listener
+```

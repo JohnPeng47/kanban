@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Popup Overlay Detail</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 1300"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
+    @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">POPUP OVERLAY DETAIL</text>
+    <text x="20" y="48" class="dim subhead">Modal expansion of 03-interaction.txt — a fully interactive nested diagram viewer in a popup</text>
+  </g>
+
+  <!-- DiagramScene context (popupStack) -->
+  <g data-reflow-group="diagram-scene-context" class="fade-section" style="animation-delay: 0.05s">
+    <rect x="20" y="70" width="1060" height="220" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="92" class="blue heading">DiagramScene</text>
+    <text x="32" y="115" class="white">popupStack: PopupEntry[]</text>
+
+    <!-- PopupEntry shape -->
+    <rect x="50" y="130" width="480" height="140" rx="3"
+          fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
+    <text x="62" y="152" class="white heading">PopupEntry:</text>
+    <text x="72" y="175" class="white">path: string       <tspan class="dim">(resolved diagram)</tspan></text>
+    <text x="72" y="193" class="white">content: string    <tspan class="dim">(fetched HTML)</tspan></text>
+    <text x="72" y="211" class="white">position: OverlayPosition</text>
+    <text x="72" y="229" class="white">anchorBounds: Rect <tspan class="dim">(source el bounds)</tspan></text>
+
+    <text x="560" y="152" class="dim subhead">Stacking: zIndex = 50 + i*2 (each popup above previous)</text>
+    <text x="560" y="172" class="dim subhead">Close: onClose slices stack at index i (closes this + all above)</text>
+  </g>
+
+  <!-- PopupDiagramOverlay [PO] -->
+  <g data-reflow-group="popup-overlay"
+     data-interactive="PO"
+     data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145"
+     data-category="module"
+     data-label="PopupDiagramOverlay"
+     data-link="03-interaction.html#PS"
+     class="fade-section" style="animation-delay: 0.1s">
+
+    <rect x="20" y="310" width="1060" height="540" rx="4"
+          fill="#24292E" stroke="#A371F7" stroke-width="1.2"/>
+    <text x="32" y="332" class="violet heading"
+          data-tt="popup-diagram-overlay.tsx:63 — PopupDiagramOverlay component">
+      PopupDiagramOverlay [PO]
+    </text>
+
+    <!-- Backdrop layer -->
+    <rect x="40" y="350" width="1020" height="480" rx="3"
+          fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
+    <text x="52" y="372" class="dim heading">absolute inset-0</text>
+    <text x="52" y="392" class="dim subhead">backdrop: bg-surface-0/50 backdrop-blur(2px)</text>
+    <text x="52" y="410" class="dim subhead">click backdrop → onClose</text>
+
+    <!-- Positioned popup [PP] -->
+    <g data-interactive="PP"
+       data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:114-143"
+       data-category="module"
+       data-label="positionedPopup">
+      <rect x="70" y="425" width="970" height="385" rx="3"
+            fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+      <text x="82" y="447" class="orange heading"
+            data-tt="popup-diagram-overlay.tsx:114 — Positioned popup div with close btn">
+        Positioned popup [PP]
+      </text>
+
+      <!-- computePopupLayout [PL] -->
+      <g data-interactive="PL"
+         data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:36-60"
+         data-category="function"
+         data-label="computePopupLayout">
+        <text x="92" y="472" class="white"
+              data-tt="popup-diagram-overlay.tsx:36 — computePopupLayout: size to fit diagram">
+          Layout: computePopupLayout [PL]
+        </text>
+        <text x="110" y="492" class="dim subhead">input: container size, diagram natural size (root localBounds)</text>
+        <text x="110" y="507" class="dim subhead">output: { top: 24, left: 24, width, height }</text>
+        <text x="110" y="527" class="dim subhead">sizing logic:</text>
+        <text x="130" y="542" class="dim subhead">maxW = 85% of container</text>
+        <text x="130" y="557" class="dim subhead">maxH = 85% of container</text>
+        <text x="130" y="572" class="dim subhead">min: 200 x 150</text>
+        <text x="130" y="587" class="dim subhead">if diagram fits: use diagram size + 24px padding</text>
+        <text x="130" y="602" class="dim subhead">else: scale to fit within max</text>
+      </g>
+
+      <!-- Close button -->
+      <rect x="920" y="435" width="100" height="30" rx="3"
+            fill="#2D3339" stroke="#F85149" stroke-width="0.6"/>
+      <text x="932" y="455" class="red">X close (z:10)</text>
+
+      <!-- PopupScene [PS] -->
+      <g data-interactive="PS"
+         data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155"
+         data-category="module"
+         data-label="PopupScene"
+         data-link="02-rendering.html#VP">
+        <rect x="90" y="618" width="930" height="175" rx="3"
+              fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+        <text x="102" y="640" class="blue heading"
+              data-tt="popup-diagram-overlay.tsx:147 — PopupScene: SceneInput with parent's onNavigate">
+          PopupScene [PS]
+        </text>
+        <text x="110" y="663" class="white">useDiagram(content) → Scene</text>
+        <text x="110" y="683" class="dim subhead">SceneInput</text>
+        <text x="130" y="700" class="dim subhead">scene = popup's own Scene</text>
+        <text x="130" y="715" class="dim subhead">onNavigate = parent's handleNavigate</text>
+        <text x="130" y="730" class="dim subhead">(clicks inside popup fire same nav dispatch)</text>
+        <text x="110" y="753" class="white">This means a popup can:</text>
+        <text x="130" y="770" class="dim subhead">- trigger code jumps (Alt+click)</text>
+        <text x="130" y="785" class="dim subhead">- open nested popups (modal click → push to popupStack)</text>
+      </g>
+    </g>
+
+    <text x="52" y="820" class="dim subhead">ESC key → onClose (window keydown listener)</text>
+  </g>
+
+  <!-- Section: Popup trigger flow -->
+  <g data-reflow-group="trigger-flow-section" class="fade-section" style="animation-delay: 0.15s">
+    <line x1="20" y1="870" x2="1060" y2="870" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="893" class="white title">POPUP TRIGGER FLOW</text>
+  </g>
+
+  <!-- Trigger flow steps -->
+  <g data-reflow-group="trigger-flow" class="fade-section" style="animation-delay: 0.2s">
+
+    <!-- Step 1: user clicks -->
+    <rect x="20" y="910" width="380" height="35" rx="3"
+          fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="32" y="932" class="orange">user clicks element with data-modal</text>
+
+    <!-- Arrow -->
+    <g data-arrow>
+      <line x1="210" y1="950" x2="210" y2="970" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Step 2: handleNavigate -->
+    <rect x="20" y="975" width="380" height="35" rx="3"
+          fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="32" y="997" class="orange">handleNavigate → interactive.modal exists</text>
+
+    <!-- Arrow -->
+    <g data-arrow>
+      <line x1="210" y1="1015" x2="210" y2="1035" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Step 3: openPopup -->
+    <rect x="20" y="1040" width="380" height="35" rx="3"
+          fill="#24292E" stroke="#A371F7" stroke-width="0.6"/>
+    <text x="32" y="1062" class="violet">openPopup(interactive)</text>
+
+    <!-- Arrow -->
+    <g data-arrow>
+      <line x1="210" y1="1080" x2="210" y2="1100" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Step 4: resolve + fetch -->
+    <rect x="20" y="1105" width="600" height="90" rx="3"
+          fill="#24292E" stroke="#444C56" stroke-width="0.6"/>
+    <text x="32" y="1127" class="dim subhead">├─ resolveDiagramPath(selectedPath, modal.target.path)</text>
+    <text x="32" y="1147" class="dim subhead">├─ scene.getWorldBounds(modal.source.elementId) → anchorBounds</text>
+    <text x="32" y="1167" class="dim subhead">└─ TRPC diagrams.getContent.query({ path: resolvedPath })</text>
+
+    <!-- Arrow -->
+    <g data-arrow>
+      <line x1="210" y1="1200" x2="210" y2="1220" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Step 5: setPopupStack -->
+    <rect x="20" y="1225" width="700" height="35" rx="3"
+          fill="#24292E" stroke="#A371F7" stroke-width="0.6"/>
+    <text x="32" y="1247" class="violet">setPopupStack(prev =&gt; [...prev, { path, content, position, anchorBounds }])</text>
+  </g>
+
+  <!-- Final note -->
+  <g data-reflow-group="final-note" class="fade-section" style="animation-delay: 0.25s">
+    <text x="20" y="1285" class="dim subhead">PopupDiagramOverlay rendered with fetched HTML → its own useDiagram → its own Scene → its own SceneInput → fully interactive</text>
+  </g>
+
+</svg>
+</body>
+</html>

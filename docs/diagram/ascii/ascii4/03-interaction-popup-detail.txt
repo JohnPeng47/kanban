@@ -1,0 +1,136 @@
+```diagram
+POPUP OVERLAY DETAIL (modal expansion of 03-interaction.txt)
+============================================================
+** 02-rendering.txt  (each popup creates its own useDiagram → Scene → SceneInput → Viewport stack)
+
+  PopupDiagramOverlay — a fully interactive nested diagram viewer in a popup.
+
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  DiagramScene                                                                              │
+  │                                                                                            │
+  │  popupStack: PopupEntry[]                                                                  │
+  │    ┌─────────────────────────────────────────────┐                                         │
+  │    │  PopupEntry:                                │                                         │
+  │    │    path: string       (resolved diagram)    │                                         │
+  │    │    content: string    (fetched HTML)         │                                         │
+  │    │    position: OverlayPosition                │                                         │
+  │    │    anchorBounds: Rect (source el bounds)    │                                         │
+  │    └─────────────────────────────────────────────┘                                         │
+  │                                                                                            │
+  │  Stacking: zIndex = 50 + i*2  (each popup above previous)                                 │
+  │  Close: onClose slices stack at index i (closes this + all above)                          │
+  │                                                                                            │
+  └────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  PopupDiagramOverlay                                                                   PO  │
+  │                                                                                            │
+  │  ┌── absolute inset-0 ────────────────────────────────────────────────────────────────┐    │
+  │  │  backdrop: bg-surface-0/50 backdrop-blur(2px)                                      │    │
+  │  │  click backdrop → onClose                                                          │    │
+  │  │                                                                                    │    │
+  │  │  ┌── positioned popup ───────────────────────────────────────────────────────┐     │    │
+  │  │  │                                                                          │     │    │
+  │  │  │  Layout: computePopupLayout [PL]                                         │     │    │
+  │  │  │    input: container size, diagram natural size (root localBounds)         │     │    │
+  │  │  │    output: { top: 24, left: 24, width, height }                          │     │    │
+  │  │  │                                                                          │     │    │
+  │  │  │    sizing logic:                                                         │     │    │
+  │  │  │      maxW = 85% of container                                             │     │    │
+  │  │  │      maxH = 85% of container                                             │     │    │
+  │  │  │      min:  200 x 150                                                     │     │    │
+  │  │  │      if diagram fits: use diagram size + 24px padding                    │     │    │
+  │  │  │      else: scale to fit within max                                       │     │    │
+  │  │  │                                                                          │     │    │
+  │  │  │  ┌── close button (top-right, z:10) ──┐                                 │     │    │
+  │  │  │  │  <X size={16}> icon                │                                 │     │    │
+  │  │  │  └────────────────────────────────────┘                                 │     │    │
+  │  │  │                                                                          │     │    │
+  │  │  │  ┌── PopupScene ─────────────────────────────────────────────────┐      │     │    │
+  │  │  │  │                                                              │      │     │    │
+  │  │  │  │  useDiagram(content) → Scene                                 │      │     │    │
+  │  │  │  │       │                                                      │      │     │    │
+  │  │  │  │       ▼                                                      │      │     │    │
+  │  │  │  │  SceneInput                                                  │      │     │    │
+  │  │  │  │    scene = popup's own Scene                                 │      │     │    │
+  │  │  │  │    onNavigate = parent's handleNavigate                      │      │     │    │
+  │  │  │  │    (clicks inside popup fire same nav dispatch)              │      │     │    │
+  │  │  │  │                                                              │      │     │    │
+  │  │  │  │  This means a popup can:                                     │      │     │    │
+  │  │  │  │   - trigger code jumps (Alt+click)                          │      │     │    │
+  │  │  │  │   - open nested popups (modal click → push to popupStack)   │      │     │    │
+  │  │  │  │   - follow links (jump to other diagram)                    │      │     │    │
+  │  │  │  │                                                          PS  │      │     │    │
+  │  │  │  └──────────────────────────────────────────────────────────────┘      │     │    │
+  │  │  │                                                                  PP  │     │    │
+  │  │  └──────────────────────────────────────────────────────────────────────┘     │    │
+  │  │                                                                              │    │
+  │  │  ESC key → onClose (window keydown listener)                                 │    │
+  │  └──────────────────────────────────────────────────────────────────────────────┘    │
+  │                                                                                PO  │
+  └──────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  Popup trigger flow:
+
+  user clicks element with data-modal
+       │
+       ▼
+  handleNavigate → interactive.modal exists
+       │
+       ▼
+  openPopup(interactive)
+       │
+       ├─ resolveDiagramPath(selectedPath, modal.target.path)
+       ├─ scene.getWorldBounds(modal.source.elementId) → anchorBounds
+       └─ TRPC diagrams.getContent.query({ path: resolvedPath })
+            │
+            ▼
+       setPopupStack(prev => [...prev, { path, content, position, anchorBounds }])
+            │
+            ▼
+       PopupDiagramOverlay rendered with fetched HTML
+       its own useDiagram → its own Scene → its own SceneInput
+       fully interactive (zoom, pan, click, tooltips)
+```
+
+```code-refs
+PO  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145   PopupDiagramOverlay component
+PL  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:36-60    computePopupLayout: size to fit diagram
+PS  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155  PopupScene: SceneInput with parent's onNavigate
+PP  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:114-143  Positioned popup div with close btn
+```
+
+```entities
+# name                  id_type  id    description
+
+popup-overlay           box      PO    PopupDiagramOverlay (full component)
+  popup-layout          text     PL    computePopupLayout (size/position calc)
+  popup-scene           box      PS    PopupScene wrapper (SceneInput + own Scene)
+  positioned-popup      box      PP    Positioned popup div (visual container)
+```
+
+```arrows
+# src              target           description
+modal-click        openPopup        user clicks data-modal element → handleNavigate → openPopup
+openPopup          popupStack       resolvePath + TRPC getContent → push PopupEntry to stack
+popupStack         PO               popupStack.map renders PopupDiagramOverlay per entry
+PO.content         PS.useDiagram    entry.content → useDiagram → own Scene
+PO.onClose         popupStack       onClose slices stack at index (closes this + above)
+PO.backdrop        PO.onClose       backdrop click → onClose
+PO.esc             PO.onClose       ESC key → onClose
+```
+
+```links
+# local-id  target-file                          target-id  description
+PS           02-rendering.txt                     VP         each popup has its own SceneInput → Viewport stack
+PS           03-interaction.txt                   HN         clicks inside popup relay onNavigate → parent handleNavigate
+PO           03-interaction.txt                   PS         parent diagram (this is the modal expansion)
+```
+
+```notes
+Entity IDs and code-ref IDs share the same 2-char namespace. Both are resolved
+by finding [XX] on the diagram (for box/text types) or {#xx} (for marker types).
+No prefix is needed to disambiguate — the [brackets] already distinguish IDs from
+surrounding text. Cross-diagram jump targets use the form: ** filename.txt#ID
+```

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Viewport & Coordinate Transform + Overlay Layer</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 1050"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">VIEWPORT &amp; COORDINATE TRANSFORM + OVERLAY LAYER</text>
+    <text x="20" y="48" class="dim subhead">DOM structure, coordinate conversion, pointer events, badge anchoring</text>
+  </g>
+
+  <!-- ═══ Section 1: DOM Structure + Coordinate Conversion (side by side) ═══ -->
+  <g data-reflow-group="section-dom" class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="78" class="white heading">DOM Structure &amp; Coordinate Spaces</text>
+  </g>
+
+  <!-- Left: DOM Structure -->
+  <g data-reflow-group="dom-structure"
+     data-interactive="viewport-component"
+     data-ref="web-ui/src/diagram/rendering/viewport.tsx:48-463"
+     data-category="module"
+     data-label="Viewport"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="20" y="90" width="520" height="250" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="112" class="blue heading" data-tt="viewport.tsx:48 — pan/zoom container component">Container div (overflow:hidden, touch-none)</text>
+
+    <g data-interactive="transform-div"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:90-96"
+       data-category="flow"
+       data-label="applyTransform">
+      <rect x="40" y="125" width="480" height="40" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="142" class="orange" data-tt="viewport.tsx:90 — CSS: translate(tx,ty) scale(s)">Transform div — CSS: translate(tx,ty) scale(s), origin: 0 0</text>
+      <text x="52" y="157" class="dim subhead">SVG mounted here (no viewBox, explicit w/h, overflow:visible)</text>
+    </g>
+
+    <g data-interactive="over-layer"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:64-127"
+       data-category="module"
+       data-label="OverLayer">
+      <rect x="40" y="180" width="480" height="30" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="200" class="blue" data-tt="over-layer.tsx:64 — badge buttons, rAF-positioned, z:10">OverLayer div (absolute inset-0, z:10) — ● ● ● badges</text>
+    </g>
+
+    <g data-interactive="selection-lasso"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:431-460"
+       data-category="flow"
+       data-label="selectionLasso">
+      <rect x="40" y="225" width="480" height="25" rx="3" fill="#2D3339" stroke="#6E7681" stroke-width="0.6" stroke-dasharray="4,3"/>
+      <text x="52" y="242" class="dim" data-tt="viewport.tsx:431 — screen-space selection rect (ctrl+drag)">Selection lasso (when ctrl+drag active)</text>
+    </g>
+  </g>
+
+  <!-- Right: Coordinate Conversion -->
+  <g data-reflow-group="coord-conversion" class="fade-section" style="animation-delay: 0.1s">
+    <rect x="560" y="90" width="520" height="250" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="572" y="112" class="violet heading">Coordinate Conversion</text>
+
+    <g data-interactive="screen-to-scene"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:98-107"
+       data-category="function"
+       data-label="screenToScene">
+      <rect x="580" y="125" width="480" height="70" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="592" y="145" class="violet" data-tt="viewport.tsx:98 — screen→scene coordinate conversion">screenToScene(pt):</text>
+      <text x="600" y="162" class="white">cx = pt.x - rect.left;  cy = pt.y - rect.top</text>
+      <text x="600" y="178" class="white">sceneX = (cx - tx) / scale;  sceneY = (cy - ty) / scale</text>
+    </g>
+
+    <text x="592" y="218" class="dim subhead">inverse (scene→screen):</text>
+    <text x="600" y="235" class="white">screenX = sceneX * scale + tx;  screenY = sceneY * scale + ty</text>
+
+    <g data-interactive="sync-root"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:110-115"
+       data-category="function"
+       data-label="syncRootTransform">
+      <rect x="580" y="255" width="480" height="30" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="592" y="275" class="violet" data-tt="viewport.tsx:110 — scene.setTransform('root', t)">syncRootTransform(t) — keeps Scene bounds in sync</text>
+    </g>
+  </g>
+
+  <!-- ═══ Section 2: Transform Mutations + Pointer Events ═══ -->
+  <g data-reflow-group="section-transforms" class="fade-section" style="animation-delay: 0.15s">
+    <text x="20" y="370" class="white heading">Transform Mutations &amp; Pointer Events</text>
+  </g>
+
+  <!-- Left: Transform mutations -->
+  <g data-reflow-group="transform-mutations" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="20" y="385" width="520" height="260" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="32" y="407" class="orange heading">Transform State: transformRef = { tx, ty, scale }</text>
+
+    <g data-interactive="pan-logic"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:322-330"
+       data-category="flow"
+       data-label="pan">
+      <text x="40" y="432" class="white" data-tt="viewport.tsx:322 — tx += dx, ty += dy">Pan (drag): tx += dx, ty += dy</text>
+    </g>
+
+    <g data-interactive="wheel-zoom"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:151-176"
+       data-category="function"
+       data-label="wheelZoom">
+      <rect x="40" y="445" width="480" height="50" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="462" class="orange" data-tt="viewport.tsx:151 — zoom pivots around cursor">Wheel zoom (pivot at cursor)</text>
+      <text x="60" y="482" class="dim subhead">s' = clamp(s*(1+delta), 0.1, 5)  tx' = cx - (cx-tx)*(s'/s)</text>
+    </g>
+
+    <g data-interactive="pinch-zoom"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:244-279"
+       data-category="function"
+       data-label="pinchZoom">
+      <rect x="40" y="510" width="480" height="40" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="530" class="orange" data-tt="viewport.tsx:244 — scaleFactor = dist / startDist">Pinch zoom: scaleFactor = dist / startDist + midpoint pan</text>
+    </g>
+
+    <g data-interactive="center-on"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:118-148"
+       data-category="function"
+       data-label="centerOn">
+      <rect x="40" y="565" width="480" height="40" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="582" class="orange" data-tt="viewport.tsx:118 — tx = W/2 - pt.x*s, ty = H/2 - pt.y*s">centerOn(pt): tx = W/2 - pt.x*s,  animate: 220ms transition</text>
+    </g>
+  </g>
+
+  <!-- Right: Pointer events -->
+  <g data-reflow-group="pointer-events" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="560" y="385" width="520" height="260" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="572" y="407" class="blue heading">Pointer Event Flow</text>
+
+    <g data-interactive="pointer-down"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:198-233"
+       data-category="function"
+       data-label="onPointerDown">
+      <rect x="580" y="418" width="480" height="45" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="592" y="436" class="blue" data-tt="viewport.tsx:198 — track pointers, start pinch or record drag start">pointerDown</text>
+      <text x="600" y="454" class="dim subhead">2nd finger → start pinch  ·  1st finger → record start</text>
+    </g>
+
+    <g data-interactive="pointer-move"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:235-334"
+       data-category="function"
+       data-label="onPointerMove">
+      <rect x="580" y="478" width="480" height="55" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="592" y="496" class="blue" data-tt="viewport.tsx:235 — pinch zoom, lasso rect, or pan">pointerMove</text>
+      <text x="600" y="512" class="dim subhead">pinch? → zoom  ·  dist&gt;4 → didDrag</text>
+      <text x="600" y="526" class="dim subhead">ctrl? → lasso rect  ·  else → pan</text>
+    </g>
+
+    <g data-interactive="pointer-up"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:338-399"
+       data-category="function"
+       data-label="onPointerUp">
+      <rect x="580" y="548" width="480" height="55" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="592" y="566" class="blue" data-tt="viewport.tsx:338 — window-level: click dispatch, selection end, cleanup">pointerUp (window-level)</text>
+      <text x="600" y="582" class="dim subhead">was pinch? → end, no click</text>
+      <text x="600" y="596" class="dim subhead">ctrl+drag? → onSelectionDragEnd  ·  no drag? → onSceneClick</text>
+    </g>
+  </g>
+
+  <!-- ═══ Section 3: Badge Anchoring + rAF Sync ═══ -->
+  <g data-reflow-group="section-badges" class="fade-section" style="animation-delay: 0.25s">
+    <text x="20" y="675" class="white heading">Badge Anchor Resolution</text>
+  </g>
+
+  <!-- Left: resolveAnchor -->
+  <g data-reflow-group="resolve-anchor"
+     data-interactive="resolve-anchor"
+     data-ref="web-ui/src/diagram/rendering/over-layer.tsx:6-52"
+     data-category="function"
+     data-label="resolveAnchor"
+     class="fade-section" style="animation-delay: 0.3s">
+    <rect x="20" y="690" width="520" height="200" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="32" y="712" class="violet heading" data-tt="over-layer.tsx:6 — badge anchor → screen position">resolveAnchor(anchor, transform, scene)</text>
+
+    <g data-interactive="anchor-screen"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:8-9"
+       data-category="flow"
+       data-label="screen anchor">
+      <text x="40" y="740" class="white" data-tt="over-layer.tsx:8 — fixed screen position">"screen" → return {x,y} directly</text>
+    </g>
+    <g data-interactive="anchor-scene"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:11-15"
+       data-category="flow"
+       data-label="scene anchor">
+      <text x="40" y="762" class="white" data-tt="over-layer.tsx:11 — world coords × scale + translate">"scene"  → x*scale + tx, y*scale + ty</text>
+    </g>
+    <g data-interactive="anchor-element"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:17-51"
+       data-category="flow"
+       data-label="element anchor">
+      <rect x="40" y="775" width="480" height="40" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="52" y="793" class="violet" data-tt="over-layer.tsx:17 — getWorldBounds → pick corner → transform">"element" → getWorldBounds(id), pick corner, * scale + t</text>
+      <text x="60" y="808" class="dim subhead">corners: top-left, top-right, bottom-left, bottom-right, center</text>
+    </g>
+
+    <g data-interactive="badge-button"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:96-124"
+       data-category="concept"
+       data-label="badge rendering">
+      <text x="40" y="845" class="dim subhead" data-tt="over-layer.tsx:96 — 18×18px button, -9px margin, hover scale(1.25)">Badge: 18×18px button, -9px margin center, hover: scale(1.25)</text>
+    </g>
+  </g>
+
+  <!-- Right: rAF sync loop -->
+  <g data-reflow-group="raf-sync"
+     data-interactive="raf-loop"
+     data-ref="web-ui/src/diagram/rendering/over-layer.tsx:68-89"
+     data-category="flow"
+     data-label="rAF sync"
+     class="fade-section" style="animation-delay: 0.3s">
+    <rect x="560" y="690" width="520" height="200" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1"/>
+    <text x="572" y="712" class="green heading" data-tt="over-layer.tsx:68 — requestAnimationFrame continuous loop">rAF Sync Loop</text>
+
+    <text x="580" y="742" class="white">every frame:</text>
+    <text x="600" y="762" class="white">t = transformRef.current</text>
+    <text x="600" y="782" class="white">for each badge:</text>
+    <text x="620" y="802" class="white">pos = resolveAnchor(anchor, t, scene)</text>
+    <text x="620" y="822" class="white">dom.style.left = pos.x + "px"</text>
+    <text x="620" y="842" class="white">dom.style.top  = pos.y + "px"</text>
+
+    <text x="580" y="872" class="green">no React setState → no reconciliation → 60fps</text>
+  </g>
+
+</svg>
+</body>
+</html>

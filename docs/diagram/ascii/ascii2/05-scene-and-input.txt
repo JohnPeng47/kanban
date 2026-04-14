@@ -1,0 +1,168 @@
+```diagram
+                                                    ┌─────────────────────────────────────────────────────┐
+                                                    │  useDiagram(html) [UD]                              │
+                                                    │                                                     │
+                                                    │  html ──→ DOMParser ──→ <svg> ──→ body.appendChild  │
+                                                    │                                       │             │
+                                                    │                              new SvgScene(svg) [SC] │
+                                                    │                                       │             │
+                                                    │                              body.removeChild(svg)  │
+                                                    │                                       │             │
+                                                    │                              return Scene           │
+                                                    │                              cleanup: .destroy()    │
+                                                    └───────────────────────────────┬─────────────────────┘
+                                                                                    │ Scene
+                                ┌───────────────────────────────────────────────────┼──────────────────────────────────────────────────┐
+                                │  DiagramContentArea [DC]                          │                                                  │
+                                │                                                  │                                                  │
+                                │  props: content, isLoading, error, selectedPath,  │  pendingJumpElementId, onRequestJump             │
+                                │         workspaceId, workspacePath                │                                                  │
+                                │                                                  ▼                                                  │
+                                │  States: empty ──→ loading ──→ error              Scene ready ──→ DiagramScene                       │
+                                │                                                                       │                             │
+                                └───────────────────────────────────────────────────────────────────────┼─────────────────────────────┘
+                                                                                                        │
+        ┌───────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────┐
+        │  DiagramScene [DS]                                                                            │                          │
+        │                                                                                              ▼                          │
+        │  ┌─────────────────────────────────────┐     ┌──────────────────────────────────────────────────────────────────────┐    │
+        │  │  Navigation Dispatch [NV]           │     │  SceneInput [SI]                                                    │    │
+        │  │                                     │     │                                                                      │    │
+        │  │  handleNavigate(interactive, event)  │◄────│  onNavigate ──→ handleNavigate                                      │    │
+        │  │       │                             │     │  onSelectionChange ──→ (selection data)                              │    │
+        │  │       ├── Alt+click                 │     │  onContextMenu ──→ context menu state                               │    │
+        │  │       │    └─ fireCodeJump [FJ]     │     │  badges ──→ allBadges (modal + link + user)                         │    │
+        │  │       │         │                   │     │                                                                      │    │
+        │  │       │    trpc.diagrams.navigate   │     │  ┌────────────────────────────────────────────────────────────────┐  │    │
+        │  │       │    (file, line, newTab)      │     │  │  Event Flow                                                   │  │    │
+        │  │       │                             │     │  │                                                                │  │    │
+        │  │       ├── modal? ──→ openPopup [OP] │     │  │  Viewport callbacks ──→ handleSceneClick [CK]                  │  │    │
+        │  │       │    │                        │     │  │       │                      │                                 │  │    │
+        │  │       │    │  trpc.getContent(path)  │     │  │       │               scene.hitTest(screenPt) [HT]             │  │    │
+        │  │       │    │  ──→ push PopupEntry    │     │  │       │                      │                                 │  │    │
+        │  │       │    │      to popupStack      │     │  │       │               ┌──────┴──────┐                          │  │    │
+        │  │       │                             │     │  │       │               │             │                          │  │    │
+        │  │       ├── link? ──→ executeJump [EJ]│     │  │       │          no hit         hit element                    │  │    │
+        │  │       │    │                        │     │  │       │           │                 │                          │  │    │
+        │  │       │    ├── same diagram:         │     │  │       │     clear selection    ┌───┴───┐                      │  │    │
+        │  │       │    │   centerOn(target)      │     │  │       │                        │       │                      │  │    │
+        │  │       │    └── cross diagram:        │     │  │       │                  shift+click  click                   │  │    │
+        │  │       │        onRequestJump(path)   │     │  │       │                   toggle    replace                   │  │    │
+        │  │       │                             │     │  │       │                  selection  selection                  │  │    │
+        │  │       └── default                   │     │  │       │                        │       │                      │  │    │
+        │  │            └─ fireCodeJump          │     │  │       │                        └───┬───┘                      │  │    │
+        │  │                                     │     │  │       │                            │                          │  │    │
+        │  └─────────────────────────────────────┘     │  │       │                   fire onNavigate [FN]                │  │    │
+        │                                              │  │       │                                                       │  │    │
+        │  ┌──────────────────────────────┐            │  │       ├──→ handleSelectionDrag [SD]                           │  │    │
+        │  │  Popup Stack [PS]            │            │  │       │      scene.hitTestRect(rect, "intersect")             │  │    │
+        │  │                              │            │  │       │      preview: toggle .selected CSS class              │  │    │
+        │  │  PopupEntry[]                │            │  │       │      overlay: dragPreviewPaths list                   │  │    │
+        │  │   ├── path                   │            │  │       │                                                       │  │    │
+        │  │   ├── content (HTML)         │            │  │       └──→ handleSelectionDragEnd [SE]                        │  │    │
+        │  │   ├── position               │            │  │              final hitTestRect ──→ setSelectedIds             │  │    │
+        │  │   └── anchorBounds           │            │  │              copy refs to clipboard                           │  │    │
+        │  │                              │            │  │              show toast                                        │  │    │
+        │  │  Each entry renders:         │            │  └────────────────────────────────────────────────────────────────┘  │    │
+        │  │  PopupDiagramOverlay [PO]    │            │                                                                      │    │
+        │  │   ├── backdrop (blur)        │            │  Tooltip: SVG mouseover on [data-tt] elements [TT]                   │    │
+        │  │   ├── close button (ESC/X)   │            │  Viewport** 03-viewport-and-transforms.txt: pan/zoom, transforms, OverLayer              │    │
+        │  │   ├── useDiagram(content)    │            │                                                                      │    │
+        │  │   └── PopupScene             │            └──────────────────────────────────────────────────────────────────────┘    │
+        │  │        └── SceneInput (nested│            │                                                                          │
+        │  │              recursive)      │            │  ┌────────────────────────────────────────────────────┐                   │
+        │  │  z-index: 50 + i*2           │            │  │  Badge Creation [BC]                               │                   │
+        │  └──────────────────────────────┘            │  │                                                    │                   │
+        │                                              │  │  Auto-badges (from Scene elements):                │                   │
+        │  ┌──────────────────────────────┐            │  │   el.interactive.modal ──→ "⬡" purple badge       │                   │
+        │  │  Context Menu [CM]           │            │  │   el.interactive.link  ──→ "→" gold badge          │                   │
+        │  │                              │            │  │                                                    │                   │
+        │  │  right-click ──→ popup at    │            │  │  User badges (from context menu):                  │                   │
+        │  │    screen coords             │            │  │   Add Badge ──→ "📌" green, click to remove        │                   │
+        │  │  [Add Badge] ──→ userBadges  │            │  │                                                    │                   │
+        │  │  dismiss on pointerdown      │            │  │  All merged: [...autoBadges, ...userBadges]        │                   │
+        │  └──────────────────────────────┘            │  └────────────────────────────────────────────────────┘                   │
+        │                                                                                                                          │
+        └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+        ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        │  Scene Interface [IF]                                                                                                         │
+        │                                                                                                                               │
+        │  ┌─────────────────────────┐  ┌─────────────────────────────┐  ┌────────────────────────────────┐  ┌────────────────────────┐  │
+        │  │  Element Tree [ET]      │  │  Bounds [BD]                │  │  Transforms [TF]               │  │  Hit Testing [HX]      │  │
+        │  │                         │  │                             │  │                                │  │                        │  │
+        │  │  getRoot()              │  │  getLocalBounds(id)         │  │  setTransform(id, t)           │  │  hitTest(screenPt)     │  │
+        │  │  getElement(id)         │  │  getWorldBounds(id)         │  │  getTransform(id)              │  │   → elementFromPoint   │  │
+        │  │  getAllElements()       │  │   └─ cached, invalidated    │  │  getWorldTransform(id)         │  │   → closest [selector] │  │
+        │  │  getChildren(id)        │  │      on transform change    │  │   └─ compose chain to root    │  │                        │  │
+        │  └─────────────────────────┘  └─────────────────────────────┘  └────────────────────────────────┘  │  hitTestRect(rect,mode)│  │
+        │                                                                                                    │   → AABB intersect or  │  │
+        │  ┌─────────────────────────┐  ┌─────────────────────────────────────────────────────────────────┐  │     contain check      │  │
+        │  │  Mutations [MU]         │  │  Rendering / Lifecycle [RL]                                     │  └────────────────────────┘  │
+        │  │                         │  │                                                                 │                              │
+        │  │  growVisualBounds(id,   │  │  getSvgElement() ──→ SVGSVGElement                              │                              │
+        │  │    deltaW, deltaH)      │  │  destroy() ──→ clear all maps                                  │                              │
+        │  │  addElement(id, dom,    │  │                                                                 │                              │
+        │  │    parentId)            │  └─────────────────────────────────────────────────────────────────┘                              │
+        │  │  removeElement(id)      │                                                                                                   │
+        │  │  addSubtree(dom,        │                                                                                                   │
+        │  │    parentId)            │                                                                                                   │
+        │  └─────────────────────────┘                                                                                                   │
+        │                                                                                                                               │
+        │  Impl: SvgScene [SV]  ──→ see modal: 06-scene-svgscene-detail.txt                                                               │
+        └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+        ┌──────────────────────────────────────────────────────────────────────────────┐
+        │  SceneElement [EL]                                                           │
+        │                                                                              │
+        │  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────────┐  │
+        │  │  Identity          │  │  Spatial            │  │  Roles                 │  │
+        │  │                    │  │                    │  │                        │  │
+        │  │  id: string        │  │  localBounds: Rect  │  │  interactive:          │  │
+        │  │  parentId: string? │  │  transform:         │  │    InteractiveData?    │  │
+        │  │  childIds: string[]│  │    Transform        │  │   ├ ref, parsedRef     │  │
+        │  │                    │  │  hasVisualRect:     │  │   ├ category, label    │  │
+        │  │  ID resolution:    │  │    boolean          │  │   ├ navTarget          │  │
+        │  │  ├ data-reflow-grp │  │                    │  │   ├ modal: DiagramModal │  │
+        │  │  ├ data-interactive│  │  metadata:          │  │   └ link: DiagramLink  │  │
+        │  │  ├ data-arrow →    │  │    Record<str,str>  │  │                        │  │
+        │  │  │  "arrow-{n}"    │  │   (all data-* attr) │  │  reflow:               │  │
+        │  │  └ root: "root"    │  │                    │  │    ReflowState?         │  │
+        │  │                    │  │                    │  │   └ originalBounds      │  │
+        │  └────────────────────┘  └────────────────────┘  └────────────────────────┘  │
+        │                                                                              │
+        └──────────────────────────────────────────────────────────────────────────────┘
+```
+
+```code-refs
+UD  web-ui/src/diagram/use-diagram.ts:8-52            useDiagram hook: HTML parse → SvgScene lifecycle
+SC  web-ui/src/diagram/rendering/svg-scene.ts:52-80    SvgScene constructor: viewBox removal, style injection, tree build
+DC  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354   DiagramContentArea component
+DS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269    DiagramScene: navigation + popups + badges
+NV  web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161   handleNavigate dispatch logic
+FJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73     fireCodeJump: TRPC navigate call
+OP  web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107    openPopup: fetch modal content, push to stack
+EJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135   executeJump: same-diagram pan or cross-diagram jump
+SI  web-ui/src/diagram/input/scene-input.tsx:48-357    SceneInput component
+CK  web-ui/src/diagram/input/scene-input.tsx:245-312   handleSceneClick: hit test → selection → navigate
+HT  web-ui/src/diagram/rendering/svg-scene.ts:347-358  hitTest: elementFromPoint → closest selector match
+FN  web-ui/src/diagram/input/scene-input.tsx:307-309   onNavigate dispatch after selection update
+SD  web-ui/src/diagram/input/scene-input.tsx:149-173   handleSelectionDrag: live lasso preview
+SE  web-ui/src/diagram/input/scene-input.tsx:186-243   handleSelectionDragEnd: finalize + clipboard copy
+TT  web-ui/src/diagram/input/scene-input.tsx:59-118    Tooltip: mouseover/touch on data-tt elements
+PS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:20-26     PopupEntry type
+PO  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145   PopupDiagramOverlay: backdrop, close, nested SceneInput
+BC  web-ui/src/components/diagram-panels/diagram-content-area.tsx:164-193   Badge creation: auto (modal/link) + user badges
+CM  web-ui/src/components/diagram-panels/diagram-content-area.tsx:195-229   Context menu: add badge
+IF  web-ui/src/diagram/rendering/scene.ts:47-94        Scene interface: 5 method groups
+ET  web-ui/src/diagram/rendering/scene.ts:48-54        Element Tree methods
+BD  web-ui/src/diagram/rendering/scene.ts:55-58        Bounds methods (local + world)
+TF  web-ui/src/diagram/rendering/scene.ts:60-64        Transform methods
+HX  web-ui/src/diagram/rendering/scene.ts:79-84        Hit testing methods
+MU  web-ui/src/diagram/rendering/scene.ts:67-78        Mutation methods
+RL  web-ui/src/diagram/rendering/scene.ts:86-93        Rendering + lifecycle
+SV  web-ui/src/diagram/rendering/svg-scene.ts:52-521   SvgScene full implementation
+EL  web-ui/src/diagram/rendering/scene.ts:10-44        SceneElement interface
+```

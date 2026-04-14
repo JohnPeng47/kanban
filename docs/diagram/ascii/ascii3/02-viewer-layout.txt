@@ -1,0 +1,89 @@
+```diagram
+DIAGRAMVIEWER — 3-PANEL LAYOUT, HOOKS, AND JUMP PROTOCOL
+
+┌─ DiagramViewer [DW] ──────────────────────────────────────────────────────────────────────────────────────────────┐
+│  containerRef                                                                                                     │
+│  ┌──────────────────────┬──┬───────────────────────────────────────────────────────────┬──┬──────────────────────┐ │
+│  │ DiagramTreePanel [TP]│RH│  DiagramContentArea [CA]                                 │RH│  Agent Panel        │ │
+│  │                      │  │  (relative flex-1)                                       │  │  (conditional)      │ │
+│  │  tree: FileTreeNode[]│  │                                                          │  │                     │ │
+│  │  selectedPath        │  │  ┌───────────────────────────────────────────────────┐   │  │  useDiagramAgent    │ │
+│  │  expandedFolders     │  │  │  DiagramScene [DS]                                │   │  │  Panel              │ │
+│  │  onSelectPath ───────┼──┼──┼→ triggers content fetch in useDiagramViewer       │   │  │                     │ │
+│  │  onToggleFolder      │  │  │                                                   │   │  │                     │ │
+│  │                      │  │  │  SceneInput → Viewport → SVG                     │   │  │                     │ │
+│  │  width: controlled   │  │  │  PopupDiagramOverlay (stacked)                    │   │  │                     │ │
+│  │  by resize drag      │  │  │  Context menu                                     │   │  │  width: controlled  │ │
+│  │                      │  │  │  ** 03-viewport-and-coords.txt                    │   │  │  by resize drag     │ │
+│  │                      │  │  │  ** 05-content-and-navigation.txt             DS  │   │  │                     │ │
+│  │                      │  │  └───────────────────────────────────────────────────┘   │  │                     │ │
+│  │                      │  │                                                          │  │                     │ │
+│  │                      │  │  ┌─ CodeVizStatusIndicator ──────┐                       │  │                     │ │
+│  │                      │  │  │  absolute top-2 right-2 z-10  │                       │  │                     │ │
+│  │                  TP  │  │  │  state: connected|disconn|... │                       │  │                     │ │
+│  │                      │  │  └───────────────────────────────┘                       │  │                     │ │
+│  └──────────────────────┘  └──────────────────────────────────────────────────────────┘  └──────────────────────┘ │
+│        displayTreePanelWidth                                                              displayAgentPanelWidth │
+│  RH = ResizeHandle (vertical, ew-resize drag)                                                                    │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ useDiagramViewer HOOK STATE ══════════════════════════════════════════════════════════════════════
+
+  ┌─ useDiagramViewer(workspaceId, initialPath) ────────────────────────────────────────────────┐
+  │                                                                                             │
+  │  State fields:                          TRPC interactions:                                  │
+  │  ─────────────                          ──────────────────                                  │
+  │  tree: FileTreeNode[]            ◄────── diagrams.list.query({})                            │
+  │  diagramsRootExists: boolean     ◄──┘    (on mount / workspaceId change)                    │
+  │  isTreeLoading: boolean                                                                     │
+  │  workspacePath: string | null    ◄──┘    extracted from diagramsRoot                        │
+  │                                                                                             │
+  │  selectedPath: string | null     ◄────── onSelectPath(path) or requestJump(path, ...)       │
+  │  expandedFolders: Set<string>    ◄────── onToggleFolder(path)                               │
+  │  content: string | null          ◄────── diagrams.getContent.query({ path })                │
+  │  isContentLoading: boolean               (on selectedPath change)                           │
+  │  contentError: string | null                                                                │
+  │                                                                                             │
+  │  pendingJumpElementId: string|null ◄──── requestJump(path, elementId)                       │
+  │  consumeJump: () => void           ────► setPendingJumpElementId(null)                      │
+  │                                                                                         VH  │
+  └─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ CROSS-DIAGRAM JUMP PROTOCOL ═══════════════════════════════════════════════════════════════════
+
+  DiagramContentArea            useDiagramViewer               DiagramContentArea (new)
+  (diagram A)                   (shared hook)                  (diagram B)
+  ─────────────                 ────────────────               ──────────────
+       │                              │                              │
+  1.   │── executeJump(data) ────────►│                              │
+       │   link.target = {path, id}   │                              │
+       │                              │                              │
+  2.   │                    requestJump(path, elementId)              │
+       │                    ──→ setPendingJumpElementId(id)           │
+       │                    ──→ setSelectedPath(path)                 │
+       │                    ──→ pushState (browser back)              │
+       │                              │                              │
+  3.   │                              │── content fetch ────────────►│
+       │                              │◄── HTML ───────────────────│
+       │                              │                              │
+  4.   │                              │   useDiagram(html) → Scene   │
+       │                              │   pendingJumpElementId set   │
+       │                              │                              │
+  5.   │                              │   useEffect:                 │
+       │                              │     scene.getElement(id)     │
+       │                              │     → found → consumeJump() │
+       │                              │                              │
+       │                              │   (viewport centers on       │
+       │                              │    element via centerOn)     │
+
+```
+
+```code-refs
+DW  web-ui/src/components/diagram-viewer.tsx:19-156                     DiagramViewer component
+TP  web-ui/src/components/diagram-panels/diagram-tree-panel.tsx:1-1     DiagramTreePanel (file tree sidebar)
+CA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354  DiagramContentArea wrapper
+DS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269   DiagramScene inner component
+VH  web-ui/src/hooks/use-diagram-viewer.ts:49-224                       useDiagramViewer hook
+```

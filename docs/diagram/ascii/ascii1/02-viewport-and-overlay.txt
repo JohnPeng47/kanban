@@ -1,0 +1,93 @@
+```diagram
+VIEWPORT & COORDINATE TRANSFORM + OVERLAY LAYER
+
+═══ DOM Structure & Coordinate Spaces ═══════════════════════════════════════════════════════════════════
+
+ Container div (overflow:hidden, touch-none)                    Coordinate Conversion
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  Transform div                                   │           │  screenToScene(pt):              [SC] │
+│  CSS: translate(tx,ty) scale(s), origin: 0 0     │           │    cx = pt.x - rect.left             │
+│  ┌──────────────────────────────────────────┐    │           │    cy = pt.y - rect.top              │
+│  │  SVG (no viewBox, explicit w/h,      [SV]│    │           │    sceneX = (cx - tx) / scale        │
+│  │       overflow:visible)                   │    │           │    sceneY = (cy - ty) / scale        │
+│  └──────────────────────────────────────────┘    │           │                                      │
+│                                                  │           │  inverse (scene→screen):              │
+│  OverLayer div (absolute inset-0, z:10)      [OL]│           │    screenX = sceneX * scale + tx      │
+│  ┌──────────────────────────────────────────┐    │           │    screenY = sceneY * scale + ty      │
+│  │ ● ● ● badges (rAF-positioned)            │    │           │                                      │
+│  └──────────────────────────────────────────┘    │           │  syncRootTransform(t):           [SR] │
+│                                                  │           │    scene.setTransform("root", t)      │
+│  Selection lasso ╌╌╌╌╌╌╌╌ (when ctrl+drag)  [SL]│           │    (keeps Scene bounds in sync)       │
+│                                              VP  │           │                                  CO  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+
+═══ Transform Mutations & Pointer Events ════════════════════════════════════════════════════════════════
+
+ Transform State: transformRef = { tx, ty, scale }              Pointer Event Flow
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  Pan (drag)                                 [PN] │           │  pointerDown                    [PD] │
+│    tx += dx,  ty += dy                           │           │    2nd finger? → start pinch         │
+│                                                  │           │    1st finger  → record start        │
+│  Wheel zoom (pivot at cursor)               [WZ] │           │                                      │
+│    s' = clamp(s * (1 + delta), 0.1, 5)           │           │  pointerMove                    [PM] │
+│    tx' = cx - (cx-tx) * (s'/s)                   │           │    pinch? → zoom around midpoint     │
+│    sensitivity: 0.002                            │           │    dist>4? → didDrag=true            │
+│                                                  │           │      ctrl? → lasso rect         [LS] │
+│  Pinch zoom (2-finger)                      [PZ] │           │             → onSelectionDrag        │
+│    scaleFactor = dist / startDist                │           │      else  → pan                     │
+│    zoom around midpoint + pan by drift           │           │                                      │
+│                                                  │           │  pointerUp (window-level)       [PU] │
+│  centerOn(pt, {scale?, animate?})           [CO] │           │    was pinch?    → end, no click     │
+│    tx = W/2 - pt.x * s                          │           │    was ctrl+drag?→ onSelectionDragEnd │
+│    ty = H/2 - pt.y * s                          │           │    no drag?      → onSceneClick      │
+│    animate: 220ms CSS transition                 │           │                                      │
+│                                              TM  │           │                                  PE  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+
+═══ Badge Anchor Resolution ═════════════════════════════════════════════════════════════════════════════
+
+ resolveAnchor(anchor, transform, scene)                        rAF Sync Loop
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  "screen"  → return {x,y} directly          [AS] │           │  every frame:                   [RF] │
+│                                                  │           │    t = transformRef.current           │
+│  "scene"   → x*scale + tx, y*scale + ty     [AW] │           │    for each badge:                   │
+│                                                  │           │      pos = resolveAnchor(anchor,t,s)  │
+│  "element" → getWorldBounds(id)              [AE] │           │      dom.style.left = pos.x          │
+│              pick corner (TL/TR/BL/BR/center)    │           │      dom.style.top  = pos.y           │
+│              * scale + t                         │           │                                      │
+│                                                  │           │  no React setState → 60fps      [NR] │
+│  Badge: 18×18px button, -9px margin center  [BD] │           │                                      │
+│  hover: scale(1.25), onClick stops propagation   │           │                                      │
+│                                              AR  │           │                                  SY  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+```
+
+```code-refs
+VP  web-ui/src/diagram/rendering/viewport.tsx:48-463
+SV  web-ui/src/diagram/rendering/viewport.tsx:78-88
+OL  web-ui/src/diagram/rendering/over-layer.tsx:64-127
+SL  web-ui/src/diagram/rendering/viewport.tsx:431-460
+SC  web-ui/src/diagram/rendering/viewport.tsx:98-107
+SR  web-ui/src/diagram/rendering/viewport.tsx:110-115
+CO  web-ui/src/diagram/rendering/viewport.tsx:118-148
+PN  web-ui/src/diagram/rendering/viewport.tsx:322-330
+WZ  web-ui/src/diagram/rendering/viewport.tsx:151-176
+PZ  web-ui/src/diagram/rendering/viewport.tsx:244-279
+PD  web-ui/src/diagram/rendering/viewport.tsx:198-233
+PM  web-ui/src/diagram/rendering/viewport.tsx:235-334
+LS  web-ui/src/diagram/rendering/viewport.tsx:294-320
+PU  web-ui/src/diagram/rendering/viewport.tsx:338-399
+AR  web-ui/src/diagram/rendering/over-layer.tsx:6-52
+AS  resolveAnchor "screen" case — over-layer.tsx:8-9
+AW  resolveAnchor "scene" case — over-layer.tsx:11-15
+AE  resolveAnchor "element" case — over-layer.tsx:17-51
+BD  web-ui/src/diagram/rendering/over-layer.tsx:96-124
+RF  web-ui/src/diagram/rendering/over-layer.tsx:68-89
+NR  (design: mutable ref read, no setState, no reconciliation)
+TM  web-ui/src/diagram/types.ts:17-22
+PE  web-ui/src/diagram/rendering/viewport.tsx:15-18
+SY  (design: requestAnimationFrame continuous loop)
+```

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scene &amp; SvgScene — Element Tree and Bounds</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 1100"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">SCENE &amp; SVG SCENE — ELEMENT TREE AND BOUNDS</text>
+    <text x="20" y="48" class="dim subhead">Scene interface, SceneElement data, tree construction, bounds caching, hit testing</text>
+  </g>
+
+  <!-- ═══ Row 1: Scene Interface + SceneElement ═══ -->
+  <g data-reflow-group="section-1" class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="78" class="white heading">Scene Interface &amp; SceneElement</text>
+  </g>
+
+  <!-- Left: Scene interface -->
+  <g data-reflow-group="scene-interface"
+     data-interactive="scene-interface"
+     data-ref="web-ui/src/diagram/rendering/scene.ts:46-94"
+     data-category="type"
+     data-label="Scene"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="20" y="90" width="520" height="260" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="112" class="blue heading" data-tt="scene.ts:46 — rendering abstraction interface">Scene interface</text>
+
+    <g data-interactive="scene-element-tree"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:48-53"
+       data-category="concept"
+       data-label="Element Tree">
+      <text x="40" y="138" class="white" data-tt="scene.ts:48 — getRoot, getElement, getAllElements, getChildren">Element Tree: getRoot, getElement, getAllElements, getChildren</text>
+    </g>
+    <g data-interactive="scene-bounds"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:55-58"
+       data-category="concept"
+       data-label="Bounds">
+      <text x="40" y="162" class="white" data-tt="scene.ts:55 — getLocalBounds, getWorldBounds (cached)">Bounds: getLocalBounds, getWorldBounds (cached)</text>
+    </g>
+    <g data-interactive="scene-transforms"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:60-64"
+       data-category="concept"
+       data-label="Transforms">
+      <text x="40" y="186" class="white" data-tt="scene.ts:60 — setTransform, getTransform, getWorldTransform">Transforms: setTransform, getTransform, getWorldTransform</text>
+    </g>
+    <g data-interactive="scene-mutations"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:66-77"
+       data-category="concept"
+       data-label="Mutations">
+      <text x="40" y="210" class="white" data-tt="scene.ts:66 — growVisualBounds, addElement, removeElement, addSubtree">Mutations: growVisualBounds, addElement, removeElement, addSubtree</text>
+    </g>
+    <g data-interactive="scene-hit-testing"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:79-84"
+       data-category="concept"
+       data-label="Hit Testing">
+      <text x="40" y="234" class="white" data-tt="scene.ts:79 — hitTest(screenPt), hitTestRect(sceneRect, mode)">Hit Testing: hitTest(screenPt), hitTestRect(sceneRect, mode)</text>
+    </g>
+    <g data-interactive="scene-rendering"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:86-93"
+       data-category="concept"
+       data-label="Rendering">
+      <text x="40" y="258" class="white" data-tt="scene.ts:86 — getSvgElement(), destroy()">Rendering: getSvgElement()  ·  Lifecycle: destroy()</text>
+    </g>
+    <g data-interactive="scene-helpers"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:96-108"
+       data-category="function"
+       data-label="role helpers">
+      <text x="40" y="284" class="dim subhead" data-tt="scene.ts:96 — isReflowGroup, isInteractiveRegion, isArrow">Helpers: isReflowGroup, isInteractiveRegion, isArrow</text>
+    </g>
+  </g>
+
+  <!-- Right: SceneElement -->
+  <g data-reflow-group="scene-element"
+     data-interactive="scene-element"
+     data-ref="web-ui/src/diagram/rendering/scene.ts:10-44"
+     data-category="type"
+     data-label="SceneElement"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="560" y="90" width="520" height="260" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="572" y="112" class="orange heading" data-tt="scene.ts:10 — universal scene primitive">SceneElement</text>
+
+    <text x="580" y="138" class="white">id — data-reflow-group | data-interactive | arrow-N | "root"</text>
+    <text x="580" y="158" class="white">parentId, childIds (document order)</text>
+    <text x="580" y="178" class="white">localBounds — getBBox() at construction</text>
+    <text x="580" y="198" class="white">transform — { tx, ty, scale }</text>
+    <text x="580" y="218" class="white">metadata — all data-* attrs</text>
+    <text x="580" y="238" class="white">hasVisualRect — direct &lt;rect&gt; child</text>
+
+    <g data-interactive="interactive-data"
+       data-ref="web-ui/src/diagram/types.ts:54-64"
+       data-category="type"
+       data-label="InteractiveData"
+       data-link="02-content-area.html">
+      <rect x="580" y="252" width="480" height="35" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="592" y="270" class="violet" data-tt="types.ts:54 — ref, category, label, tooltip, navTarget, modal, link">interactive: InteractiveData (ref, category, modal, link)</text>
+      <text x="592" y="282" class="dim subhead">→ navigation dispatch</text>
+    </g>
+
+    <g data-interactive="reflow-state"
+       data-ref="web-ui/src/diagram/types.ts:66-69"
+       data-category="type"
+       data-label="ReflowState">
+      <text x="580" y="310" class="dim subhead" data-tt="types.ts:66 — originalBounds for reflow engine">reflow: ReflowState { originalBounds }</text>
+    </g>
+  </g>
+
+  <!-- ═══ Row 2: Tree Construction + Bounds System ═══ -->
+  <g data-reflow-group="section-2" class="fade-section" style="animation-delay: 0.15s">
+    <text x="20" y="380" class="white heading">Tree Construction &amp; Bounds System</text>
+  </g>
+
+  <!-- Left: buildElementTree -->
+  <g data-reflow-group="build-tree"
+     data-interactive="build-element-tree"
+     data-ref="web-ui/src/diagram/rendering/svg-scene.ts:126-206"
+     data-category="function"
+     data-label="buildElementTree"
+     class="fade-section" style="animation-delay: 0.2s">
+    <rect x="20" y="395" width="520" height="290" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="32" y="417" class="orange heading" data-tt="svg-scene.ts:126 — parse SVG DOM into element tree">buildElementTree</text>
+
+    <text x="40" y="445" class="white">SVG DOM → querySelectorAll(SELECTOR) → Scene Tree</text>
+    <text x="40" y="465" class="dim subhead">root (synthetic, bounds = svg w×h)</text>
+    <text x="40" y="480" class="dim subhead">├ module-a (reflow) └ fn-foo (interactive)</text>
+    <text x="40" y="495" class="dim subhead">├ arrow-0 (arrow)</text>
+    <text x="40" y="510" class="dim subhead">└ module-b (reflow + interactive)</text>
+
+    <text x="40" y="540" class="white">Steps per element:</text>
+    <g data-interactive="resolve-element-id"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:18-29"
+       data-category="function"
+       data-label="resolveElementId">
+      <text x="50" y="558" data-tt="svg-scene.ts:18 — reflow-group > interactive > arrow-N">1. resolveElementId</text>
+    </g>
+    <g data-interactive="read-metadata"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:32-40"
+       data-category="function"
+       data-label="readMetadata">
+      <text x="50" y="576" data-tt="svg-scene.ts:32 — all data-* → Record">2. readMetadata → data-*</text>
+    </g>
+    <g data-interactive="find-visual-rect"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:43-50"
+       data-category="function"
+       data-label="findVisualRect">
+      <text x="50" y="594" data-tt="svg-scene.ts:43 — direct rect child for reflow">3. findVisualRect → &lt;rect&gt; child</text>
+    </g>
+    <g data-interactive="walk-parents"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:161-169"
+       data-category="flow"
+       data-label="walk parents">
+      <text x="50" y="612" data-tt="svg-scene.ts:161 — DOM ancestry → nearest tagged parent">4. walk DOM parents → parentId</text>
+    </g>
+    <text x="50" y="630" class="dim subhead">5. getBBox() → localBounds</text>
+    <g data-interactive="parse-interactive"
+       data-ref="web-ui/src/diagram/types.ts:142-161"
+       data-category="function"
+       data-label="parseInteractiveData">
+      <text x="50" y="648" data-tt="types.ts:142 — parse ref, category, modal, link from metadata">6. parseInteractiveData if data-interactive</text>
+    </g>
+    <text x="50" y="666" class="dim subhead">7. mark ReflowState if reflow/arrow</text>
+  </g>
+
+  <!-- Right: Bounds System -->
+  <g data-reflow-group="bounds-system" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="560" y="395" width="520" height="290" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1"/>
+    <text x="572" y="417" class="green heading">Bounds System</text>
+
+    <text x="580" y="445" class="white">Local (getBBox) ──compose ancestors──→ World (cached)</text>
+    <text x="580" y="465" class="dim subhead">ancestor chain excludes root (Viewport manages root CSS)</text>
+
+    <g data-interactive="get-world-bounds"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:238-249"
+       data-category="function"
+       data-label="getWorldBounds">
+      <rect x="580" y="480" width="480" height="50" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="592" y="500" class="green" data-tt="svg-scene.ts:238 — cache hit → return, else compose + transformRect">getWorldBounds(id)</text>
+      <text x="600" y="518" class="dim subhead">cache hit? → return  ·  compose ancestors → transformRect(local, composed)</text>
+    </g>
+
+    <g data-interactive="set-transform"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:271-286"
+       data-category="function"
+       data-label="setTransform">
+      <rect x="580" y="545" width="480" height="45" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="563" class="orange" data-tt="svg-scene.ts:271 — update element, invalidate cache, CSS translate">setTransform(id, t)</text>
+      <text x="600" y="580" class="dim subhead">invalidate cache recursively  ·  if id≠root: CSS translate</text>
+    </g>
+
+    <g data-interactive="invalidate-cache"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:312-320"
+       data-category="function"
+       data-label="invalidateCache">
+      <text x="580" y="615" data-tt="svg-scene.ts:312 — recursive clear on children">invalidateWorldBoundsCache — recursive on children</text>
+    </g>
+
+    <g data-interactive="grow-visual-bounds"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:324-343"
+       data-category="function"
+       data-label="growVisualBounds">
+      <text x="580" y="645" data-tt="svg-scene.ts:324 — resize rect + update localBounds">growVisualBounds — updates &lt;rect&gt; + localBounds + invalidate</text>
+    </g>
+  </g>
+
+  <!-- ═══ Row 3: Hit Testing + CSS ═══ -->
+  <g data-reflow-group="section-3" class="fade-section" style="animation-delay: 0.25s">
+    <text x="20" y="715" class="white heading">Hit Testing &amp; Injected CSS</text>
+  </g>
+
+  <!-- Left: Hit Testing -->
+  <g data-reflow-group="hit-testing" class="fade-section" style="animation-delay: 0.3s">
+    <rect x="20" y="730" width="520" height="220" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="32" y="752" class="orange heading">Hit Testing</text>
+
+    <g data-interactive="hit-test-point"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:347-358"
+       data-category="function"
+       data-label="hitTest">
+      <rect x="40" y="762" width="480" height="50" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="780" class="orange" data-tt="svg-scene.ts:347 — document.elementFromPoint → closest → ID lookup">hitTest(screenPt) — point</text>
+      <text x="60" y="798" class="dim subhead">document.elementFromPoint → .closest(SELECTOR) → domElements map</text>
+    </g>
+
+    <g data-interactive="hit-test-rect"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:360-375"
+       data-category="function"
+       data-label="hitTestRect">
+      <rect x="40" y="825" width="480" height="50" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="843" class="orange" data-tt="svg-scene.ts:360 — iterate interactive els, AABB test">hitTestRect(sceneRect, mode) — rect</text>
+      <text x="60" y="861" class="dim subhead">"intersect" → rectsIntersect  ·  "contain" → rectContains</text>
+    </g>
+
+    <g data-interactive="dynamic-elements"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:379-505"
+       data-category="function"
+       data-label="dynamic ops">
+      <text x="40" y="900" data-tt="svg-scene.ts:379 — addElement, removeElement, addSubtree">Dynamic: addElement, removeElement, addSubtree</text>
+    </g>
+  </g>
+
+  <!-- Right: Injected CSS -->
+  <g data-reflow-group="injected-css"
+     data-interactive="injected-css"
+     data-ref="web-ui/src/diagram/rendering/svg-scene.ts:82-124"
+     data-category="concept"
+     data-label="interaction CSS"
+     class="fade-section" style="animation-delay: 0.3s">
+    <rect x="560" y="730" width="520" height="220" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="572" y="752" class="violet heading" data-tt="svg-scene.ts:82 — CSS injected into SVG at construction">Injected CSS (injectInteractionStyles)</text>
+
+    <text x="580" y="780" class="white">[data-interactive]</text>
+    <text x="780" y="780" class="dim subhead">cursor:pointer, filter 0.15s transition</text>
+
+    <text x="580" y="804" class="white">[data-interactive]:hover, .selected</text>
+    <text x="780" y="820" class="dim subhead">brightness(1.5) + glow drop-shadow</text>
+
+    <text x="580" y="844" class="blue">.selected &gt; rect</text>
+    <text x="780" y="844" class="dim subhead">2px #4C9AFF stroke + blue glow</text>
+
+    <g data-interactive="css-modal"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:93-106"
+       data-category="concept"
+       data-label="modal CSS">
+      <text x="580" y="872" class="violet" data-tt="svg-scene.ts:93 — purple dashed border, 12s animation">[data-modal] &gt; rect — purple dash, animated 12s</text>
+    </g>
+
+    <g data-interactive="css-link"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:108-121"
+       data-category="concept"
+       data-label="link CSS">
+      <text x="580" y="896" class="orange" data-tt="svg-scene.ts:108 — gold dashed border, 10s animation">[data-link] &gt; rect — gold dash, animated 10s</text>
+    </g>
+  </g>
+
+</svg>
+</body>
+</html>

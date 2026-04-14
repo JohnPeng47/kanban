@@ -9,3 +9,5 @@ cd /home/john/kanban && npm run build
 ```
 
 This compiles TypeScript, builds the web-ui with Vite, and bundles the CLI — all in one step. Do not skip this or run partial builds.
+
+If there are any root-owned folders in this directory just run chown to change to your current user

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Diagram Content Area — Application Logic</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 920"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">DIAGRAM CONTENT AREA — APPLICATION LOGIC</text>
+    <text x="20" y="48" class="dim subhead">Navigation dispatch, popup overlays, badges, context menu, scene lifecycle</text>
+  </g>
+
+  <!-- ═══ Row 1: Component Hierarchy + Navigation Dispatch ═══ -->
+  <g data-reflow-group="section-1" class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="78" class="white heading">Component Hierarchy &amp; Navigation Dispatch</text>
+  </g>
+
+  <!-- Left: Hierarchy -->
+  <g data-reflow-group="hierarchy"
+     data-interactive="diagram-scene"
+     data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269"
+     data-category="module"
+     data-label="DiagramScene"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="20" y="90" width="520" height="310" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="32" y="112" class="orange heading" data-tt="diagram-content-area.tsx:28 — scene rendering + interaction logic">DiagramContentArea → DiagramScene</text>
+
+    <g data-interactive="use-diagram-hook"
+       data-ref="web-ui/src/diagram/use-diagram.ts:6-52"
+       data-category="function"
+       data-label="useDiagram">
+      <text x="40" y="140" data-tt="use-diagram.ts:6 — HTML→DOMParser→SVG→SvgScene→Scene">useDiagram(content) → Scene</text>
+    </g>
+
+    <g data-interactive="jump-consumption"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:300-312"
+       data-category="flow"
+       data-label="jump consumption">
+      <text x="40" y="162" data-tt="diagram-content-area.tsx:300 — wait 50ms for Viewport mount">pendingJump consumption (50ms delay)</text>
+    </g>
+
+    <text x="40" y="190" class="white">DiagramScene owns:</text>
+    <g data-interactive="popup-stack"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:42"
+       data-category="data"
+       data-label="popupStack">
+      <text x="52" y="208" data-tt="diagram-content-area.tsx:42 — PopupEntry[] for modal overlays">popupStack: PopupEntry[]</text>
+    </g>
+    <g data-interactive="user-badges"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:43"
+       data-category="data"
+       data-label="userBadges">
+      <text x="52" y="226" data-tt="diagram-content-area.tsx:43 — user-placed badges via context menu">userBadges: OverlayBadge[]</text>
+    </g>
+    <text x="52" y="244" class="dim subhead">contextMenu state</text>
+
+    <!-- Children -->
+    <g data-interactive="scene-input-child"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:233-239"
+       data-category="module"
+       data-label="SceneInput"
+       data-link="04-scene-input.html">
+      <rect x="40" y="258" width="220" height="35" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="280" class="blue" data-tt="diagram-content-area.tsx:233 — SceneInput with badges + onNavigate">SceneInput (ref→VP)</text>
+    </g>
+
+    <g data-interactive="popup-overlay"
+       data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145"
+       data-category="module"
+       data-label="PopupOverlay">
+      <rect x="275" y="258" width="220" height="35" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="287" y="280" class="violet" data-tt="popup-diagram-overlay.tsx:63 — stacked modal diagrams">PopupOverlay (z:50+i*2)</text>
+    </g>
+
+    <g data-interactive="context-menu"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:251-266"
+       data-category="concept"
+       data-label="context menu">
+      <text x="40" y="320" class="dim subhead" data-tt="diagram-content-area.tsx:251 — right-click → Add Badge">Context menu (z:200) — 📌 Add Badge</text>
+    </g>
+  </g>
+
+  <!-- Right: Navigation Dispatch -->
+  <g data-reflow-group="nav-dispatch"
+     data-interactive="handle-navigate"
+     data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161"
+     data-category="function"
+     data-label="handleNavigate"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="560" y="90" width="520" height="310" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="572" y="112" class="orange heading" data-tt="diagram-content-area.tsx:137 — alt/modal/link/default dispatch">Navigation Dispatch (handleNavigate)</text>
+
+    <text x="580" y="142" class="white">handleNavigate(interactive, domEvent)</text>
+
+    <text x="600" y="170" class="white">altKey? →</text>
+    <g data-interactive="fire-code-jump"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73"
+       data-category="function"
+       data-label="fireCodeJump">
+      <rect x="580" y="180" width="480" height="55" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="592" y="200" class="blue" data-tt="diagram-content-area.tsx:54 — trpc.diagrams.navigate()">fireCodeJump</text>
+      <text x="600" y="220" class="dim subhead">trpc.diagrams.navigate({ root, filePath, startLine, newTab })</text>
+      <text x="600" y="232" class="dim subhead">→ Server → CodeVizClient → opens file in VSCode</text>
+    </g>
+
+    <text x="600" y="260" class="white">modal? →</text>
+    <g data-interactive="open-popup"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107"
+       data-category="function"
+       data-label="openPopup">
+      <rect x="580" y="268" width="480" height="35" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="592" y="290" class="violet" data-tt="diagram-content-area.tsx:75 — resolve path, fetch content, push stack">openPopup → resolvePath + fetch + push PopupEntry</text>
+    </g>
+
+    <text x="600" y="325" class="white">link? →</text>
+    <g data-interactive="execute-jump"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135"
+       data-category="function"
+       data-label="executeJump"
+       data-link="05-data-flow.html">
+      <rect x="580" y="333" width="480" height="40" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="592" y="353" class="green" data-tt="diagram-content-area.tsx:109 — same-diagram pan or cross-diagram jump">executeJump → same: centerOn · cross: onRequestJump</text>
+      <text x="600" y="368" class="dim subhead">→ jump protocol</text>
+    </g>
+
+    <text x="600" y="392" class="dim subhead">default → fireCodeJump</text>
+  </g>
+
+  <!-- ═══ Row 2: Popup System + Badges ═══ -->
+  <g data-reflow-group="section-2" class="fade-section" style="animation-delay: 0.15s">
+    <text x="20" y="430" class="white heading">Popup System &amp; Badges</text>
+  </g>
+
+  <!-- Left: Popup system -->
+  <g data-reflow-group="popup-system" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="20" y="445" width="520" height="310" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="32" y="467" class="violet heading">Modal Popup System</text>
+
+    <g data-interactive="resolve-path"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:14-19"
+       data-category="function"
+       data-label="resolveDiagramPath">
+      <text x="40" y="495" data-tt="diagram-content-area.tsx:14 — dir(selectedPath) + '/' + relativePath">resolveDiagramPath(selected, modal.target.path)</text>
+    </g>
+    <text x="40" y="515" class="dim subhead">anchor = getWorldBounds(source.elementId)</text>
+    <text x="40" y="535" class="dim subhead">fetch via trpc.diagrams.getContent</text>
+
+    <g data-interactive="popup-entry"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:90-98"
+       data-category="data"
+       data-label="PopupEntry">
+      <rect x="40" y="548" width="480" height="30" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="52" y="568" class="violet" data-tt="diagram-content-area.tsx:90 — { path, content, position, anchorBounds }">PopupEntry: { path, content, position, anchorBounds }</text>
+    </g>
+
+    <g data-interactive="popup-overlay-detail"
+       data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145"
+       data-category="module"
+       data-label="PopupDiagramOverlay">
+      <rect x="40" y="593" width="480" height="60" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="52" y="613" class="violet" data-tt="popup-diagram-overlay.tsx:63 — floating overlay with nested SceneInput">PopupDiagramOverlay:</text>
+      <text x="60" y="633" class="dim subhead">min: 200×150 · max: 85% · backdrop: click/ESC to close</text>
+      <text x="60" y="647" class="dim subhead">nested SceneInput (fully interactive) · z: 50 + i*2</text>
+    </g>
+
+    <g data-interactive="execute-jump-detail"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135"
+       data-category="function"
+       data-label="executeJump">
+      <text x="40" y="685" class="white" data-tt="diagram-content-area.tsx:109 — same → centerOn, cross → onRequestJump">executeJump: same diagram → centerOn · cross → onRequestJump</text>
+    </g>
+  </g>
+
+  <!-- Right: Badges -->
+  <g data-reflow-group="badges" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="560" y="445" width="520" height="310" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="572" y="467" class="orange heading">Badges</text>
+
+    <text x="580" y="495" class="white">Auto-generated (useMemo over scene.getAllElements):</text>
+
+    <g data-interactive="badge-modal"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:167-177"
+       data-category="concept"
+       data-label="modal badge">
+      <rect x="580" y="505" width="480" height="35" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="592" y="525" class="violet" data-tt="diagram-content-area.tsx:167 — ⬡ purple badge at element top-right">modal? → ⬡ purple #A371F7 · anchor: element top-right</text>
+    </g>
+
+    <g data-interactive="badge-link"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:178-188"
+       data-category="concept"
+       data-label="link badge">
+      <rect x="580" y="555" width="480" height="35" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="575" class="orange" data-tt="diagram-content-area.tsx:178 — → gold badge at element top-right">link? → → gold #D4A72C · anchor: element top-right</text>
+    </g>
+
+    <text x="580" y="620" class="white">User badges (right-click context menu):</text>
+
+    <g data-interactive="badge-user"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:203-221"
+       data-category="concept"
+       data-label="user badge">
+      <rect x="580" y="630" width="480" height="35" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="592" y="650" class="green" data-tt="diagram-content-area.tsx:203 — 📌 green, scene-anchored, click to remove">📌 green #3FB950 · anchor: scene point · click to remove</text>
+    </g>
+
+    <g data-interactive="all-badges"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:193"
+       data-category="data"
+       data-label="allBadges"
+       data-link="02-viewport-and-overlay.html#over-layer">
+      <text x="580" y="695" class="white" data-tt="diagram-content-area.tsx:193 — [...auto, ...user] → SceneInput → OverLayer">allBadges = [...auto, ...user] → SceneInput → OverLayer</text>
+    </g>
+  </g>
+
+</svg>
+</body>
+</html>

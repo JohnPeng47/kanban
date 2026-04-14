@@ -1,0 +1,71 @@
+```diagram
+DATA FLOW — useDiagramViewer
+
+═══ Hook State & Effects ════════════════════════════════════════════════════════════════════════════════
+
+ State [ST]                                                     Effects
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  tree: FileTreeNode[]                  ← list    │           │  workspaceId changes:           [E1] │
+│  diagramsRootExists: boolean           ← list    │           │    trpc.diagrams.list()              │
+│  isTreeLoading: boolean                          │           │    → setTree                         │
+│  workspacePath: string|null         ← derived    │           │    → setDiagramsRootExists           │
+│                                                  │           │    → derive workspacePath        [WD] │
+│  selectedPath: string|null                       │           │    → auto-expand top dirs        [AE] │
+│    ← onSelectPath / requestJump                  │           │                                      │
+│  expandedFolders: Set<string>                    │           │  selectedPath changes:           [E2] │
+│    ← onToggleFolder / auto-expand                │           │    trpc.diagrams.getContent(path)    │
+│                                                  │           │    → setContent / setContentError    │
+│  content: string|null              ← getContent  │           │                                      │
+│  isContentLoading: boolean                       │           │  selectedPath changes:           [E3] │
+│  contentError: string|null                       │           │    syncUrlState(selectedPath)         │
+│                                                  │           │    replaceState:                      │
+│  pendingJumpElementId: string|null               │           │    ?view=diagram&path=...             │
+│    ← requestJump / consumeJump                   │           │                                      │
+│                                              ST  │           │                                  EF  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+
+═══ Actions & Cross-Diagram Jump Protocol ═══════════════════════════════════════════════════════════════
+
+ Actions                                                        Jump Protocol
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  onSelectPath(path)                         [SP] │           │  1. DiagramScene.executeJump          │
+│    setSelectedPath(path)                         │           │       interactive.link clicked        │
+│                                                  │           │       resolvedPath ≠ selectedPath    │
+│  onToggleFolder(path)                       [TF] │           │                                      │
+│    toggle in expandedFolders set                 │           │  2. onRequestJump(path, elId)    [RJ] │
+│                                                  │           │       → setSelectedPath(path)        │
+│  requestJump(path, elementId)               [RJ] │           │       → setPendingJumpElId(elId)     │
+│    setPendingJumpElementId(elId)                 │           │       → pushState (browser back)     │
+│    setSelectedPath(path)                         │           │                                      │
+│    history.pushState:                            │           │  3. content fetch triggers       [CF] │
+│      ?view=diagram&path=...&at=elId              │           │       new HTML loaded                │
+│                                                  │           │                                      │
+│  consumeJump()                              [CJ] │           │  4. useDiagram(content)→ Scene   [NS] │
+│    setPendingJumpElementId(null)                 │           │       scene + pendingJumpElId both    │
+│                                                  │           │       present → wait 50ms       [JC] │
+│  Same-diagram jump:                         [SJ] │           │       (Viewport mount time)          │
+│    no state change, smooth pan                   │           │                                      │
+│    viewportRef.centerOn(center, {animate})       │           │  5. consumeJump()                [CJ] │
+│                                              AC  │           │       clearPendingJumpElId           │
+└──────────────────────────────────────────────────┘           │                                  JP  │
+                                                               └──────────────────────────────────────┘
+```
+
+```code-refs
+ST  web-ui/src/hooks/use-diagram-viewer.ts:50-65
+E1  web-ui/src/hooks/use-diagram-viewer.ts:68-116
+WD  web-ui/src/hooks/use-diagram-viewer.ts:86-92
+AE  web-ui/src/hooks/use-diagram-viewer.ts:94-104
+E2  web-ui/src/hooks/use-diagram-viewer.ts:119-148
+E3  web-ui/src/hooks/use-diagram-viewer.ts:151-153
+SP  web-ui/src/hooks/use-diagram-viewer.ts:155-157
+TF  web-ui/src/hooks/use-diagram-viewer.ts:178-188
+RJ  web-ui/src/hooks/use-diagram-viewer.ts:159-172
+CJ  web-ui/src/hooks/use-diagram-viewer.ts:174-176
+SJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:117-129
+CF  content fetch triggered by selectedPath change — use-diagram-viewer.ts:119-148
+NS  web-ui/src/diagram/use-diagram.ts:6-52
+JC  web-ui/src/components/diagram-panels/diagram-content-area.tsx:300-312
+```

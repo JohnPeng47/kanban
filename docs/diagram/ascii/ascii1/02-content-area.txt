@@ -1,0 +1,81 @@
+```diagram
+DIAGRAM CONTENT AREA — APPLICATION LOGIC
+
+═══ Component Hierarchy & Navigation Dispatch ═══════════════════════════════════════════════════════════
+
+ DiagramContentArea → DiagramScene [DS]                         Navigation Dispatch [ND]
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │  handleNavigate(interactive, event)   │
+│  useDiagram(content) → Scene              [UD]   │           │       │                              │
+│  pendingJump consumption (50ms)           [JC]   │           │       ├─ altKey? → fireCodeJump [FJ] │
+│                                                  │           │       │                              │
+│  DiagramScene owns:                              │           │       ├─ modal? → openPopup    [OP] │
+│    popupStack: PopupEntry[]               [PS]   │           │       │                              │
+│    userBadges: OverlayBadge[]             [UB]   │           │       ├─ link? → executeJump   [EJ] │
+│    contextMenu state                      [CX]   │           │       │                              │
+│                                                  │           │       └─ default → fireCodeJump      │
+│  ┌──────────────────┐  ┌──────────────────┐      │           │                                      │
+│  │ SceneInput  [SI]  │  │ PopupOverlay [PO]│      │           │  fireCodeJump:                  [FJ] │
+│  │ ** 04-input       │  │ (one per stack)  │      │           │    trpc.diagrams.navigate({          │
+│  │ ref→ViewportHandle│  │ z: 50+i*2       │      │           │      root: workspacePath,            │
+│  │ badges=allBadges  │  │ close→slice(0,i)│      │           │      filePath, startLine,            │
+│  └──────────────────┘  │ onNavigate relay │      │           │      newTab: ctrl|meta })            │
+│                        └──────────────────┘      │           │    → Server → CodeVizClient          │
+│                                                  │           │    → opens file in VSCode            │
+│  Context menu (z:200)                     [MN]   │           │                                      │
+│  └─ 📌 Add Badge → scene-anchored, green         │           │                                  ND  │
+│                                              DS  │           └──────────────────────────────────────┘
+└──────────────────────────────────────────────────┘
+
+═══ Popup System & Badges ═══════════════════════════════════════════════════════════════════════════════
+
+ Modal Popup System [OP]                                        Badges
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │  Auto-generated (useMemo):      [AB] │
+│  openPopup(interactive):                         │           │                                      │
+│    path = resolveDiagramPath(selected,      [RP] │           │  modal? → ⬡ purple #A371F7     [BM] │
+│            modal.target.path)                    │           │    anchor: element top-right          │
+│    anchor = getWorldBounds(source.elementId)     │           │    onClick: openPopup                │
+│    fetch content via trpc.diagrams.getContent    │           │                                      │
+│    push PopupEntry to stack                 [PP] │           │  link?  → → gold #D4A72C       [BL] │
+│                                                  │           │    anchor: element top-right          │
+│  PopupEntry:                                     │           │    onClick: executeJump               │
+│  ┌────────────────────────────────────────┐      │           │                                      │
+│  │ path, content, position, anchorBounds  │      │           │  User badges (context menu):    [BU] │
+│  └────────────────────────────────────────┘      │           │    📌 green #3FB950                   │
+│                                                  │           │    anchor: scene point               │
+│  PopupDiagramOverlay:                       [PO] │           │    onClick: remove self              │
+│    min: 200×150, max: 85% container              │           │                                      │
+│    backdrop: click/ESC to close                  │           │  allBadges = [...auto, ...user] [AL] │
+│    nested SceneInput (fully interactive)         │           │    → SceneInput → Viewport           │
+│    stacking: z-index 50 + i*2                    │           │    → OverLayer  ** 02-vp             │
+│                                                  │           │                                      │
+│  executeJump(interactive):                  [EJ] │           │                                      │
+│    same diagram → centerOn(center, animate)      │           │                                      │
+│    cross diagram → onRequestJump ** 05-data-flow │           │                                      │
+│                                              MP  │           │                                  BG  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+```
+
+```code-refs
+DS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269
+UD  web-ui/src/diagram/use-diagram.ts:6-52
+JC  web-ui/src/components/diagram-panels/diagram-content-area.tsx:300-312
+PS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:42
+UB  web-ui/src/components/diagram-panels/diagram-content-area.tsx:43
+CX  web-ui/src/components/diagram-panels/diagram-content-area.tsx:44
+SI  web-ui/src/components/diagram-panels/diagram-content-area.tsx:233-239
+ND  web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161
+FJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73
+OP  web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107
+RP  web-ui/src/components/diagram-panels/diagram-content-area.tsx:14-19
+PP  web-ui/src/components/diagram-panels/diagram-content-area.tsx:90-98
+EJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135
+PO  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145
+MN  web-ui/src/components/diagram-panels/diagram-content-area.tsx:251-266
+AB  web-ui/src/components/diagram-panels/diagram-content-area.tsx:164-191
+BM  web-ui/src/components/diagram-panels/diagram-content-area.tsx:167-177
+BL  web-ui/src/components/diagram-panels/diagram-content-area.tsx:178-188
+BU  web-ui/src/components/diagram-panels/diagram-content-area.tsx:203-221
+AL  web-ui/src/components/diagram-panels/diagram-content-area.tsx:193
+```

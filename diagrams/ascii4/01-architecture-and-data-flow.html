@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Architecture &amp; Data Flow</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1200 1520"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
+    @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">DIAGRAM FEATURE — END-TO-END ARCHITECTURE &amp; DATA FLOW</text>
+    <text x="20" y="48" class="dim subhead">URL: ?view=diagram&amp;path=...&amp;at=...</text>
+  </g>
+
+  <!-- Arrow: title → DiagramViewer -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.05s">
+    <line x1="200" y1="56" x2="200" y2="76" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══ TIER 1: BROWSER ═══ -->
+
+  <!-- DiagramViewer container -->
+  <g data-reflow-group="diagram-viewer"
+     data-interactive="DV"
+     data-ref="web-ui/src/components/diagram-viewer.tsx:19-156"
+     data-category="module"
+     data-label="DiagramViewer"
+     class="fade-section" style="animation-delay: 0.1s">
+
+    <rect x="20" y="82" width="1160" height="360" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
+    <text x="32" y="104" class="blue heading"
+          data-tt="diagram-viewer.tsx:19 — DiagramViewer 3-panel layout component">
+      DiagramViewer [DV]
+    </text>
+
+    <!-- TreePanel -->
+    <g data-interactive="TP"
+       data-ref="web-ui/src/components/diagram-panels/diagram-tree-panel.tsx"
+       data-category="module"
+       data-label="TreePanel">
+      <rect x="40" y="118" width="220" height="120" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="138" class="blue"
+            data-tt="diagram-tree-panel.tsx — TreePanel sidebar (file browser)">
+        TreePanel [TP]
+      </text>
+      <text x="52" y="156" class="dim subhead">FileTreeNode[]</text>
+      <text x="52" y="170" class="dim subhead">expandedFolders</text>
+      <text x="52" y="184" class="dim subhead">onSelectPath ───►</text>
+    </g>
+
+    <!-- DiagramContentArea -->
+    <g data-interactive="DA"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354"
+       data-category="module"
+       data-label="ContentArea"
+       data-link="02-rendering.html#UD">
+      <rect x="290" y="118" width="560" height="120" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="302" y="138" class="blue"
+            data-tt="diagram-content-area.tsx:286 — ContentArea → useDiagram (Scene construction)">
+        DiagramContentArea [DA]
+      </text>
+      <text x="302" y="158" class="white">useDiagram(html) [UD] → Scene</text>
+      <text x="302" y="178" class="dim subhead">DiagramScene → SceneInput → Viewport</text>
+      <text x="302" y="196" class="dim subhead">** 02-rendering    ** 03-interaction</text>
+    </g>
+
+    <!-- AgentPanel -->
+    <g data-interactive="AG"
+       data-ref="web-ui/src/hooks/use-diagram-agent-panel.ts"
+       data-category="module"
+       data-label="AgentPanel">
+      <rect x="880" y="118" width="280" height="120" rx="3"
+            fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="892" y="138" class="violet"
+            data-tt="use-diagram-agent-panel.ts — AgentPanel (optional Cline sidebar)">
+        AgentPanel (opt) [AG]
+      </text>
+      <text x="892" y="158" class="dim subhead">Cline-powered sidebar</text>
+    </g>
+
+    <!-- useDiagramViewer -->
+    <g data-interactive="UV"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:49-224"
+       data-category="function"
+       data-label="useDiagramViewer"
+       data-link="03-interaction.html#EJ">
+      <rect x="40" y="260" width="440" height="160" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="280" class="orange"
+            data-tt="use-diagram-viewer.ts:49 — useDiagramViewer (tree, content, jump state)">
+        useDiagramViewer [UV]
+      </text>
+      <text x="52" y="300" class="dim subhead">state: tree, selectedPath, content,</text>
+      <text x="52" y="314" class="dim subhead">  expandedFolders, pendingJumpElementId</text>
+      <text x="52" y="334" class="dim subhead">3 effects (on deps)</text>
+    </g>
+
+    <!-- useCodeVizStatus -->
+    <g data-interactive="CS"
+       data-ref="web-ui/src/hooks/use-code-viz-status.ts:14-50"
+       data-category="function"
+       data-label="useCodeVizStatus">
+      <rect x="510" y="260" width="460" height="160" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="522" y="280" class="orange"
+            data-tt="use-code-viz-status.ts:14 — useCodeVizStatus (30s health poll)">
+        useCodeVizStatus [CS]
+      </text>
+      <text x="522" y="300" class="dim subhead">polls 30s</text>
+      <text x="522" y="314" class="dim subhead">→ "connected" | "workspace-not-registered" | "disconnected"</text>
+      <text x="522" y="334" class="dim subhead">→ drives CodeVizStatusIndicator badge</text>
+    </g>
+  </g>
+
+  <!-- ═══ HTTP boundary ═══ -->
+  <g data-reflow-group="http-boundary-1" class="fade-section" style="animation-delay: 0.15s">
+    <line x1="20" y1="468" x2="1180" y2="468" stroke="#D29922" stroke-width="1.2" stroke-dasharray="8,4"/>
+    <text x="830" y="462" class="orange subhead">HTTP boundary (TRPC)</text>
+  </g>
+
+  <!-- Arrows: Browser → Server -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.2s">
+    <line x1="200" y1="444" x2="200" y2="508" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="210" y="490" class="dim subhead">TRPC calls</text>
+  </g>
+  <g data-arrow class="fade-section" style="animation-delay: 0.2s">
+    <line x1="700" y1="444" x2="700" y2="508" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="710" y="490" class="dim subhead">TRPC call</text>
+  </g>
+
+  <!-- ═══ TIER 2: SERVER ═══ -->
+
+  <!-- TRPC Router -->
+  <g data-reflow-group="trpc-router"
+     data-interactive="TR"
+     data-ref="src/trpc/diagrams-api.ts:73-155"
+     data-category="module"
+     data-label="TRPC Router"
+     class="fade-section" style="animation-delay: 0.25s">
+
+    <rect x="20" y="510" width="1160" height="290" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1.5"/>
+    <text x="32" y="532" class="orange heading"
+          data-tt="diagrams-api.ts:73 — TRPC diagrams router (4 procedures)">
+      TRPC diagrams router [TR]
+    </text>
+
+    <!-- File operations group -->
+    <g data-reflow-group="file-ops">
+      <rect x="40" y="546" width="440" height="100" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="564" class="orange subhead">File operations</text>
+
+      <!-- diagrams.list -->
+      <g data-interactive="DL"
+         data-ref="src/trpc/diagrams-api.ts:75-103"
+         data-category="function"
+         data-label="diagrams.list">
+        <text x="60" y="584" class="white"
+              data-tt="diagrams-api.ts:75 — listDiagrams: recursive readdir, .html filter">
+          diagrams.list [DL]
+        </text>
+        <text x="60" y="600" class="dim subhead">readdir recursive, .html filter, path traversal protection</text>
+      </g>
+
+      <!-- diagrams.getContent -->
+      <g data-interactive="DC"
+         data-ref="src/trpc/diagrams-api.ts:105-130"
+         data-category="function"
+         data-label="diagrams.getContent">
+        <text x="60" y="624" class="white"
+              data-tt="diagrams-api.ts:105 — getDiagramContent: readFile, 5MB cap, path safe">
+          diagrams.getContent [DC]
+        </text>
+        <text x="60" y="638" class="dim subhead">readFile, 5MB cap, path safe</text>
+      </g>
+    </g>
+
+    <!-- Navigate procedure -->
+    <g data-interactive="DN"
+       data-ref="src/trpc/diagrams-api.ts:132-137"
+       data-category="function"
+       data-label="diagrams.navigate"
+       data-link="03-interaction.html#FJ">
+      <rect x="500" y="546" width="260" height="100" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="512" y="564" class="orange subhead">Code Viz proxy</text>
+      <text x="512" y="584" class="white"
+            data-tt="diagrams-api.ts:132 — navigateToDiagramSource → codeVizClient">
+        diagrams.navigate [DN]
+      </text>
+      <text x="512" y="600" class="dim subhead">→ codeVizClient.navigate()</text>
+    </g>
+
+    <!-- checkExtension procedure -->
+    <g data-interactive="DE"
+       data-ref="src/trpc/diagrams-api.ts:139-153"
+       data-category="function"
+       data-label="diagrams.checkExt">
+      <rect x="780" y="546" width="260" height="100" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="792" y="564" class="orange subhead">Health check</text>
+      <text x="792" y="584" class="white"
+            data-tt="diagrams-api.ts:139 — checkExtensionStatus: health + workspace">
+        diagrams.checkExt [DE]
+      </text>
+      <text x="792" y="600" class="dim subhead">→ checkHealth() + checkWorkspace()</text>
+    </g>
+
+    <!-- code-viz-client -->
+    <g data-interactive="CC"
+       data-ref="src/diagram/code-viz-client.ts:108-112"
+       data-category="module"
+       data-label="codeVizClient">
+      <rect x="40" y="666" width="1120" height="110" rx="3"
+            fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="52" y="686" class="violet"
+            data-tt="code-viz-client.ts:108 — codeVizClient singleton">
+        code-viz-client.ts [CC]
+      </text>
+
+      <!-- checkHealth -->
+      <g data-interactive="CH"
+         data-ref="src/diagram/code-viz-client.ts:45-54"
+         data-category="function"
+         data-label="checkHealth">
+        <text x="60" y="710" class="white"
+              data-tt="code-viz-client.ts:45 — checkHealth: GET /api/health">
+          checkHealth()   GET  /api/health [CH]
+        </text>
+      </g>
+
+      <!-- checkWorkspace -->
+      <g data-interactive="CW"
+         data-ref="src/diagram/code-viz-client.ts:66-82"
+         data-category="function"
+         data-label="checkWorkspace">
+        <text x="60" y="730" class="white"
+              data-tt="code-viz-client.ts:66 — checkWorkspace: GET /api/workspaces">
+          checkWorkspace() GET  /api/ws    [CW]
+        </text>
+      </g>
+
+      <!-- navigate -->
+      <g data-interactive="CN"
+         data-ref="src/diagram/code-viz-client.ts:84-106"
+         data-category="function"
+         data-label="navigate">
+        <text x="60" y="750" class="white"
+              data-tt="code-viz-client.ts:84 — navigate: POST /api/navigate">
+          navigate()       POST /api/nav   [CN]
+        </text>
+      </g>
+
+      <text x="60" y="770" class="dim subhead">port: $CODE_VIZ_PORT || 24680</text>
+    </g>
+  </g>
+
+  <!-- ═══ HTTP :24680 boundary ═══ -->
+  <g data-reflow-group="http-boundary-2" class="fade-section" style="animation-delay: 0.3s">
+    <line x1="20" y1="826" x2="1180" y2="826" stroke="#D29922" stroke-width="1.2" stroke-dasharray="8,4"/>
+    <text x="830" y="820" class="orange subhead">HTTP :24680 boundary</text>
+  </g>
+
+  <!-- Arrow: Server → Extension -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.35s">
+    <line x1="600" y1="802" x2="600" y2="854" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══ TIER 3: CODE VIZ EXTENSION ═══ -->
+  <g data-reflow-group="codeviz-extension"
+     data-interactive="CZ"
+     data-ref="(external)"
+     data-category="module"
+     data-label="Code Viz Extension"
+     class="fade-section" style="animation-delay: 0.4s">
+
+    <rect x="20" y="856" width="1160" height="70" rx="4"
+          fill="#24292E" stroke="#3FB950" stroke-width="1.5"/>
+    <text x="32" y="878" class="green heading"
+          data-tt="Code Viz VSCode Extension on :24680">
+      Code Viz VSCode Extension (optional) [CZ]
+    </text>
+    <text x="32" y="898" class="dim subhead">/api/health → status,pid,port    /api/workspaces → roots    /api/navigate → open file:line</text>
+  </g>
+
+  <!-- ═══ DATA FLOW SEQUENCE ═══ -->
+  <g data-reflow-group="data-flow-separator" class="fade-section" style="animation-delay: 0.45s">
+    <line x1="20" y1="960" x2="1180" y2="960" stroke="#444C56" stroke-width="1"/>
+    <text x="20" y="982" class="white title">DATA FLOW: what calls what, when</text>
+    <text x="20" y="1000" class="dim subhead">The arrows above show static wiring. Below is the runtime sequence — read top-to-bottom.</text>
+  </g>
+
+  <!-- Sequence column headers -->
+  <g data-reflow-group="seq-headers" class="fade-section" style="animation-delay: 0.5s">
+    <text x="40" y="1030" class="blue heading">Browser (useDiagramViewer)</text>
+    <text x="520" y="1030" class="orange heading">Node.js (TRPC)</text>
+    <text x="880" y="1030" class="green heading">Code Viz</text>
+    <line x1="40" y1="1038" x2="400" y2="1038" stroke="#4C9AFF" stroke-width="0.6"/>
+    <line x1="520" y1="1038" x2="780" y2="1038" stroke="#D29922" stroke-width="0.6"/>
+    <line x1="880" y1="1038" x2="1060" y2="1038" stroke="#3FB950" stroke-width="0.6"/>
+    <!-- Vertical swimlanes -->
+    <line x1="220" y1="1042" x2="220" y2="1500" stroke="#30363D" stroke-width="0.5"/>
+    <line x1="650" y1="1042" x2="650" y2="1500" stroke="#30363D" stroke-width="0.5"/>
+    <line x1="960" y1="1042" x2="960" y2="1500" stroke="#30363D" stroke-width="0.5"/>
+  </g>
+
+  <!-- Step 1: Tree loading -->
+  <g data-reflow-group="step-tree-loading"
+     data-interactive="s1"
+     data-ref="src/trpc/diagrams-api.ts:75-103"
+     data-category="flow"
+     data-label="Tree Loading"
+     data-link="02-rendering.html#SS"
+     class="fade-section" style="animation-delay: 0.55s">
+    <text x="40" y="1064" class="white">1.</text>
+    <line x1="56" y1="1060" x2="640" y2="1060" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="280" y="1056" class="dim subhead">diagrams.list.query</text>
+    <text x="650" y="1064" class="dim subhead">[DL] readdir</text>
+    <line x1="640" y1="1076" x2="56" y2="1076" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="280" y="1072" class="dim subhead">FileTreeNode[]</text>
+    <text x="56" y="1098" class="dim subhead">→ setTree, derive workspacePath, auto-expand</text>
+  </g>
+
+  <!-- Step 2: Content fetch -->
+  <g data-reflow-group="step-content-fetch"
+     data-interactive="s2"
+     data-ref="src/trpc/diagrams-api.ts:105-130"
+     data-category="flow"
+     data-label="Content Fetch"
+     data-link="02-rendering.html#SS"
+     class="fade-section" style="animation-delay: 0.6s">
+    <text x="40" y="1126" class="white">2.</text>
+    <text x="56" y="1126" class="dim subhead">user picks file (onSelectPath)</text>
+    <line x1="56" y1="1138" x2="640" y2="1138" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="280" y="1134" class="dim subhead">diagrams.getContent.query</text>
+    <text x="650" y="1142" class="dim subhead">[DC] readFile</text>
+    <line x1="640" y1="1154" x2="56" y2="1154" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="280" y="1150" class="dim subhead">{ content: "&lt;svg&gt;..." }</text>
+    <text x="56" y="1174" class="dim subhead">→ useDiagram → SvgScene  ** 02-rendering</text>
+  </g>
+
+  <!-- Step 3: Navigate -->
+  <g data-reflow-group="step-navigate"
+     data-interactive="s3"
+     data-ref="web-ui/src/hooks/use-diagram-viewer.ts:49-224"
+     data-category="flow"
+     data-label="Navigate"
+     data-link="03-interaction.html#HN"
+     class="fade-section" style="animation-delay: 0.65s">
+    <text x="40" y="1200" class="white">3.</text>
+    <text x="56" y="1200" class="dim subhead">user clicks interactive element</text>
+    <text x="56" y="1216" class="dim subhead">handleNavigate dispatches:</text>
+    <text x="72" y="1232" class="dim subhead">├─ modal → openPopup (fetches via #2)</text>
+    <text x="72" y="1248" class="dim subhead">├─ link  → executeJump (#4 or centerOn)</text>
+    <text x="72" y="1264" class="dim subhead">└─ code  → fireCodeJump (#3a)</text>
+  </g>
+
+  <!-- Step 3a: fireCodeJump -->
+  <g data-reflow-group="step-fire-code-jump" class="fade-section" style="animation-delay: 0.7s">
+    <text x="40" y="1290" class="white">3a.</text>
+    <line x1="56" y1="1286" x2="640" y2="1286" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <text x="240" y="1282" class="dim subhead">diagrams.navigate.mutate</text>
+    <line x1="650" y1="1286" x2="950" y2="1286" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <text x="730" y="1282" class="dim subhead">POST /api/navigate</text>
+    <text x="960" y="1290" class="dim subhead">[CN]</text>
+    <line x1="950" y1="1302" x2="650" y2="1302" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <line x1="640" y1="1302" x2="56" y2="1302" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="780" y="1316" class="dim subhead">{ ok }</text>
+  </g>
+
+  <!-- Step 4: Cross-diagram jump -->
+  <g data-reflow-group="step-jump-protocol"
+     data-interactive="s4"
+     data-ref="web-ui/src/hooks/use-diagram-viewer.ts:49-224"
+     data-category="flow"
+     data-label="Jump Protocol"
+     data-link="03-interaction.html#EJ"
+     class="fade-section" style="animation-delay: 0.75s">
+    <text x="40" y="1342" class="white">4.</text>
+    <text x="56" y="1342" class="dim subhead">cross-diagram jump:</text>
+    <text x="56" y="1358" class="dim subhead">requestJump(path, elementId) [UV]</text>
+    <text x="72" y="1374" class="dim subhead">├─ setPendingJumpElementId(elemId)</text>
+    <text x="72" y="1390" class="dim subhead">├─ setSelectedPath(path) → triggers #2</text>
+    <text x="72" y="1406" class="dim subhead">└─ pushState (browser back)</text>
+    <text x="56" y="1430" class="dim subhead">after Scene loads: DiagramContentArea sees pending →</text>
+    <text x="56" y="1446" class="dim subhead">waits 50ms → consumeJump() → viewport.centerOn(target)</text>
+  </g>
+
+  <!-- Step 5: Health poll -->
+  <g data-reflow-group="step-health-poll"
+     data-interactive="s5"
+     data-ref="web-ui/src/hooks/use-code-viz-status.ts:14-50"
+     data-category="flow"
+     data-label="Health Poll"
+     class="fade-section" style="animation-delay: 0.8s">
+    <text x="40" y="1476" class="white">5.</text>
+    <text x="56" y="1476" class="dim subhead">useCodeVizStatus [CS] (every 30s)</text>
+    <line x1="56" y1="1488" x2="640" y2="1488" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="240" y="1484" class="dim subhead">diagrams.checkExtension.query</text>
+    <line x1="650" y1="1488" x2="950" y2="1488" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="730" y="1484" class="dim subhead">/api/health</text>
+    <line x1="650" y1="1502" x2="950" y2="1502" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="730" y="1498" class="dim subhead">+ /api/workspaces</text>
+    <line x1="640" y1="1502" x2="56" y2="1502" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="200" y="1498" class="dim subhead">{ extensionRunning, workspaceRegistered }</text>
+  </g>
+
+</svg>
+</body>
+</html>

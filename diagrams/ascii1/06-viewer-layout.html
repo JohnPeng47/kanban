@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DiagramViewer — Three-Panel Layout</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 700"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">DIAGRAM VIEWER — THREE-PANEL LAYOUT</text>
+    <text x="20" y="48" class="dim subhead">Panel structure, resize logic, component wiring, render states</text>
+  </g>
+
+  <!-- ═══ Row 1: Panel Structure + Wiring ═══ -->
+  <g data-reflow-group="section-1" class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="78" class="white heading">Panel Structure &amp; Component Wiring</text>
+  </g>
+
+  <!-- Left: Visual layout -->
+  <g data-reflow-group="panel-layout"
+     data-interactive="diagram-viewer"
+     data-ref="web-ui/src/components/diagram-viewer.tsx:19-156"
+     data-category="module"
+     data-label="DiagramViewer"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="20" y="90" width="520" height="240" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="112" class="blue heading" data-tt="diagram-viewer.tsx:19 — top-level flex row container">DiagramViewer (flex row)</text>
+
+    <!-- Tree -->
+    <g data-interactive="tree-panel"
+       data-ref="web-ui/src/components/diagram-panels/diagram-tree-panel.tsx"
+       data-category="module"
+       data-label="TreePanel">
+      <rect x="40" y="125" width="120" height="150" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="52" y="145" class="green" data-tt="diagram-tree-panel.tsx — recursive file tree sidebar">TreePanel</text>
+      <text x="52" y="162" class="dim subhead">w:250 min:180</text>
+      <text x="52" y="185" class="dim subhead">folder ▶</text>
+      <text x="56" y="200" class="dim subhead"> file</text>
+      <text x="56" y="215" class="dim subhead"> file ●</text>
+      <text x="52" y="235" class="dim subhead">folder ▶</text>
+    </g>
+
+    <!-- Resize handle -->
+    <rect x="165" y="125" width="6" height="150" rx="2" fill="#444C56"/>
+
+    <!-- Content -->
+    <g data-interactive="content-area-layout"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354"
+       data-category="module"
+       data-label="ContentArea"
+       data-link="02-content-area.html">
+      <rect x="178" y="125" width="220" height="150" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="190" y="145" class="orange" data-tt="diagram-content-area.tsx:286 — SceneInput/Viewport + popups">Content Area</text>
+      <text x="190" y="162" class="dim subhead">SceneInput / Viewport</text>
+      <text x="190" y="180" class="dim subhead">min: 340px</text>
+    </g>
+
+    <!-- CodeViz indicator -->
+    <g data-interactive="code-viz-indicator"
+       data-ref="web-ui/src/components/diagram-panels/code-viz-status-indicator.tsx"
+       data-category="module"
+       data-label="CodeViz status">
+      <circle cx="380" cy="140" r="4" fill="#3FB950"/>
+      <text x="388" y="144" class="dim subhead" data-tt="code-viz-status-indicator.tsx — connection state popover">CodeViz</text>
+    </g>
+
+    <!-- Resize handle -->
+    <rect x="405" y="125" width="6" height="150" rx="2" fill="#444C56"/>
+
+    <!-- Agent -->
+    <g data-interactive="agent-panel"
+       data-ref="web-ui/src/hooks/use-diagram-agent-panel.tsx:1-178"
+       data-category="module"
+       data-label="AgentPanel">
+      <rect x="418" y="125" width="100" height="150" rx="3" fill="#2D3339" stroke="#6E7681" stroke-width="0.6"/>
+      <text x="430" y="145" class="dim" data-tt="use-diagram-agent-panel.tsx — chat or terminal panel">Agent</text>
+      <text x="430" y="162" class="dim subhead">w:420 min:320</text>
+      <text x="430" y="180" class="dim subhead">(optional)</text>
+    </g>
+
+    <!-- Drag labels -->
+    <g data-interactive="tree-separator"
+       data-ref="web-ui/src/components/diagram-viewer.tsx:49-75"
+       data-category="flow"
+       data-label="tree resize">
+      <text x="130" y="296" class="dim subhead" data-tt="diagram-viewer.tsx:49 — drag right → grow tree">↔ drag</text>
+    </g>
+    <g data-interactive="agent-separator"
+       data-ref="web-ui/src/components/diagram-viewer.tsx:77-104"
+       data-category="flow"
+       data-label="agent resize">
+      <text x="380" y="296" class="dim subhead" data-tt="diagram-viewer.tsx:77 — drag left → grow agent">↔ drag</text>
+    </g>
+  </g>
+
+  <!-- Right: Component Wiring -->
+  <g data-reflow-group="wiring" class="fade-section" style="animation-delay: 0.1s">
+    <rect x="560" y="90" width="520" height="240" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="572" y="112" class="violet heading">Component Wiring</text>
+
+    <g data-interactive="wiring-viewer"
+       data-ref="web-ui/src/hooks/use-diagram-viewer.ts:49-224"
+       data-category="function"
+       data-label="useDiagramViewer"
+       data-link="05-data-flow.html">
+      <rect x="580" y="125" width="480" height="30" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="592" y="145" class="violet" data-tt="use-diagram-viewer.ts:49 — tree, selectedPath, content, jump">useDiagramViewer(wsId, path) → tree, content, jumps</text>
+    </g>
+
+    <g data-interactive="wiring-codeviz"
+       data-ref="web-ui/src/hooks/use-code-viz-status.ts:1-50"
+       data-category="function"
+       data-label="useCodeVizStatus">
+      <rect x="580" y="165" width="480" height="25" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="592" y="183" class="green" data-tt="use-code-viz-status.ts:1 — polls every 30s for extension status">useCodeVizStatus(wsId) → 30s poll → 3-state</text>
+    </g>
+
+    <g data-interactive="wiring-agent"
+       data-ref="web-ui/src/hooks/use-diagram-agent-panel.tsx:1-178"
+       data-category="function"
+       data-label="useDiagramAgentPanel">
+      <rect x="580" y="200" width="480" height="25" rx="3" fill="#2D3339" stroke="#6E7681" stroke-width="0.6"/>
+      <text x="592" y="218" class="dim" data-tt="use-diagram-agent-panel.tsx — compose agent chat/terminal">useDiagramAgentPanel(input) → ReactElement | null</text>
+    </g>
+
+    <g data-interactive="wiring-layout"
+       data-ref="web-ui/src/resize/use-diagram-viewer-layout.ts"
+       data-category="function"
+       data-label="useViewerLayout">
+      <rect x="580" y="235" width="480" height="25" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="253" class="orange" data-tt="use-diagram-viewer-layout.ts — panel widths, setters, localStorage">useDiagramViewerLayout({ containerWidth }) → widths, clamp fns</text>
+    </g>
+
+    <text x="580" y="290" class="dim subhead">useResizeDrag() → startDrag(event, { axis, cursor, onMove, onEnd })</text>
+  </g>
+
+  <!-- ═══ Row 2: Resize Logic + Render States ═══ -->
+  <g data-reflow-group="section-2" class="fade-section" style="animation-delay: 0.15s">
+    <text x="20" y="360" class="white heading">Resize Logic &amp; Render States</text>
+  </g>
+
+  <!-- Left: Resize -->
+  <g data-reflow-group="resize-logic" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="20" y="375" width="520" height="200" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="32" y="397" class="orange heading">Resize</text>
+
+    <text x="40" y="425" class="white">Tree separator: drag right → grow tree panel</text>
+    <text x="50" y="445" class="dim subhead">clampDiagramTreePanelWidth(w, containerWidth, agentWidth)</text>
+
+    <text x="40" y="475" class="white">Agent separator: drag left → grow agent panel</text>
+    <text x="50" y="495" class="dim subhead">clampDiagramAgentPanelWidth(w, containerWidth, treeWidth)</text>
+
+    <text x="40" y="525" class="white">Constraints: tree ≥ 180, agent ≥ 320, content ≥ 340</text>
+    <text x="40" y="545" class="white">tree + content + agent ≤ containerWidth</text>
+    <text x="40" y="565" class="dim subhead">Persisted to localStorage via ResizeNumberPreference</text>
+  </g>
+
+  <!-- Right: Render States -->
+  <g data-reflow-group="render-states" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="560" y="375" width="520" height="200" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1"/>
+    <text x="572" y="397" class="green heading">Render States</text>
+
+    <g data-interactive="fallback"
+       data-ref="web-ui/src/components/diagram-panels/diagram-viewer-fallback.tsx"
+       data-category="module"
+       data-label="fallback">
+      <text x="580" y="425" class="white" data-tt="diagram-viewer-fallback.tsx — shown when /diagrams doesn't exist">DiagramViewer: !diagramsRootExists → Fallback</text>
+    </g>
+
+    <g data-interactive="content-states"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354"
+       data-category="flow"
+       data-label="content states">
+      <rect x="580" y="445" width="480" height="110" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="592" y="465" class="green" data-tt="diagram-content-area.tsx:286 — loading/error/empty/ready states">DiagramContentArea states:</text>
+
+      <text x="600" y="490" class="dim subhead">no selectedPath → "Select a diagram" placeholder</text>
+      <text x="600" y="508" class="dim subhead">isLoading → Spinner</text>
+      <text x="600" y="526" class="dim subhead">error → red message</text>
+      <text x="600" y="544" class="white">scene ready → DiagramScene</text>
+    </g>
+  </g>
+
+</svg>
+</body>
+</html>

@@ -1,0 +1,85 @@
+```diagram
+BACKEND API & CODE VIZ INTEGRATION
+
+═══ TRPC Router & diagrams-api Implementation ═══════════════════════════════════════════════════════════
+
+ TRPC Router (workspace-scoped) [TR]                            diagrams-api.ts [DA]
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │  listDiagrams(workspacePath)     [LD] │
+│  diagrams.list (Query)                      [QL] │           │    root = wsPath + "/diagrams"        │
+│    input: {}                                     │──────────→│    !exists? → { rootExists: false }   │
+│    output: { diagramsRoot, rootExists, tree[] }  │           │    fs.readdir (recursive)             │
+│                                                  │           │    filter .html, validate paths       │
+│  diagrams.getContent (Query)                [QC] │           │    build RuntimeDiagramNode[] tree    │
+│    input: { path }                               │           │                                      │
+│    output: { content }                           │──────────→│  getDiagramContent(wsPath, p)    [GC] │
+│                                                  │           │    validate: no "..", no null bytes   │
+│  diagrams.navigate (Mutation)               [MN] │           │    stat → size > 5MB? → error        │
+│    input: { root, filePath, line?, newTab? }     │           │    fs.readFile(fullPath, "utf-8")     │
+│    output: { ok, error? }                        │──────────→│                                      │
+│                                                  │           │  navigateToDiagramSource(...)    [NS] │
+│  diagrams.checkExtension (Query)            [QE] │           │    → codeVizClient.navigate()        │
+│    output: { extensionRunning,                   │           │                                      │
+│              workspaceRegistered }                │──────────→│  checkExtensionStatus(wsPath)    [ES] │
+│                                              TR  │           │    → checkHealth + checkWorkspace     │
+└──────────────────────────────────────────────────┘           │                                  DA  │
+                                                               └──────────────────────────────────────┘
+
+═══ Code Viz Client & Status Polling ════════════════════════════════════════════════════════════════════
+
+ CodeVizClient (HTTP, :24680 or CODE_VIZ_PORT) [CC]             Status Polling (frontend)
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│  All requests: 2.5s timeout, graceful errors     │           │  useCodeVizStatus(wsId)          [CS] │
+│                                                  │           │    polls every 30s                    │
+│  checkHealth()                              [CH] │           │    trpc.diagrams.checkExtension       │
+│    GET /api/health → true | false                │           │                                      │
+│                                                  │           │    running && registered              │
+│  checkWorkspace(wsPath)                     [CW] │           │      → "connected"         green ●   │
+│    GET /api/workspaces                           │           │    running && !registered             │
+│    compare by fs.realpath (resolves symlinks)    │           │      → "workspace-not-     orange ●  │
+│    → true | false                                │           │         registered"                   │
+│                                                  │           │    !running                           │
+│  navigate(root, filePath, line?, newTab?)    [CN] │           │      → "disconnected"      gray ●   │
+│    POST /api/navigate                            │           │                                      │
+│    body: { root, filePath, line, newTab }        │           │  CodeVizStatusIndicator          [CI] │
+│    → { ok, error? }                              │           │    Radix popover, top-right           │
+│    opens file in VSCode at line                  │           │    of content area                    │
+│                                              CC  │           │                                  SP  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+
+═══ Type Contracts ══════════════════════════════════════════════════════════════════════════════════════
+
+ api-contract.ts [TC]
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  RuntimeDiagramNode { name, path, type: "file"|"directory", children }                          [DN] │
+│  RuntimeDiagramListResponse { diagramsRoot, diagramsRootExists, tree }                          [LR] │
+│  RuntimeDiagramContentResponse { content }                                                      [CR] │
+│  RuntimeDiagramNavigateRequest { root, filePath, line?, newTab? }                                [NR] │
+│  RuntimeDiagramExtensionStatusResponse { extensionRunning, workspaceRegistered }                 [ER] │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+```code-refs
+TR  src/trpc/app-router.ts:680-702
+QL  diagrams.list procedure — app-router.ts:682-686
+QC  diagrams.getContent procedure — app-router.ts:688-692
+MN  diagrams.navigate procedure — app-router.ts:694-698
+QE  diagrams.checkExtension procedure — app-router.ts:700-702
+DA  src/trpc/diagrams-api.ts:75-153
+LD  src/trpc/diagrams-api.ts:75-103
+GC  src/trpc/diagrams-api.ts:105-130
+NS  src/trpc/diagrams-api.ts:132-137
+ES  src/trpc/diagrams-api.ts:139-153
+CC  src/diagram/code-viz-client.ts
+CH  src/diagram/code-viz-client.ts:45-54
+CW  src/diagram/code-viz-client.ts:66-82
+CN  src/diagram/code-viz-client.ts:84-106
+CS  web-ui/src/hooks/use-code-viz-status.ts:1-50
+CI  web-ui/src/components/diagram-panels/code-viz-status-indicator.tsx
+TC  src/core/api-contract.ts:1109-1158
+DN  RuntimeDiagramNode — api-contract.ts:1109-1115
+LR  RuntimeDiagramListResponse — api-contract.ts:1117-1125
+CR  RuntimeDiagramContentResponse — api-contract.ts:1127-1133
+NR  RuntimeDiagramNavigateRequest — api-contract.ts:1135-1145
+ER  RuntimeDiagramExtensionStatusResponse — api-contract.ts:1147-1158
+```

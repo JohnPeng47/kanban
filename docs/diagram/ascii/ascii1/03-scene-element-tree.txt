@@ -1,0 +1,114 @@
+```diagram
+SCENE & SVG SCENE — ELEMENT TREE AND BOUNDS
+
+═══ Scene Interface & SceneElement ══════════════════════════════════════════════════════════════════════
+
+ Scene interface [SI]                                           SceneElement [SE]
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│  Element Tree:                                   │           │  id ── reflow-group|interactive      │
+│    getRoot, getElement,                     [ET] │           │         |arrow-N|"root"              │
+│    getAllElements, getChildren                    │           │  parentId, childIds                  │
+│                                                  │           │  localBounds ── getBBox()       [LB] │
+│  Bounds:                                         │           │  transform ── { tx, ty, scale }      │
+│    getLocalBounds, getWorldBounds (cached)  [BO] │           │  metadata ── data-* attrs            │
+│                                                  │           │  hasVisualRect                       │
+│  Transforms:                                     │           │                                      │
+│    setTransform, getTransform,              [TR] │           │  Roles (parsed from metadata):       │
+│    getWorldTransform                             │           │  ┌────────────────────────────────┐  │
+│                                                  │           │  │ interactive: InteractiveData   │  │
+│  Mutations:                                      │           │  │   ref, parsedRef, category [ID]│  │
+│    growVisualBounds, addElement,             [MU] │           │  │   label, tooltip, navTarget    │  │
+│    removeElement, addSubtree                     │           │  │   modal, link  ** 02-content   │  │
+│                                                  │           │  │                                │  │
+│  Hit Testing:                                    │           │  │ reflow: ReflowState            │  │
+│    hitTest(screenPt),                       [HT] │           │  │   originalBounds          [RS] │  │
+│    hitTestRect(sceneRect, mode)                  │           │  └────────────────────────────────┘  │
+│                                                  │           │                                      │
+│  Rendering: getSvgElement()                 [RN] │           │  Helpers: isReflowGroup,        [HL] │
+│  Lifecycle: destroy()                       [LC] │           │   isInteractiveRegion, isArrow       │
+│                                              SI  │           │                                  SE  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+
+═══ Tree Construction & Bounds System ═══════════════════════════════════════════════════════════════════
+
+ buildElementTree [BT]                                          Bounds System
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  SVG DOM                  Scene Tree             │           │  Local         compose        World   │
+│  ┌──────────────┐         ┌──────────────┐       │           │  ┌──────┐     ancestors     ┌──────┐ │
+│  │ <svg>        │         │ root     [RT]│       │           │  │getBBox│ ──(excl root)──→ │cached│ │
+│  │  <g reflow>  │ ──────→ │ ├ mod-a      │       │           │  └──────┘                   └──┬───┘ │
+│  │    <g inter> │  query  │ │ └ fn-foo   │       │           │     │                          │     │
+│  │  <g arrow>   │  Select │ ├ arrow-0    │       │           │  growVisualBounds [GV]    worldBounds │
+│  │  <g dual>    │  All    │ └ mod-b      │       │           │  updates <rect>           Cache  [WC] │
+│  └──────────────┘         └──────────────┘       │           │  + localBounds                  │     │
+│                                                  │           │                                 │     │
+│  Steps per element:                              │           │  setTransform [ST]               │     │
+│  1. resolveElementId                        [RI] │           │    invalidates cache        [IV] │     │
+│  2. readMetadata → data-*                   [RM] │           │    recursive on children         │     │
+│  3. findVisualRect → <rect> child           [FV] │           │    if id≠root: CSS translate     │     │
+│  4. walk DOM parents → parentId             [WP] │           │                                  │     │
+│  5. getBBox() → localBounds                      │           │  getWorldBounds [WB]              │     │
+│  6. parseInteractiveData if data-interactive[PI] │           │    cache hit? → return            │     │
+│  7. mark ReflowState if reflow/arrow             │           │    compose ancestor transforms    │     │
+│                                              BT  │           │    transformRect(local, composed)  │     │
+└──────────────────────────────────────────────────┘           │                                  BS  │
+                                                               └──────────────────────────────────────┘
+
+═══ Hit Testing & Injected CSS ══════════════════════════════════════════════════════════════════════════
+
+ Hit Testing                                                    Injected CSS [CS]
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  Point: hitTest(screenPt)                   [HP] │           │  [data-interactive]                   │
+│    document.elementFromPoint(x,y)                │           │    cursor:pointer, filter 0.15s      │
+│    .closest(SELECTOR)                            │           │                                      │
+│    lookup in domElements map → id | null         │           │  [data-interactive]:hover, .selected  │
+│                                                  │           │    brightness(1.5) + glow            │
+│  Rect: hitTestRect(sceneRect, mode)         [HR] │           │                                      │
+│    for each interactive element:                 │           │  .selected > rect                     │
+│      getWorldBounds(id)                          │           │    2px #4C9AFF stroke + blue glow    │
+│      "intersect" → rectsIntersect           [RI] │           │                                      │
+│      "contain"   → rectContains             [RC] │           │  [data-modal] > rect                  │
+│    return matching ids[]                         │           │    purple dash ╌╌ animated 12s  [CM] │
+│                                                  │           │                                      │
+│  Dynamic: addElement, removeElement,        [DY] │           │  [data-link] > rect                   │
+│           addSubtree, nextArrowIndex             │           │    gold dash ╌╌ animated 10s    [CL] │
+│                                              HI  │           │                                  CS  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+```
+
+```code-refs
+SI  web-ui/src/diagram/rendering/scene.ts:46-94
+ET  web-ui/src/diagram/rendering/scene.ts:48-53
+BO  web-ui/src/diagram/rendering/scene.ts:55-58
+TR  web-ui/src/diagram/rendering/scene.ts:60-64
+MU  web-ui/src/diagram/rendering/scene.ts:66-77
+HT  web-ui/src/diagram/rendering/scene.ts:79-84
+RN  web-ui/src/diagram/rendering/scene.ts:86-89
+LC  web-ui/src/diagram/rendering/scene.ts:91-93
+SE  web-ui/src/diagram/rendering/scene.ts:10-44
+LB  SceneElement.localBounds — scene.ts:24-26
+ID  web-ui/src/diagram/types.ts:54-64
+RS  web-ui/src/diagram/types.ts:66-69
+HL  web-ui/src/diagram/rendering/scene.ts:96-108
+BT  web-ui/src/diagram/rendering/svg-scene.ts:126-206
+RT  web-ui/src/diagram/rendering/svg-scene.ts:131-142
+RI  web-ui/src/diagram/rendering/svg-scene.ts:18-29
+RM  web-ui/src/diagram/rendering/svg-scene.ts:32-40
+FV  web-ui/src/diagram/rendering/svg-scene.ts:43-50
+WP  web-ui/src/diagram/rendering/svg-scene.ts:161-169
+PI  web-ui/src/diagram/types.ts:142-161
+ST  web-ui/src/diagram/rendering/svg-scene.ts:271-286
+IV  web-ui/src/diagram/rendering/svg-scene.ts:312-320
+GV  web-ui/src/diagram/rendering/svg-scene.ts:324-343
+WB  web-ui/src/diagram/rendering/svg-scene.ts:238-249
+WC  web-ui/src/diagram/rendering/svg-scene.ts:57
+HP  web-ui/src/diagram/rendering/svg-scene.ts:347-358
+HR  web-ui/src/diagram/rendering/svg-scene.ts:360-375
+DY  web-ui/src/diagram/rendering/svg-scene.ts:379-505
+CS  web-ui/src/diagram/rendering/svg-scene.ts:82-124
+CM  web-ui/src/diagram/rendering/svg-scene.ts:93-106
+CL  web-ui/src/diagram/rendering/svg-scene.ts:108-121
+RC  web-ui/src/diagram/types.ts:193-200
+```

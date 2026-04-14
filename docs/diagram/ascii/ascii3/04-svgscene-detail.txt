@@ -1,0 +1,115 @@
+```diagram
+SVGSCENE — IMPLEMENTATION DETAIL (modal expansion of SvgScene in 04-overlayer-and-scene.txt)
+
+═══ CONSTRUCTION ════════════════════════════════════════════════════════════════════════════════════
+
+  new SvgScene(svg) [SS]
+       │
+       ├─ 1. Remove viewBox, set explicit width/height ──→ 1:1 pixel rendering
+       │      svg.style.overflow = "visible"
+       │      svg.style.display = "block"
+       │
+       ├─ 2. injectInteractionStyles(svg) [IS]
+       │      <style> element prepended to SVG:
+       │        [data-interactive]        → cursor:pointer, brightness transition
+       │        [data-interactive]:hover   → brightness(1.5) + drop-shadow
+       │        .selected > rect          → stroke:#4C9AFF, drop-shadow blue
+       │        [data-modal] > rect       → stroke:#A371F7 dashed, animated dash
+       │        [data-link] > rect        → stroke:#D4A72C dashed, animated dash
+       │
+       └─ 3. buildElementTree() [BT]
+              │
+              ├─ Query: svg.querySelectorAll("[data-reflow-group], [data-interactive], [data-arrow]")
+              │
+              ├─ Create root SceneElement (id="root", bounds from svg width/height)
+              │
+              ├─ For each tagged <g>:
+              │    resolveElementId(g) → id from data-reflow-group || data-interactive || "arrow-{n}"
+              │    readMetadata(g) → all data-* attrs as Record<string,string>
+              │    findVisualRect(g) → direct <rect> child or null
+              │    Walk DOM ancestry to find parent (nearest tagged ancestor, else root)
+              │    getBBox() → localBounds
+              │    parseInteractiveData(id, metadata) → interactive role
+              │    Check reflow-group/arrow → reflow role
+              │
+              └─ Wire parent.childIds.push(id) relationships
+
+
+═══ BOUNDS COMPUTATION ═══════════════════════════════════════════════════════════════════════════
+
+                     getLocalBounds(id)                     getWorldBounds(id) [WB]
+                     ──────────────────                     ─────────────────────
+                     return element.localBounds              Check worldBoundsCache
+                                                             │
+                                                             ├─ cache hit → return cached
+                                                             │
+                                                             └─ cache miss:
+                                                                  getAncestorTransform(id) [AX]
+                                                                  │  Walk parentId chain up to root
+                                                                  │  Collect parent transforms (skip root)
+                                                                  │  Reverse, compose left-to-right
+                                                                  │  → single Transform
+                                                                  │
+                                                                  transformRect(localBounds, ancestorTransform)
+                                                                  │  x = x*s + tx,  y = y*s + ty
+                                                                  │  w = w*s,        h = h*s
+                                                                  │
+                                                                  Store in cache, return
+
+
+═══ HIT TESTING ═══════════════════════════════════════════════════════════════════════════════════
+
+  hitTest(screenPoint) [HT]                        hitTestRect(sceneRect, mode) [HR]
+  ──────────────────────────                        ─────────────────────────────────
+  document.elementFromPoint(x, y)                  For each element with interactive != null:
+  │                                                  worldBounds = getWorldBounds(id)
+  ├─ Not in SVG? → null                              mode == "contain":
+  │                                                    rectContains(sceneRect, worldBounds)
+  └─ closest(SCENE_ELEMENT_SELECTOR)                  mode == "intersect":
+     │                                                  rectsIntersect(sceneRect, worldBounds)
+     └─ Match against domElements map → id
+        (linear scan of Map entries)                Returns string[] of matching IDs
+
+
+═══ TRANSFORMS ════════════════════════════════════════════════════════════════════════════════════
+
+  setTransform(id, transform) [ST]
+  ────────────────────────────────
+  element.transform = transform
+  invalidateWorldBoundsCache(id)   ← recursive down children
+  if id != "root":
+    domElement.style.transform = `translate(${tx}px,${ty}px)`
+  (root transform is managed by Viewport's CSS transform on transformDiv)
+
+  getWorldTransform(id) ── walk to root, compose all transforms
+
+
+═══ MUTATIONS ═════════════════════════════════════════════════════════════════════════════════════
+
+  growVisualBounds(id, dW, dH)       addElement(id, dom, parentId)        removeElement(id)
+  ────────────────────────────       ─────────────────────────────        ─────────────────
+  Update SVG rect width/height       Error if id exists                   Recursive remove children
+  Update element.localBounds         readMetadata, findVisualRect         Remove from parent.childIds
+  Invalidate bounds cache            getBBox → localBounds                Clear from all Maps
+                                     Parse roles (interactive, reflow)
+                                     Wire parent-child
+                                     Invalidate parent bounds cache
+
+  addSubtree(rootDomNode, parentId)
+  ─────────────────────────────────
+  Query all tagged <g> in subtree
+  Build local domToId map
+  For each: resolve parent (subtree-local first, then existing scene)
+  Delegate to addElement() for each
+```
+
+```code-refs
+SS  web-ui/src/diagram/rendering/svg-scene.ts:52-80       SvgScene constructor
+IS  web-ui/src/diagram/rendering/svg-scene.ts:82-124      injectInteractionStyles — CSS injection
+BT  web-ui/src/diagram/rendering/svg-scene.ts:126-206     buildElementTree — tree construction
+WB  web-ui/src/diagram/rendering/svg-scene.ts:238-249     getWorldBounds — cached world bounds
+AX  web-ui/src/diagram/rendering/svg-scene.ts:251-267     getAncestorTransform — compose parent chain
+HT  web-ui/src/diagram/rendering/svg-scene.ts:347-358     hitTest — elementFromPoint + closest
+HR  web-ui/src/diagram/rendering/svg-scene.ts:360-375     hitTestRect — rect intersection/containment
+ST  web-ui/src/diagram/rendering/svg-scene.ts:271-286     setTransform + cache invalidation
+```

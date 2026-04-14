@@ -1,0 +1,53 @@
+```diagram
+DIAGRAM FEATURE — SYSTEM OVERVIEW
+
+┌─ Browser (web-ui) ──────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                                     │
+│  App.tsx ─(?view=diagram)─→ DiagramViewer [DV]                                                      │
+│                               │                                                                     │
+│         ┌─────────────────────┼─────────────────────┐                                               │
+│         │                     │                     │                                               │
+│    TreePanel              ContentArea          AgentPanel                                            │
+│    ** 06-layout           ** 02-content         (optional)                                           │
+│         │                     │                     │                                               │
+│  useDiagramViewer [UV]   useDiagram [UD]    useDiagramAgentPanel                                    │
+│  ** 05-data-flow              │                                                                     │
+│         │              ┌──────┴──────┐                                                              │
+│         │              │  SvgScene   │ [SS]   SceneInput [SI]   Viewport [VP]   OverLayer [OL]       │
+│         │              │  ** 03      │        ** 04             ** 02-vp        ** 02-vp             │
+│         │              └─────────────┘                                                              │
+│         ▼                                                                                           │
+│    TRPC Client ◄── fireCodeJump / openPopup / executeJump                                           │
+│         │                                                                                           │
+└─────────┼───────────────────────────────────────────────────────────────────────────────────────────┘
+          │ HTTP
+┌─────────┼──────────────────────────────────────────┬────────────────────────────────────────────────┐
+│ Server  │                                          │  Code Viz Extension (optional, :24680)          │
+│         ▼                                          │                                                │
+│   diagrams-api.ts [DA]                             │   /api/health      ← checkHealth()        [CH] │
+│    ├─ list       → fs.readdir          [DL]        │   /api/workspaces  ← checkWorkspace()     [CW] │
+│    ├─ getContent → fs.readFile         [DC]        │   /api/navigate    ← navigate()           [CN] │
+│    ├─ navigate   → CodeVizClient       [DN]        │                                                │
+│    └─ checkExt   → CodeVizClient       [DE]        │                                                │
+│                                                    │                                                │
+│   ** 07-backend                                    │                                                │
+└────────────────────────────────────────────────────┴────────────────────────────────────────────────┘
+```
+
+```code-refs
+DV  web-ui/src/components/diagram-viewer.tsx:19-156
+UV  web-ui/src/hooks/use-diagram-viewer.ts:49-224
+UD  web-ui/src/diagram/use-diagram.ts:6-52
+SS  web-ui/src/diagram/rendering/svg-scene.ts:52-521
+SI  web-ui/src/diagram/input/scene-input.tsx:48-357
+VP  web-ui/src/diagram/rendering/viewport.tsx:48-463
+OL  web-ui/src/diagram/rendering/over-layer.tsx:64-127
+DA  src/trpc/diagrams-api.ts:75-153
+DL  src/trpc/diagrams-api.ts:75-103
+DC  src/trpc/diagrams-api.ts:105-130
+DN  src/trpc/diagrams-api.ts:132-137
+DE  src/trpc/diagrams-api.ts:139-153
+CH  src/diagram/code-viz-client.ts:45-54
+CW  src/diagram/code-viz-client.ts:66-82
+CN  src/diagram/code-viz-client.ts:84-106
+```

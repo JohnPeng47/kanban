@@ -1,0 +1,67 @@
+```diagram
+DIAGRAM VIEWER — THREE-PANEL LAYOUT
+
+═══ Panel Structure & Component Wiring ══════════════════════════════════════════════════════════════════
+
+ DiagramViewer [DV] (flex row)                                  Component Wiring
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│ ┌──────────┐ ┌─────────────────────┐ ┌─────────┐│           │                                      │
+│ │TreePanel │R│   Content Area      │R│  Agent  ││           │  useDiagramViewer(wsId, path)   [UV] │
+│ │          │e│                     │e│  Panel  ││           │    ** 05-data-flow                    │
+│ │ w:250  [TP]s│  SceneInput/VP      │s│         ││           │    → tree, selectedPath, content     │
+│ │ min:180  │i│  ** 04-input         │i│ w:420   ││           │    → requestJump, consumeJump        │
+│ │          │z│  ** 02-vp            │z│ min:320 ││           │                                      │
+│ │ folder ▶ │e│                     │e│         ││           │  useCodeVizStatus(wsId)          [CV] │
+│ │  file    │ │              [CodeViz│ │    [AP] ││           │    30s poll → 3-state                │
+│ │  file ●  │ │               ● ] [CI│ │         ││           │                                      │
+│ │          │ │                     │ │         ││           │  useDiagramAgentPanel(input)     [UA] │
+│ └──────────┘ └─────────────────────┘ └─────────┘│           │    → ReactElement | null             │
+│   drag [T1]     content min:340       drag [T2] │           │                                      │
+│                                              DV  │           │  useDiagramViewerLayout         [VL] │
+└──────────────────────────────────────────────────┘           │    ({ containerWidth })              │
+                                                               │    → widths, setters, clamp fns     │
+                                                               │                                      │
+                                                               │  useResizeDrag()               [RD] │
+                                                               │    → startDrag(event, config)        │
+                                                               │                                  CW  │
+                                                               └──────────────────────────────────────┘
+
+═══ Resize Logic & Render States ════════════════════════════════════════════════════════════════════════
+
+ Resize [RS]                                                    Render States
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  Tree separator:                            [T1] │           │  DiagramViewer:                      │
+│    drag right → grow tree panel                  │           │    !diagramsRootExists → Fallback[FB]│
+│    clampDiagramTreePanelWidth(w, cw, agentW)     │           │    else → full 3-panel layout        │
+│                                                  │           │                                      │
+│  Agent separator:                           [T2] │           │  DiagramContentArea:            [CA] │
+│    drag left → grow agent panel                  │           │  ┌──────────┬─────────┬────────────┐ │
+│    clampDiagramAgentPanelWidth(w, cw, treeW)     │           │  │no path   │loading  │error       │ │
+│                                                  │           │  │"Select a │Spinner  │red message │ │
+│  Constraints:                                    │           │  │ diagram" │         │            │ │
+│    tree ≥ 180, agent ≥ 320, content ≥ 340        │           │  ├──────────┴─────────┴────────────┤ │
+│    tree + content + agent ≤ containerWidth        │           │  │scene ready → DiagramScene  [DS] │ │
+│                                                  │           │  │  ** 02-content                   │ │
+│  Persisted to localStorage                  [LP] │           │  └─────────────────────────────────┘ │
+│                                              RS  │           │                                  RN  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+```
+
+```code-refs
+DV  web-ui/src/components/diagram-viewer.tsx:19-156
+TP  web-ui/src/components/diagram-panels/diagram-tree-panel.tsx
+CI  web-ui/src/components/diagram-panels/code-viz-status-indicator.tsx
+AP  web-ui/src/hooks/use-diagram-agent-panel.tsx:1-178
+UV  web-ui/src/hooks/use-diagram-viewer.ts:49-224
+CV  web-ui/src/hooks/use-code-viz-status.ts:1-50
+UA  web-ui/src/hooks/use-diagram-agent-panel.tsx:1-178
+VL  web-ui/src/resize/use-diagram-viewer-layout.ts
+RD  web-ui/src/resize/use-resize-drag.ts
+T1  web-ui/src/components/diagram-viewer.tsx:49-75
+T2  web-ui/src/components/diagram-viewer.tsx:77-104
+LP  persisted via ResizeNumberPreference in use-diagram-viewer-layout.ts
+FB  web-ui/src/components/diagram-panels/diagram-viewer-fallback.tsx
+CA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354
+DS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:343-353
+```

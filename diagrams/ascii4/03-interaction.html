@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interaction Pipeline</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1200 1900"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
+    @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">INTERACTION PIPELINE</text>
+    <text x="20" y="48" class="dim subhead">SceneInput, Navigation, Popups, Badges</text>
+  </g>
+
+  <!-- DiagramContentArea [DA] -->
+  <g data-reflow-group="content-area"
+     data-interactive="DA"
+     data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354"
+     data-category="module"
+     data-label="DiagramContentArea"
+     class="fade-section" style="animation-delay: 0.05s">
+
+    <rect x="20" y="70" width="1160" height="1810" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="32" y="92" class="blue heading"
+          data-tt="diagram-content-area.tsx:286 — DiagramContentArea (outer wrapper)">
+      DiagramContentArea [DA]
+    </text>
+    <text x="32" y="112" class="dim subhead">useDiagram(content) → Scene</text>
+  </g>
+
+  <!-- Arrow: useDiagram → DiagramScene -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.1s">
+    <line x1="200" y1="118" x2="200" y2="138" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="210" y="132" class="dim subhead">useDiagram(content) → Scene</text>
+  </g>
+
+  <!-- DiagramScene [DS] -->
+  <g data-reflow-group="diagram-scene"
+     data-interactive="DS"
+     data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269"
+     data-category="module"
+     data-label="DiagramScene"
+     class="fade-section" style="animation-delay: 0.15s">
+
+    <rect x="40" y="145" width="1120" height="1720" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="52" y="167" class="blue heading"
+          data-tt="diagram-content-area.tsx:28 — DiagramScene (inner, owns state)">
+      DiagramScene [DS]
+    </text>
+    <text x="52" y="187" class="dim subhead">state: popupStack[], userBadges[], contextMenu</text>
+
+    <!-- SceneInput [SI] -->
+    <g data-reflow-group="scene-input"
+       data-interactive="SI"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:48-357"
+       data-category="module"
+       data-label="SceneInput"
+       class="fade-section" style="animation-delay: 0.2s">
+
+      <rect x="60" y="200" width="1080" height="240" rx="4"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="72" y="222" class="blue heading"
+            data-tt="scene-input.tsx:48 — SceneInput (selection + tooltip + dispatch)">
+        SceneInput [SI]
+      </text>
+      <text x="72" y="242" class="dim subhead">state: selectedIds: Set&lt;string&gt;, dragPreviewIds</text>
+
+      <!-- Viewport [VP] -->
+      <g data-interactive="VP"
+         data-ref="web-ui/src/diagram/rendering/viewport.tsx:48-463"
+         data-category="module"
+         data-label="Viewport"
+         data-link="02-rendering.html#VP">
+        <rect x="80" y="258" width="1040" height="55" rx="3"
+              fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+        <text x="92" y="278" class="orange"
+              data-tt="viewport.tsx:48 — Viewport (pan/zoom, delegated)">
+          Viewport [VP]  → 02-rendering.txt
+        </text>
+        <text x="92" y="298" class="dim subhead">props: onSceneClick, onContextMenu, onSelectionDrag, onSelectionDragEnd, badges</text>
+      </g>
+
+      <!-- Tooltip [TT] -->
+      <g data-interactive="TT"
+         data-ref="web-ui/src/diagram/input/scene-input.tsx:59-118"
+         data-category="function"
+         data-label="Tooltip">
+        <rect x="80" y="325" width="500" height="100" rx="3"
+              fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+        <text x="92" y="345" class="violet heading"
+              data-tt="scene-input.tsx:59 — Tooltip system: mouseover/move/out + touch">
+          Tooltip [TT]
+        </text>
+        <text x="92" y="365" class="dim subhead">SVG mouseover → closest [data-tt] → show</text>
+        <text x="92" y="380" class="dim subhead">fixed div, z:100, clientX+14 / Y-10</text>
+        <text x="92" y="395" class="dim subhead">touch: pointerdown → show, tap away → hide</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Arrow: Viewport.onSceneClick → handleSceneClick -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.25s">
+    <line x1="600" y1="445" x2="600" y2="480" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="610" y="470" class="dim subhead">User click (via Viewport.onSceneClick)</text>
+  </g>
+
+  <!-- handleSceneClick [HC] -->
+  <g data-reflow-group="handle-scene-click"
+     data-interactive="HC"
+     data-ref="web-ui/src/diagram/input/scene-input.tsx:245-312"
+     data-category="function"
+     data-label="handleSceneClick"
+     class="fade-section" style="animation-delay: 0.3s">
+
+    <rect x="60" y="490" width="1080" height="210" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="72" y="512" class="orange heading"
+          data-tt="scene-input.tsx:245 — handleSceneClick: hit test → select → navigate">
+      handleSceneClick [HC]
+    </text>
+
+    <!-- hitTest [HT] -->
+    <g data-interactive="HT"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:347-358"
+       data-category="call"
+       data-label="hitTest"
+       data-link="02-rendering-svgscene-detail.html#HT">
+      <text x="80" y="540" class="orange"
+            data-tt="svg-scene.ts:347 — hitTest: elementFromPoint → id">
+        scene.hitTest(screenPoint) [HT]  → SvgScene detail
+      </text>
+    </g>
+
+    <text x="100" y="568" class="dim subhead">├── null → deselect all, fire onSelectionChange([])</text>
+    <text x="100" y="588" class="dim subhead">└── hit element:</text>
+    <text x="130" y="608" class="dim subhead">├── shift? → toggle in selectedIds</text>
+    <text x="130" y="628" class="dim subhead">└── no shift → clear all, select this</text>
+
+    <text x="160" y="658" class="white">└── fire onNavigate(interactive, domEvent)</text>
+  </g>
+
+  <!-- Arrow: handleSceneClick → handleNavigate -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.35s">
+    <line x1="600" y1="705" x2="600" y2="740" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="610" y="730" class="dim subhead">onNavigate(interactive, domEvent)</text>
+  </g>
+
+  <!-- handleNavigate [HN] — 4-way dispatch -->
+  <g data-reflow-group="handle-navigate"
+     data-interactive="HN"
+     data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161"
+     data-category="function"
+     data-label="handleNavigate"
+     data-link="04-types-and-data-model.html#ID"
+     class="fade-section" style="animation-delay: 0.4s">
+
+    <rect x="60" y="750" width="1080" height="230" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="72" y="772" class="orange heading"
+          data-tt="diagram-content-area.tsx:137 — handleNavigate: Alt/modal/link/fallthrough">
+      handleNavigate [HN]
+    </text>
+
+    <!-- Alt+click → fireCodeJump -->
+    <g data-interactive="FJ"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73"
+       data-category="function"
+       data-label="fireCodeJump"
+       data-link="01-architecture-and-data-flow.html#DN">
+      <rect x="80" y="790" width="240" height="170" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="92" y="810" class="blue heading"
+            data-tt="diagram-content-area.tsx:54 — fireCodeJump → TRPC navigate mutate">
+        Alt+click?
+      </text>
+      <text x="92" y="835" class="white">fireCodeJump [FJ]</text>
+      <text x="92" y="855" class="dim subhead">TRPC navigate.mutate</text>
+      <text x="92" y="875" class="dim subhead">{ root, filePath,</text>
+      <text x="92" y="890" class="dim subhead">  line, newTab }</text>
+      <text x="92" y="920" class="dim subhead">→ 01-architecture-</text>
+      <text x="92" y="935" class="dim subhead">  and-data-flow.txt</text>
+      <text x="92" y="950" class="dim subhead">  (navigate sequence)</text>
+    </g>
+
+    <!-- modal? → openPopup -->
+    <g data-interactive="OP"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107"
+       data-category="function"
+       data-label="openPopup"
+       data-modal="03-interaction-popup-detail.html">
+      <rect x="340" y="790" width="240" height="170" rx="3"
+            fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="352" y="810" class="violet heading"
+            data-tt="diagram-content-area.tsx:75 — openPopup → resolve path, fetch, push to stack">
+        modal?
+      </text>
+      <text x="352" y="835" class="white">openPopup [OP]</text>
+      <text x="352" y="855" class="dim subhead">resolveDiagramPath</text>
+      <text x="352" y="875" class="dim subhead">TRPC getContent.query</text>
+      <text x="352" y="895" class="dim subhead">push to popupStack</text>
+      <text x="352" y="925" class="dim subhead">see modal:</text>
+      <text x="352" y="940" class="dim subhead">03-interaction-popup-</text>
+      <text x="352" y="955" class="dim subhead">detail.txt</text>
+    </g>
+
+    <!-- link? → executeJump -->
+    <g data-interactive="EJ"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135"
+       data-category="function"
+       data-label="executeJump"
+       data-link="01-architecture-and-data-flow.html#UV">
+      <rect x="600" y="790" width="260" height="170" rx="3"
+            fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="612" y="810" class="green heading"
+            data-tt="diagram-content-area.tsx:109 — executeJump: same-diagram centerOn / cross-diagram">
+        link?
+      </text>
+      <text x="612" y="835" class="white">executeJump [EJ]</text>
+      <text x="612" y="855" class="dim subhead">same diagram?</text>
+      <text x="612" y="875" class="dim subhead"> → centerOn(target, animate)</text>
+      <text x="612" y="895" class="dim subhead">cross diagram?</text>
+      <text x="612" y="915" class="dim subhead"> → onRequestJump(path, elId)</text>
+      <text x="612" y="945" class="dim subhead">→ 01-architecture-and-</text>
+      <text x="612" y="955" class="dim subhead">  data-flow.txt (jump protocol)</text>
+    </g>
+
+    <!-- default → fireCodeJump -->
+    <g data-interactive="FJ-default"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73"
+       data-category="function"
+       data-label="fireCodeJump">
+      <rect x="880" y="790" width="240" height="170" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="892" y="810" class="blue heading">
+        default
+      </text>
+      <text x="892" y="835" class="white">fireCodeJump [FJ]</text>
+      <text x="892" y="855" class="dim subhead">(same as Alt)</text>
+    </g>
+  </g>
+
+  <!-- Arrow: openPopup → Popup Stack -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.45s">
+    <line x1="460" y1="985" x2="460" y2="1020" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="470" y="1010" class="dim subhead">push PopupEntry to popupStack</text>
+  </g>
+
+  <!-- Popup Stack [PS] -->
+  <g data-reflow-group="popup-stack"
+     data-interactive="PS"
+     data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:42"
+     data-category="data"
+     data-label="popupStack"
+     class="fade-section" style="animation-delay: 0.5s">
+
+    <rect x="60" y="1030" width="1080" height="330" rx="4"
+          fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="72" y="1052" class="violet heading"
+          data-tt="diagram-content-area.tsx:42 — popupStack state">
+      Popup Stack [PS]
+    </text>
+    <text x="72" y="1072" class="dim subhead">popupStack.map((entry, i) =></text>
+
+    <!-- PopupDiagramOverlay [PO] -->
+    <g data-interactive="PO"
+       data-ref="web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145"
+       data-category="module"
+       data-label="PopupDiagramOverlay">
+      <rect x="80" y="1085" width="1040" height="255" rx="3"
+            fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="92" y="1107" class="violet heading"
+            data-tt="popup-diagram-overlay.tsx:63 — PopupDiagramOverlay component">
+        PopupDiagramOverlay [PO]
+      </text>
+      <text x="92" y="1127" class="dim subhead">zIndex: 50 + i*2</text>
+      <text x="92" y="1147" class="dim subhead">onClose: slice stack at i</text>
+      <text x="92" y="1167" class="dim subhead">onNavigate: relay to parent</text>
+
+      <!-- Internals box -->
+      <rect x="500" y="1090" width="600" height="240" rx="3"
+            fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
+      <text x="512" y="1112" class="white heading">PopupDiagramOverlay internals:</text>
+      <text x="512" y="1135" class="dim subhead">backdrop (blur, click to close) + ESC key</text>
+      <text x="512" y="1155" class="dim subhead">useDiagram(entry.content) → popup Scene</text>
+      <text x="512" y="1175" class="dim subhead">SceneInput (nested, fully interactive, can open more popups)</text>
+      <text x="512" y="1195" class="dim subhead">layout: min 200x150, max 85% container, 24px offset</text>
+      <text x="512" y="1215" class="dim subhead">onNavigate relayed back → handleNavigate (recursive!)</text>
+    </g>
+  </g>
+
+  <!-- Arrow: PO.onNavigate → handleNavigate (recursive) -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.55s">
+    <line x1="1050" y1="1170" x2="1150" y2="1170" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="1150" y1="1170" x2="1150" y2="765" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="1150" y1="765" x2="1145" y2="765" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="1155" y="970" class="dim subhead" transform="rotate(90, 1155, 970)">recursive</text>
+  </g>
+
+  <!-- Lasso Selection [SD/SE] -->
+  <g data-reflow-group="lasso-selection" class="fade-section" style="animation-delay: 0.6s">
+    <rect x="60" y="1390" width="530" height="260" rx="4"
+          fill="#24292E" stroke="#3FB950" stroke-width="1"/>
+    <text x="72" y="1412" class="green heading">Lasso Selection</text>
+
+    <!-- handleSelectionDrag [SD] -->
+    <g data-interactive="SD"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:149-173"
+       data-category="function"
+       data-label="handleSelectionDrag">
+      <text x="80" y="1438" class="green"
+            data-tt="scene-input.tsx:149 — handleSelectionDrag: hitTestRect preview">
+        Ctrl+drag (or selectMode touch)
+      </text>
+      <text x="80" y="1458" class="white">handleSelectionDrag [SD]</text>
+      <text x="80" y="1478" class="dim subhead">scene.hitTestRect(sceneRect, "intersect")</text>
+      <text x="80" y="1498" class="dim subhead">filter to .interactive only</text>
+      <text x="80" y="1518" class="dim subhead">toggle .selected CSS class</text>
+      <text x="80" y="1538" class="dim subhead">show dragPreviewPaths beside lasso</text>
+    </g>
+
+    <!-- Arrow: SD → SE -->
+    <g data-arrow>
+      <line x1="300" y1="1548" x2="300" y2="1568" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+      <text x="310" y="1562" class="dim subhead">pointer up</text>
+    </g>
+
+    <!-- handleSelectionDragEnd [SE] -->
+    <g data-interactive="SE"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:186-243"
+       data-category="function"
+       data-label="handleSelectionDragEnd">
+      <text x="80" y="1588" class="white"
+            data-tt="scene-input.tsx:186 — handleSelectionDragEnd: finalize + clipboard">
+        handleSelectionDragEnd [SE]
+      </text>
+      <text x="80" y="1608" class="dim subhead">final hitTestRect → setSelectedIds</text>
+      <text x="80" y="1628" class="dim subhead">refs → clipboard.writeText → toast "Copied N ref(s)"</text>
+      <text x="80" y="1648" class="dim subhead">fire onSelectionChange(interactiveData[])</text>
+    </g>
+  </g>
+
+  <!-- Badges + Context Menu [CM] -->
+  <g data-reflow-group="badges-context" class="fade-section" style="animation-delay: 0.65s">
+    <rect x="610" y="1390" width="530" height="260" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="622" y="1412" class="orange heading">Badges + Context Menu</text>
+
+    <!-- Auto badges [AB] -->
+    <g data-interactive="AB"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:164-191"
+       data-category="data"
+       data-label="autoBadges"
+       data-link="02-rendering.html#OL">
+      <text x="622" y="1438" class="orange"
+            data-tt="diagram-content-area.tsx:164 — Auto badge construction (modal + link)">
+        Auto badges (useMemo) [AB]:
+      </text>
+      <text x="632" y="1458" class="dim subhead">el.modal → ⬡ purple #A371F7 → openPopup</text>
+      <text x="632" y="1478" class="dim subhead">el.link  → → gold #D4A72C → executeJump</text>
+      <text x="632" y="1498" class="dim subhead">anchor: element top-right corner</text>
+    </g>
+
+    <!-- User badges [UB] -->
+    <g data-interactive="UB"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:203-221"
+       data-category="data"
+       data-label="userBadges">
+      <text x="622" y="1528" class="orange"
+            data-tt="diagram-content-area.tsx:203 — User badge creation via context menu">
+        User badges (context menu) [UB]:
+      </text>
+      <text x="632" y="1548" class="dim subhead">right-click → menu (z:200) → "Add Badge"</text>
+      <text x="632" y="1568" class="dim subhead">green #3FB950, scene-anchored</text>
+      <text x="632" y="1588" class="dim subhead">click pin → remove</text>
+    </g>
+
+    <!-- Context Menu [CM] -->
+    <g data-interactive="CM"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:195-229"
+       data-category="function"
+       data-label="contextMenu">
+      <text x="622" y="1618" class="white"
+            data-tt="diagram-content-area.tsx:195 — Context menu state + add badge handler">
+        allBadges = [...auto, ...user]
+      </text>
+      <text x="632" y="1638" class="dim subhead">→ passed to SceneInput → Viewport → OverLayer</text>
+    </g>
+  </g>
+
+  <!-- Arrow: badges → Viewport (OverLayer) -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.7s">
+    <line x1="870" y1="1498" x2="1060" y2="1498" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="1060" y1="1498" x2="1060" y2="305" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="1060" y1="305" x2="1125" y2="305" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="1065" y="900" class="dim subhead" transform="rotate(90, 1065, 900)">badges → OverLayer</text>
+  </g>
+
+  <!-- Arrow: executeJump same → viewport.centerOn -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.75s">
+    <line x1="730" y1="965" x2="730" y2="975" stroke="#3FB950" stroke-width="1"/>
+    <line x1="730" y1="975" x2="50" y2="975" stroke="#3FB950" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="50" y1="975" x2="50" y2="280" stroke="#3FB950" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="50" y1="280" x2="75" y2="280" stroke="#3FB950" stroke-width="1" marker-end="url(#a)"/>
+    <text x="30" y="630" class="dim subhead" transform="rotate(-90, 30, 630)">same-diagram → centerOn</text>
+  </g>
+
+</svg>
+</body>
+</html>

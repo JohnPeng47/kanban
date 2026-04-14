@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SvgScene Implementation Detail</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 1320"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
+    @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">SvgScene IMPLEMENTATION DETAIL</text>
+    <text x="20" y="48" class="dim subhead">Modal expansion of 02-rendering.txt    ** 04-types-and-data-model (composeTransforms, transformRect, rectsIntersect)</text>
+  </g>
+
+  <!-- ═══ SvgScene outer box ═══ -->
+  <g data-reflow-group="svg-scene"
+     data-interactive="SS"
+     data-ref="web-ui/src/diagram/rendering/svg-scene.ts:52-521"
+     data-category="module"
+     data-label="SvgScene"
+     data-link="02-rendering.html#SS"
+     class="fade-section" style="animation-delay: 0.05s">
+
+    <rect x="20" y="66" width="1060" height="1240" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
+    <text x="32" y="90" class="blue heading"
+          data-tt="svg-scene.ts:52 — SvgScene class (parent diagram)">
+      SvgScene [SS]
+    </text>
+
+    <!-- ═══ Private State ═══ -->
+    <rect x="44" y="106" width="1016" height="120" rx="3"
+          fill="#2D3339" stroke="#444C56" stroke-width="0.6"/>
+    <text x="56" y="126" class="white">Private State</text>
+    <line x1="56" y1="132" x2="280" y2="132" stroke="#444C56" stroke-width="0.5"/>
+    <text x="56" y="150" class="dim subhead">svg:              SVGSVGElement                     &lt;- the root &lt;svg&gt;</text>
+    <text x="56" y="166" class="dim subhead">elements:         Map&lt;string, SceneElement&gt;         &lt;- id → node (full scene graph)</text>
+    <text x="56" y="182" class="dim subhead">domElements:      Map&lt;string, SVGGElement&gt;          &lt;- id → DOM &lt;g&gt; backlink</text>
+    <text x="56" y="198" class="dim subhead">visualRects:      Map&lt;string, SVGRectElement&gt;       &lt;- id → first child &lt;rect&gt;</text>
+    <text x="56" y="214" class="dim subhead">worldBoundsCache: Map&lt;string, Rect&gt;                 &lt;- lazy, invalidated on transform change</text>
+
+    <!-- ═══ buildElementTree ═══ -->
+    <g data-reflow-group="build-tree"
+       data-interactive="BT"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:126-206"
+       data-category="function"
+       data-label="buildElementTree"
+       class="fade-section" style="animation-delay: 0.1s">
+
+      <line x1="44" y1="246" x2="1048" y2="246" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
+      <text x="44" y="266" class="orange heading">buildElementTree [BT]</text>
+
+      <text x="56" y="290" class="white">1. Query: svg.querySelectorAll("[data-reflow-group], [data-interactive], [data-arrow]")</text>
+      <text x="56" y="310" class="white">2. Create root SceneElement (id="root", bounds = svg width x height)</text>
+      <text x="56" y="334" class="white">3. For each tagged &lt;g&gt;:</text>
+
+      <!-- resolveElementId -->
+      <g data-interactive="RI"
+         data-ref="web-ui/src/diagram/rendering/svg-scene.ts:18-29"
+         data-category="function"
+         data-label="resolveElementId">
+        <rect x="72" y="346" width="960" height="130" rx="3"
+              fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+        <text x="84" y="366" class="orange"
+              data-tt="svg-scene.ts:18 — resolveElementId: data-* → id">
+          resolveElementId(g) [RI]:
+        </text>
+        <text x="96" y="386" class="dim subhead">data-reflow-group → use its value</text>
+        <text x="96" y="400" class="dim subhead">data-interactive  → use its value</text>
+        <text x="96" y="414" class="dim subhead">data-arrow        → "arrow-{counter++}"</text>
+        <text x="84" y="438" class="dim subhead">readMetadata(g) → all data-* attrs as Record&lt;string,string&gt;</text>
+        <text x="84" y="454" class="dim subhead">findVisualRect(g) → first child &lt;rect&gt; or null</text>
+        <text x="84" y="470" class="dim subhead">Parent resolution: walk DOM ancestors until another tagged &lt;g&gt; → parentId, or svg → "root"</text>
+      </g>
+
+      <!-- parseInteractiveData -->
+      <g data-interactive="PI"
+         data-ref="web-ui/src/diagram/types.ts:143-161"
+         data-category="function"
+         data-label="parseInteractiveData"
+         data-link="04-types-and-data-model.html#ID">
+        <text x="84" y="498" class="violet"
+              data-tt="types.ts:143 — parseInteractiveData: metadata → InteractiveData">
+          interactive = parseInteractiveData(id, metadata) [PI]
+        </text>
+        <text x="84" y="516" class="dim subhead">reflow = has reflow-group or arrow? → { originalBounds }</text>
+      </g>
+    </g>
+
+    <!-- ═══ Bounds Computation ═══ -->
+    <g data-reflow-group="bounds-computation" class="fade-section" style="animation-delay: 0.15s">
+      <line x1="44" y1="540" x2="1048" y2="540" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
+      <text x="44" y="560" class="orange heading">Bounds Computation</text>
+
+      <text x="56" y="584" class="dim subhead">getLocalBounds(id) → element.localBounds  (from getBBox at construction)</text>
+
+      <!-- getWorldBounds -->
+      <g data-interactive="WB"
+         data-ref="web-ui/src/diagram/rendering/svg-scene.ts:238-249"
+         data-category="function"
+         data-label="getWorldBounds">
+        <text x="56" y="608" class="white"
+              data-tt="svg-scene.ts:238 — getWorldBounds: cached ancestor transform composition">
+          getWorldBounds(id) [WB]:
+        </text>
+        <text x="72" y="628" class="dim subhead">cached? → return</text>
+        <text x="72" y="644" class="dim subhead">else: getAncestorTransform(id) → compose parent chain (skip root)</text>
+        <text x="72" y="660" class="dim subhead">      transformRect(localBounds, ancestorTransform) → cache result</text>
+      </g>
+
+      <!-- composeTransforms -->
+      <g data-interactive="CT"
+         data-ref="web-ui/src/diagram/types.ts:203-210"
+         data-category="function"
+         data-label="composeTransforms"
+         data-link="04-types-and-data-model.html#CT">
+        <text x="56" y="688" class="violet"
+              data-tt="types.ts:203 — composeTransforms(parent, child)">
+          composeTransforms(parent, child) [CT]:
+        </text>
+        <text x="72" y="706" class="dim subhead">tx = parent.tx + child.tx * parent.scale</text>
+        <text x="72" y="722" class="dim subhead">ty = parent.ty + child.ty * parent.scale</text>
+        <text x="72" y="738" class="dim subhead">scale = parent.scale * child.scale</text>
+      </g>
+    </g>
+
+    <!-- ═══ Transforms ═══ -->
+    <g data-reflow-group="transforms" class="fade-section" style="animation-delay: 0.2s">
+      <line x1="44" y1="758" x2="1048" y2="758" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
+      <text x="44" y="778" class="orange heading">Transforms</text>
+
+      <!-- setTransform -->
+      <g data-interactive="ST"
+         data-ref="web-ui/src/diagram/rendering/svg-scene.ts:271-286"
+         data-category="function"
+         data-label="setTransform"
+         data-link="02-rendering.html#VP">
+        <text x="56" y="802" class="white"
+              data-tt="svg-scene.ts:271 — setTransform: update + CSS + cache invalidation → root transform managed by Viewport">
+          setTransform(id, t) [ST]:
+        </text>
+        <text x="72" y="822" class="dim subhead">element.transform = t</text>
+        <text x="72" y="838" class="dim subhead">invalidateWorldBoundsCache(id) &lt;- recursive: clears id + all descendants</text>
+        <text x="72" y="854" class="dim subhead">if id != root:</text>
+        <text x="88" y="870" class="dim subhead">domElement.style.transform = translate(tx,ty)  &lt;- CSS displacement</text>
+        <text x="72" y="888" class="dim subhead">(root transform is managed by Viewport's transformDiv)</text>
+      </g>
+
+      <text x="56" y="914" class="dim subhead">getWorldTransform(id): walk parent chain → collect all transforms → composeTransforms in order</text>
+    </g>
+
+    <!-- ═══ Hit Testing ═══ -->
+    <g data-reflow-group="hit-testing" class="fade-section" style="animation-delay: 0.25s">
+      <line x1="44" y1="934" x2="1048" y2="934" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
+      <text x="44" y="954" class="orange heading">Hit Testing</text>
+
+      <!-- hitTest -->
+      <g data-interactive="HT"
+         data-ref="web-ui/src/diagram/rendering/svg-scene.ts:347-358"
+         data-category="function"
+         data-label="hitTest"
+         data-link="03-interaction.html#HC">
+        <text x="56" y="978" class="white"
+              data-tt="svg-scene.ts:347 — hitTest called from handleSceneClick">
+          hitTest(screenPt) [HT]:
+        </text>
+        <text x="72" y="998" class="dim subhead">document.elementFromPoint(x, y)</text>
+        <text x="72" y="1014" class="dim subhead">├─ not in our svg? → null</text>
+        <text x="72" y="1030" class="dim subhead">└─ .closest("[data-reflow-group], [data-interactive], [data-arrow]")</text>
+        <text x="88" y="1046" class="dim subhead">match against domElements map → return id</text>
+      </g>
+
+      <!-- hitTestRect -->
+      <g data-interactive="HR"
+         data-ref="web-ui/src/diagram/rendering/svg-scene.ts:360-375"
+         data-category="function"
+         data-label="hitTestRect"
+         data-link="03-interaction.html#SD">
+        <text x="56" y="1074" class="white"
+              data-tt="svg-scene.ts:360 — hitTestRect: intersect/contain against interactives">
+          hitTestRect(sceneRect, mode) [HR]:
+        </text>
+        <text x="72" y="1094" class="dim subhead">for each element with .interactive:</text>
+        <text x="88" y="1110" class="dim subhead">getWorldBounds(id) → test intersection/containment</text>
+        <text x="88" y="1126" class="dim subhead">mode "intersect": rectsIntersect(sceneRect, worldBounds)</text>
+        <text x="88" y="1142" class="dim subhead">mode "contain":   rectContains(sceneRect, worldBounds)</text>
+      </g>
+    </g>
+
+    <!-- ═══ Dynamic Mutations ═══ -->
+    <g data-reflow-group="dynamic-mutations" class="fade-section" style="animation-delay: 0.3s">
+      <line x1="44" y1="1162" x2="1048" y2="1162" stroke="#D29922" stroke-width="1.2" stroke-dasharray="6,3"/>
+      <text x="44" y="1182" class="orange heading">Dynamic Mutations</text>
+
+      <text x="56" y="1206" class="dim subhead">addElement(id, domNode, parentId)    → create SceneElement, link to parent</text>
+      <text x="56" y="1224" class="dim subhead">removeElement(id)                    → recursive: remove descendants, unlink from parent</text>
+      <text x="56" y="1242" class="dim subhead">addSubtree(rootDomNode, parentId)    → querySelectorAll in subtree, resolve parents, batch add</text>
+      <text x="56" y="1260" class="dim subhead">growVisualBounds(id, dw, dh)         → resize SVGRectElement + update localBounds</text>
+    </g>
+  </g>
+
+  <!-- ═══ INTERNAL ARROWS ═══ -->
+
+  <!-- querySelectorAll → resolveElementId -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.35s">
+    <line x1="420" y1="292" x2="420" y2="346" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="430" y="322" class="dim subhead">per &lt;g&gt;</text>
+  </g>
+
+  <!-- resolveId → parseInteractive -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.4s">
+    <line x1="200" y1="476" x2="200" y2="490" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="210" y="486" class="dim subhead">if data-interactive</text>
+  </g>
+
+  <!-- getWorldBounds cache miss → composeTransforms -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.45s">
+    <line x1="200" y1="662" x2="200" y2="680" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="210" y="674" class="dim subhead">cache miss → compose</text>
+  </g>
+
+  <!-- setTransform → invalidate worldBoundsCache -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.5s">
+    <line x1="800" y1="840" x2="800" y2="628" stroke="#F85149" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
+    <text x="810" y="740" class="dim subhead">invalidate cache (recursive)</text>
+  </g>
+
+  <!-- hitTestRect → getWorldBounds -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.55s">
+    <line x1="900" y1="1110" x2="900" y2="660" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
+    <text x="910" y="890" class="dim subhead">calls getWorldBounds</text>
+  </g>
+
+</svg>
+</body>
+</html>

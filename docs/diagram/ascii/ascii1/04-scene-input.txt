@@ -1,0 +1,83 @@
+```diagram
+SCENE INPUT — INTERACTION LAYER
+
+═══ Component Stack & Event Routing ═════════════════════════════════════════════════════════════════════
+
+ SceneInput [SI] (forwardRef → ViewportHandle)                  Event Routing
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │                                      │
+│  Tooltip div (fixed, z:100, no pointer)     [TT] │           │  Viewport fires:          SceneInput │
+│                                                  │           │                           handles:   │
+│  Viewport  ** 02-vp                              │           │  onSceneClick ────────→ handleScene  │
+│  ┌────────────────────────────────────────┐      │           │    {scenePt, screenPt,    Click [CK] │
+│  │ Transform div + SVG                    │      │           │     domEvent}             ↓          │
+│  │ OverLayer (badges)                     │      │           │                      hitTest → select│
+│  │ Selection lasso                        │      │           │                      → onNavigate    │
+│  └────────────────────────────────────────┘      │           │                      ** 02-content   │
+│                                                  │           │                                      │
+│  Tooltip CSS (<style>)                      [TC] │           │  onSelectionDrag ──→ handleSelection │
+│                                                  │           │    (sceneRect)        Drag      [SD] │
+│  Props:                                          │           │                      hitTestRect     │
+│    scene, onNavigate, onSelectionChange,         │           │                      preview toggle  │
+│    onContextMenu, badges, children               │           │                                      │
+│                                              SI  │           │  onSelectionDragEnd → handleSelection│
+└──────────────────────────────────────────────────┘           │    (sceneRect)        DragEnd   [SE] │
+                                                               │                      final select   │
+                                                               │                      clipboard copy │
+                                                               │                      toast          │
+                                                               │                                      │
+                                                               │  onContextMenu ──→ forwarded    [CM] │
+                                                               │                                  ER  │
+                                                               └──────────────────────────────────────┘
+
+═══ Tooltip System & Selection State ════════════════════════════════════════════════════════════════════
+
+ Tooltip [TP]                                                   Selection State Machine
+┌──────────────────────────────────────────────────┐           ┌──────────────────────────────────────┐
+│                                                  │           │  State:                              │
+│  data-tt="path:line — description"               │           │    selectedIds: Set<string>     [SS] │
+│       │                                          │           │    dragPreviewIds: Set<string>  [DP] │
+│       ├─ mouseover → find [data-tt] ancestor     │           │    visual: .selected CSS class  [SV] │
+│       │              parse text                  │           │                                      │
+│       │              show at clientX+14, Y-10    │           │  Click:                              │
+│       │                                     [MO] │           │  ┌────────────────┬─────────────────┐│
+│       ├─ mousemove → reposition             [MM] │           │  │ click interact │ clear→select it ││
+│       │                                          │           │  │ shift+click    │ toggle in/out   ││
+│       ├─ mouseout  → hide                   [MX] │           │  │ click empty    │ deselect all    ││
+│       │                                          │           │  └────────────────┴────────────[CL]─┘│
+│       └─ pointerdown(touch) → show          [PT] │           │                                      │
+│            tap elsewhere → dismiss               │           │  Lasso:                              │
+│                                                  │           │    during: hitTestRect → preview[LP] │
+│  Tooltip content:                           [TX] │           │    paths shown beside lasso     [PP] │
+│  ┌──────────────────────────────────────┐        │           │    end: final hitTestRect            │
+│  │ path:line          blue .tt-file     │        │           │         refs → clipboard.write  [CB] │
+│  │ description        gray .tt-hint    │        │           │         toast "Copied N ref(s)"      │
+│  │ click to jump      orange .tt-action │        │           │         onSelectionChange       [SC] │
+│  └──────────────────────────────────────┘        │           │                                      │
+│                                              TP  │           │                                  SM  │
+└──────────────────────────────────────────────────┘           └──────────────────────────────────────┘
+```
+
+```code-refs
+SI  web-ui/src/diagram/input/scene-input.tsx:48-357
+TT  web-ui/src/diagram/input/scene-input.tsx:316-336
+TC  web-ui/src/diagram/input/scene-input.tsx:349-354
+TP  web-ui/src/diagram/input/scene-input.tsx:59-118
+MO  web-ui/src/diagram/input/scene-input.tsx:75-82
+MM  web-ui/src/diagram/input/scene-input.tsx:84-87
+MX  web-ui/src/diagram/input/scene-input.tsx:89-93
+PT  web-ui/src/diagram/input/scene-input.tsx:96-106
+TX  showTooltip helper — scene-input.tsx:64-73
+CK  web-ui/src/diagram/input/scene-input.tsx:245-312
+SD  web-ui/src/diagram/input/scene-input.tsx:149-173
+SE  web-ui/src/diagram/input/scene-input.tsx:186-243
+CM  forwarded via props.onContextMenu
+SS  web-ui/src/diagram/input/scene-input.tsx:52
+DP  web-ui/src/diagram/input/scene-input.tsx:147
+SV  web-ui/src/diagram/input/scene-input.tsx:120-129
+CL  click selection logic — scene-input.tsx:269-304
+LP  web-ui/src/diagram/input/scene-input.tsx:149-173
+PP  web-ui/src/diagram/input/scene-input.tsx:175-184
+CB  web-ui/src/diagram/input/scene-input.tsx:214-240
+SC  web-ui/src/diagram/input/scene-input.tsx:212
+```

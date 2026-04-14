@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SceneInput — Interaction Layer</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 900"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">SCENE INPUT — INTERACTION LAYER</text>
+    <text x="20" y="48" class="dim subhead">Hit testing, selection management, tooltips, navigation dispatch</text>
+  </g>
+
+  <!-- ═══ Row 1: Component Stack + Event Routing ═══ -->
+  <g data-reflow-group="section-1" class="fade-section" style="animation-delay: 0.05s">
+    <text x="20" y="78" class="white heading">Component Stack &amp; Event Routing</text>
+  </g>
+
+  <!-- Left: Component stack -->
+  <g data-reflow-group="component-stack"
+     data-interactive="scene-input"
+     data-ref="web-ui/src/diagram/input/scene-input.tsx:48-357"
+     data-category="module"
+     data-label="SceneInput"
+     class="fade-section" style="animation-delay: 0.1s">
+    <rect x="20" y="90" width="520" height="240" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="112" class="blue heading" data-tt="scene-input.tsx:48 — interaction layer wrapping Viewport">SceneInput (forwardRef → ViewportHandle)</text>
+
+    <g data-interactive="tooltip-div"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:316-336"
+       data-category="concept"
+       data-label="tooltip div">
+      <text x="40" y="140" data-tt="scene-input.tsx:316 — fixed position, z:100, pointer-events:none">Tooltip div (fixed, z:100, no pointer events)</text>
+    </g>
+
+    <g data-interactive="viewport-ref"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:48-463"
+       data-category="module"
+       data-label="Viewport"
+       data-link="02-viewport-and-overlay.html">
+      <rect x="40" y="155" width="480" height="60" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="175" class="blue" data-tt="viewport.tsx:48 — pan/zoom container">Viewport (pan/zoom/pointer events)</text>
+      <text x="60" y="195" class="dim subhead">Transform div + SVG  ·  OverLayer (badges)  ·  Selection lasso</text>
+    </g>
+
+    <g data-interactive="tooltip-css"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:349-354"
+       data-category="concept"
+       data-label="tooltip CSS">
+      <text x="40" y="240" class="dim subhead" data-tt="scene-input.tsx:349 — .tt-file blue, .tt-hint gray, .tt-action orange">Tooltip CSS — .tt-file blue, .tt-hint gray, .tt-action orange</text>
+    </g>
+
+    <text x="40" y="270" class="dim subhead">Props: scene, onNavigate, onSelectionChange, onContextMenu, badges</text>
+  </g>
+
+  <!-- Right: Event routing -->
+  <g data-reflow-group="event-routing" class="fade-section" style="animation-delay: 0.1s">
+    <rect x="560" y="90" width="520" height="240" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="572" y="112" class="orange heading">Event Routing (Viewport → SceneInput)</text>
+
+    <g data-interactive="handle-scene-click"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:245-312"
+       data-category="function"
+       data-label="handleSceneClick">
+      <rect x="580" y="125" width="480" height="40" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="143" class="orange" data-tt="scene-input.tsx:245 — hitTest → selection update → onNavigate">onSceneClick → handleSceneClick</text>
+      <text x="600" y="158" class="dim subhead">hitTest(screenPt) → select → onNavigate</text>
+    </g>
+
+    <g data-interactive="handle-selection-drag"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:149-173"
+       data-category="function"
+       data-label="handleSelectionDrag">
+      <rect x="580" y="180" width="480" height="35" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="200" class="orange" data-tt="scene-input.tsx:149 — hitTestRect + toggle .selected preview">onSelectionDrag → handleSelectionDrag (preview)</text>
+    </g>
+
+    <g data-interactive="handle-selection-end"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:186-243"
+       data-category="function"
+       data-label="handleSelectionDragEnd">
+      <rect x="580" y="230" width="480" height="45" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="592" y="248" class="orange" data-tt="scene-input.tsx:186 — final select + clipboard copy + toast">onSelectionDragEnd → handleSelectionDragEnd</text>
+      <text x="600" y="265" class="dim subhead">final hitTestRect → selectedIds → clipboard → toast</text>
+    </g>
+
+    <text x="580" y="300" class="dim subhead">onContextMenu → forwarded to consumer</text>
+  </g>
+
+  <!-- ═══ Row 2: Tooltip + Selection State ═══ -->
+  <g data-reflow-group="section-2" class="fade-section" style="animation-delay: 0.15s">
+    <text x="20" y="360" class="white heading">Tooltip System &amp; Selection State</text>
+  </g>
+
+  <!-- Left: Tooltip -->
+  <g data-reflow-group="tooltip-system"
+     data-interactive="tooltip-effect"
+     data-ref="web-ui/src/diagram/input/scene-input.tsx:59-118"
+     data-category="function"
+     data-label="tooltip effect"
+     class="fade-section" style="animation-delay: 0.2s">
+    <rect x="20" y="375" width="520" height="260" rx="4" fill="#24292E" stroke="#A371F7" stroke-width="1"/>
+    <text x="32" y="397" class="violet heading" data-tt="scene-input.tsx:59 — mouseover/move/out + touch tap tooltips">Tooltip System (data-tt elements)</text>
+
+    <g data-interactive="tooltip-mouseover"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:75-82"
+       data-category="flow"
+       data-label="mouseover">
+      <text x="40" y="425" data-tt="scene-input.tsx:75 — find [data-tt] ancestor, parse, show near cursor">mouseover → find [data-tt] ancestor → show at clientX+14, Y-10</text>
+    </g>
+    <g data-interactive="tooltip-mousemove"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:84-87"
+       data-category="flow"
+       data-label="mousemove">
+      <text x="40" y="450" data-tt="scene-input.tsx:84 — reposition tooltip">mousemove → reposition</text>
+    </g>
+    <g data-interactive="tooltip-mouseout"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:89-93"
+       data-category="flow"
+       data-label="mouseout">
+      <text x="40" y="475" data-tt="scene-input.tsx:89 — hide tooltip">mouseout → hide</text>
+    </g>
+    <g data-interactive="tooltip-touch"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:96-106"
+       data-category="flow"
+       data-label="touch tooltip">
+      <text x="40" y="500" data-tt="scene-input.tsx:96 — pointerdown(touch) → show, tap elsewhere → dismiss">pointerdown(touch) → show  ·  tap elsewhere → dismiss</text>
+    </g>
+
+    <g data-interactive="show-tooltip"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:64-73"
+       data-category="function"
+       data-label="showTooltip">
+      <rect x="40" y="520" width="480" height="55" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+      <text x="52" y="538" class="violet" data-tt="scene-input.tsx:64 — parse data-tt, format HTML, position">Tooltip content:</text>
+      <text x="60" y="555" class="blue subhead">path:line</text>
+      <text x="160" y="555" class="dim subhead">description</text>
+      <text x="300" y="555" class="orange subhead">click to jump to code</text>
+    </g>
+  </g>
+
+  <!-- Right: Selection State -->
+  <g data-reflow-group="selection-state" class="fade-section" style="animation-delay: 0.2s">
+    <rect x="560" y="375" width="520" height="260" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1"/>
+    <text x="572" y="397" class="green heading">Selection State Machine</text>
+
+    <g data-interactive="selected-ids"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:52"
+       data-category="data"
+       data-label="selectedIds">
+      <text x="580" y="425" class="white" data-tt="scene-input.tsx:52 — React state tracking selected elements">selectedIds: Set&lt;string&gt;</text>
+    </g>
+    <g data-interactive="drag-preview-ids"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:147"
+       data-category="data"
+       data-label="dragPreviewIds">
+      <text x="580" y="445" class="white" data-tt="scene-input.tsx:147 — elements highlighted during lasso">dragPreviewIds: Set&lt;string&gt;</text>
+    </g>
+    <g data-interactive="selection-visual"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:120-129"
+       data-category="function"
+       data-label="applySelectionVisual">
+      <text x="580" y="465" class="white" data-tt="scene-input.tsx:120 — toggle .selected CSS class on DOM">visual: .selected CSS class on DOM &lt;g&gt;</text>
+    </g>
+
+    <g data-interactive="click-selection"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:269-304"
+       data-category="flow"
+       data-label="click selection">
+      <rect x="580" y="480" width="480" height="60" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="592" y="498" class="green" data-tt="scene-input.tsx:269 — click/shift-click/empty click logic">Click selection:</text>
+      <text x="600" y="515" class="dim subhead">click interactive → clear prev, select it</text>
+      <text x="600" y="530" class="dim subhead">shift+click → toggle  ·  click empty → deselect all</text>
+    </g>
+
+    <g data-interactive="lasso-preview"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:149-173"
+       data-category="flow"
+       data-label="lasso preview">
+      <rect x="580" y="555" width="480" height="60" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+      <text x="592" y="573" class="green" data-tt="scene-input.tsx:149 — lasso drag preview + clipboard copy">Lasso selection:</text>
+      <text x="600" y="590" class="dim subhead">during: hitTestRect → preview toggle · paths beside lasso</text>
+      <text x="600" y="605" class="dim subhead">end: final select → clipboard.write(refs) → toast</text>
+    </g>
+  </g>
+
+</svg>
+</body>
+</html>

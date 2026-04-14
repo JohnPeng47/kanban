@@ -1,0 +1,201 @@
+```diagram
+INTERACTION PIPELINE — SceneInput, Navigation, Popups, Badges
+=============================================================
+** 02-rendering.txt                    (Viewport, Scene, OverLayer)
+** 01-architecture-and-data-flow.txt   (TRPC calls, jump protocol)
+** 04-types-and-data-model.txt         (InteractiveData, DiagramModal, DiagramLink)
+
+
+  ┌─ DiagramContentArea [DA] ──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                                                                                                                    │
+  │  useDiagram(content) → Scene                                                                                                       │
+  │       │                                                                                                                            │
+  │       ▼                                                                                                                            │
+  │  ┌─ DiagramScene [DS] ────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+  │  │                                                                                                                                │ │
+  │  │  state: popupStack[], userBadges[], contextMenu                                                                                │ │
+  │  │                                                                                                                                │ │
+  │  │  ┌─ SceneInput [SI] ──────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ │
+  │  │  │                                                                                                                            ││ │
+  │  │  │  state: selectedIds: Set<string>, dragPreviewIds                                                                           ││ │
+  │  │  │                                                                                                                            ││ │
+  │  │  │  ┌─ Viewport [VP] ** 02-rendering.txt ────────────────────────────────────────────────────────────────────────────┐ ││ │
+  │  │  │  │  props: onSceneClick, onContextMenu, onSelectionDrag, onSelectionDragEnd, badges                                      │ ││ │
+  │  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ ││ │
+  │  │  │                                                                                                                            ││ │
+  │  │  │  ┌─ Tooltip [TT] ────────────────────────────────┐                                                                        ││ │
+  │  │  │  │  SVG mouseover → closest [data-tt] → show     │                                                                        ││ │
+  │  │  │  │  fixed div, z:100, clientX+14/Y-10            │                                                                        ││ │
+  │  │  │  │  touch: pointerdown → show, tap away → hide   │                                                                        ││ │
+  │  │  │  └────────────────────────────────────────────────┘                                                                    SI  ││ │
+  │  │  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │
+  │  │                                                                                                                                │ │
+  │  │                           ┌──── User click lands here (via Viewport.onSceneClick) ────┐                                        │ │
+  │  │                           │                                                           │                                        │ │
+  │  │                           ▼                                                           │                                        │ │
+  │  │  ┌─ handleSceneClick [HC] ──────────────────────────────────────┐                     │                                        │ │
+  │  │  │                                                              │                     │                                        │ │
+  │  │  │  scene.hitTest(screenPoint) [HT]  ** 02-rendering-svgscene-detail.txt                     │                                        │ │
+  │  │  │       │                                                      │                     │                                        │ │
+  │  │  │       ├── null → deselect all, fire onSelectionChange([])    │                     │                                        │ │
+  │  │  │       │                                                      │                     │                                        │ │
+  │  │  │       └── hit element:                                       │                     │                                        │ │
+  │  │  │            ├── shift? → toggle in selectedIds                │                     │                                        │ │
+  │  │  │            └── no shift → clear all, select this             │                     │                                        │ │
+  │  │  │                 │                                            │                     │                                        │ │
+  │  │  │                 └── fire onNavigate(interactive, domEvent) ──┼─────────────────────┘                                        │ │
+  │  │  └──────────────────────────────────────────────────────────────┘                                                              │ │
+  │  │                           │                                                                                                    │ │
+  │  │                           ▼                                                                                                    │ │
+  │  │  ┌─ handleNavigate [HN] ───────────────────────────────────────────────────────────────────────────────────────────────────┐   │ │
+  │  │  │                                                                                                                         │   │ │
+  │  │  │   ┌─ Alt+click? ──────────┐   ┌─ modal? ──────────────────┐   ┌─ link? ──────────────────────┐   ┌─ default ──────────┐│   │ │
+  │  │  │   │                        │   │                            │   │                              │   │                    ││   │ │
+  │  │  │   │  fireCodeJump [FJ]     │   │  openPopup [OP]           │   │  executeJump [EJ]            │   │  fireCodeJump [FJ] ││   │ │
+  │  │  │   │  TRPC navigate.mutate  │   │  resolveDiagramPath       │   │  same diagram?               │   │  (same as Alt)     ││   │ │
+  │  │  │   │  { root, filePath,     │   │  TRPC getContent.query    │   │   → centerOn(target,animate) │   │                    ││   │ │
+  │  │  │   │    line, newTab }      │   │  push to popupStack ──────┼───┼── cross diagram?             │   │                    ││   │ │
+  │  │  │   │                        │   │                            │   │   → onRequestJump(path,elId) │   │                    ││   │ │
+  │  │  │   │  ** 01-architecture-   │   │  see modal:               │   │   ** 01-architecture-and-    │   │                    ││   │ │
+  │  │  │   │  and-data-flow.txt    │   │  03-interaction-popup-    │   │   data-flow.txt              │   │                    ││   │ │
+  │  │  │   │  (navigate sequence)   │   │  detail.txt              │   │   (jump protocol)            │   │                    ││   │ │
+  │  │  │   │                    FJ  │   │  detail.txt           OP  │   │                          EJ  │   │                FJ  ││   │ │
+  │  │  │   └────────────────────────┘   └────────────────────────────┘   └──────────────────────────────┘   └────────────────────┘│   │ │
+  │  │  │                                            │                                                                             │   │ │
+  │  │  └─────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────┘   │ │
+  │  │                                                │                                                                                │ │
+  │  │                                                ▼                                                                                │ │
+  │  │  ┌─ Popup Stack [PS] ─────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │ │
+  │  │  │                                                                                                                           │  │ │
+  │  │  │  popupStack.map((entry, i) =>                                                                                             │  │ │
+  │  │  │    PopupDiagramOverlay [PO]                                                                                               │  │ │
+  │  │  │      zIndex: 50 + i*2                  ┌──────────────────────────────────────────────────────────────────────────────┐    │  │ │
+  │  │  │      onClose: slice stack at i         │  PopupDiagramOverlay internals:                                              │    │  │ │
+  │  │  │      onNavigate: relay to parent ──┐   │   backdrop (blur, click to close) + ESC key                                  │    │  │ │
+  │  │  │                                    │   │   useDiagram(entry.content) → popup Scene                                    │    │  │ │
+  │  │  │                                    │   │   SceneInput (nested, fully interactive, can open more popups)                │    │  │ │
+  │  │  │                                    │   │   layout: min 200×150, max 85% container, 24px offset                        │    │  │ │
+  │  │  │                                    └──►│   onNavigate relayed back → handleNavigate (recursive!)                  PO  │    │  │ │
+  │  │  │                                        └──────────────────────────────────────────────────────────────────────────────┘    │  │ │
+  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │ │
+  │  │                                                                                                                                │ │
+  │  │  ┌─ Lasso Selection [SD/SE] ──────────────────────────────────┐   ┌─ Badges + Context Menu ──────────────────────────────────┐ │ │
+  │  │  │                                                             │   │                                                         │ │ │
+  │  │  │  Ctrl+drag (or selectMode touch)                            │   │  Auto badges (useMemo) [AB]:                            │ │ │
+  │  │  │       │                                                     │   │   el.modal → ⬡ purple #A371F7 → openPopup              │ │ │
+  │  │  │       ▼                                                     │   │   el.link  → → gold #D4A72C   → executeJump             │ │ │
+  │  │  │  handleSelectionDrag [SD]                                   │   │   anchor: element top-right corner                      │ │ │
+  │  │  │   scene.hitTestRect(sceneRect, "intersect")                 │   │                                                         │ │ │
+  │  │  │   filter to .interactive only                               │   │  User badges (context menu) [UB]:                       │ │ │
+  │  │  │   toggle .selected CSS class                                │   │   right-click → menu (z:200) → "Add Badge"              │ │ │
+  │  │  │   show dragPreviewPaths beside lasso                        │   │   📌 green #3FB950, scene-anchored                       │ │ │
+  │  │  │       │                                                     │   │   click pin → remove                                    │ │ │
+  │  │  │       ▼ (on pointer up)                                     │   │                                                         │ │ │
+  │  │  │  handleSelectionDragEnd [SE]                                │   │  allBadges = [...auto, ...user]                          │ │ │
+  │  │  │   final hitTestRect → setSelectedIds                        │   │   → passed to SceneInput → Viewport → OverLayer          │ │ │
+  │  │  │   refs → clipboard.writeText → toast "Copied N ref(s)"     │   │   ** 02-rendering.txt (OverLayer rAF loop)        │ │ │
+  │  │  │   fire onSelectionChange(interactiveData[])                 │   │                                                     CM  │ │ │
+  │  │  └─────────────────────────────────────────────────────────────┘   └─────────────────────────────────────────────────────────┘ │ │
+  │  │                                                                                                                            DS  │ │
+  │  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+  │                                                                                                                                DA  │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+```code-refs
+DA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354   DiagramContentArea
+DS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269    DiagramScene (inner component)
+SI  web-ui/src/diagram/input/scene-input.tsx:48-357                         SceneInput component
+HC  web-ui/src/diagram/input/scene-input.tsx:245-312                        handleSceneClick: hit test → select → navigate
+HN  web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161   handleNavigate: Alt/modal/link/fallthrough
+FJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73     fireCodeJump → TRPC navigate mutate
+OP  web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107    openPopup → resolve path, fetch, push to stack
+EJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135   executeJump: same-diagram centerOn / cross-diagram
+HT  web-ui/src/diagram/rendering/svg-scene.ts:347-358                      hitTest: elementFromPoint → id
+SD  web-ui/src/diagram/input/scene-input.tsx:149-173                        handleSelectionDrag: hitTestRect preview
+SE  web-ui/src/diagram/input/scene-input.tsx:186-243                        handleSelectionDragEnd: finalize + clipboard
+TT  web-ui/src/diagram/input/scene-input.tsx:59-118                         Tooltip system: mouseover/move/out + touch
+AB  web-ui/src/components/diagram-panels/diagram-content-area.tsx:164-191   Auto badge construction (modal + link)
+UB  web-ui/src/components/diagram-panels/diagram-content-area.tsx:203-221   User badge creation via context menu
+CM  web-ui/src/components/diagram-panels/diagram-content-area.tsx:195-229   Context menu state + add badge handler
+PO  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145   PopupDiagramOverlay component
+PS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:42        popupStack state
+VP  web-ui/src/diagram/rendering/viewport.tsx:48-463                        Viewport component
+```
+
+```entities
+# name                  id_type  id    description
+
+# Component hierarchy
+content-area            box      DA    DiagramContentArea (outer wrapper)
+  diagram-scene         box      DS    DiagramScene (inner, owns state)
+    scene-input         box      SI    SceneInput (selection + tooltip + dispatch)
+      viewport          box      VP    Viewport (pan/zoom, delegated)
+      tooltip           box      TT    Tooltip div
+
+# Click flow
+handle-scene-click      box      HC    handleSceneClick (hit test → select → navigate)
+  hit-test              text     HT    scene.hitTest(screenPoint)
+handle-navigate         box      HN    handleNavigate (4-way dispatch)
+  fire-code-jump        box      FJ    fireCodeJump → TRPC navigate
+  open-popup            box      OP    openPopup → fetch + push to popupStack
+  execute-jump          box      EJ    executeJump → centerOn or onRequestJump
+
+# Popup stack
+popup-stack             box      PS    popupStack rendering
+  popup-overlay         box      PO    PopupDiagramOverlay (nested SceneInput)
+
+# Selection
+lasso-drag              text     SD    handleSelectionDrag (preview)
+lasso-end               text     SE    handleSelectionDragEnd (finalize + clipboard)
+
+# Badges
+auto-badges             text     AB    Auto badges from modal/link elements
+user-badges             text     UB    User badges from context menu
+context-menu            box      CM    Context menu + badge creation
+```
+
+```arrows
+# src              target           description
+DA.useDiagram      DS               useDiagram(content) → Scene → DiagramScene renders
+VP.onSceneClick    HC               Viewport fires onSceneClick → handleSceneClick
+HC.hitTest         HT               handleSceneClick calls scene.hitTest(screenPoint)
+HT                 HC.select        hit result drives selection update (shift toggle or replace)
+HC.onNavigate      HN               fire onNavigate(interactive, domEvent) → handleNavigate
+HN.alt             FJ               Alt+click → fireCodeJump
+HN.modal           OP               modal present → openPopup
+HN.link            EJ               link present → executeJump
+HN.default         FJ               no modal/link/alt → fireCodeJump (fallthrough)
+OP                 PS               openPopup pushes PopupEntry to popupStack
+PO.onNavigate      HN               PopupDiagramOverlay relays onNavigate back (recursive)
+VP.onSelectionDrag SD               Ctrl+drag → handleSelectionDrag
+SD                 SE               pointer up → handleSelectionDragEnd
+SE                 clipboard        refs → navigator.clipboard.writeText
+AB                 VP.badges        auto badges → SceneInput → Viewport → OverLayer
+UB                 VP.badges        user badges merged into allBadges → OverLayer
+CM.addBadge        UB               context menu "Add Badge" creates user badge
+EJ.same            VP.centerOn      same-diagram jump → viewport.centerOn(target, animate)
+EJ.same            VP.centerOn      same-diagram jump → viewport.centerOn
+EJ.cross           UV               cross-diagram → onRequestJump (via useDiagramViewer)
+FJ                 DN               fireCodeJump → TRPC diagrams.navigate
+```
+
+```links
+# local-id  target-file                          target-id  description
+VP           02-rendering.txt                     VP         Viewport (pan/zoom detail)
+HT           02-rendering-svgscene-detail.txt     HT         hitTest implementation in SvgScene
+AB           02-rendering.txt                     OL         badges flow to OverLayer rAF loop
+EJ           01-architecture-and-data-flow.txt    UV         cross-diagram jump → useDiagramViewer.requestJump
+FJ           01-architecture-and-data-flow.txt    DN         fireCodeJump → TRPC diagrams.navigate
+OP           03-interaction-popup-detail.txt       PO         openPopup → PopupDiagramOverlay (modal expansion)
+HN           04-types-and-data-model.txt          ID         handleNavigate reads InteractiveData fields
+HN           04-types-and-data-model.txt          DM         modal branch reads DiagramModal
+HN           04-types-and-data-model.txt          DK         link branch reads DiagramLink
+```
+
+```notes
+Entity IDs and code-ref IDs share the same 2-char namespace. Both are resolved
+by finding [XX] on the diagram (for box/text types) or {#xx} (for marker types).
+No prefix is needed to disambiguate — the [brackets] already distinguish IDs from
+surrounding text. Cross-diagram jump targets use the form: ** filename.txt#ID
+```

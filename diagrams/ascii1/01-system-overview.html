@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Diagram Feature — System Overview</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 920"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
+    @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title" class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">DIAGRAM FEATURE — SYSTEM OVERVIEW</text>
+    <text x="20" y="48" class="dim subhead">Component hierarchy from App mount to Code Viz extension</text>
+  </g>
+
+  <!-- ═══ Browser tier ═══ -->
+  <g data-reflow-group="browser-tier" class="fade-section" style="animation-delay: 0.05s">
+    <rect x="20" y="70" width="1060" height="480" rx="4" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="32" y="92" class="blue heading">Browser (web-ui)</text>
+
+    <!-- App.tsx mount -->
+    <g data-interactive="app-mount"
+       data-ref="web-ui/src/App.tsx"
+       data-category="module"
+       data-label="App.tsx">
+      <text x="40" y="120" class="white" data-tt="App.tsx — ?view=diagram mount point">App.tsx ─(?view=diagram)─→</text>
+    </g>
+
+    <!-- DiagramViewer -->
+    <g data-reflow-group="diagram-viewer"
+       data-interactive="diagram-viewer"
+       data-ref="web-ui/src/components/diagram-viewer.tsx:19-156"
+       data-category="module"
+       data-label="DiagramViewer"
+       data-link="06-viewer-layout.html#diagram-viewer">
+      <rect x="310" y="105" width="200" height="30" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="322" y="125" class="blue" data-tt="diagram-viewer.tsx:19 — top-level 3-panel container">DiagramViewer</text>
+    </g>
+
+    <!-- Three panels -->
+    <g data-reflow-group="panels" class="fade-section" style="animation-delay: 0.1s">
+      <!-- TreePanel -->
+      <g data-interactive="tree-panel"
+         data-ref="web-ui/src/components/diagram-panels/diagram-tree-panel.tsx"
+         data-category="module"
+         data-label="TreePanel"
+         data-link="06-viewer-layout.html#tree-panel">
+        <rect x="100" y="160" width="150" height="30" rx="3" fill="#2D3339" stroke="#3FB950" stroke-width="0.6"/>
+        <text x="112" y="180" class="green" data-tt="diagram-tree-panel.tsx — file tree sidebar">TreePanel</text>
+      </g>
+
+      <!-- ContentArea -->
+      <g data-interactive="content-area"
+         data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354"
+         data-category="module"
+         data-label="ContentArea"
+         data-link="02-content-area.html">
+        <rect x="310" y="160" width="180" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+        <text x="322" y="180" class="orange" data-tt="diagram-content-area.tsx:286 — scene rendering + popups">ContentArea</text>
+      </g>
+
+      <!-- AgentPanel -->
+      <g data-interactive="agent-panel"
+         data-ref="web-ui/src/hooks/use-diagram-agent-panel.tsx:1-178"
+         data-category="module"
+         data-label="AgentPanel">
+        <rect x="550" y="160" width="160" height="30" rx="3" fill="#2D3339" stroke="#6E7681" stroke-width="0.6"/>
+        <text x="562" y="180" class="dim" data-tt="use-diagram-agent-panel.tsx — optional agent chat/terminal">AgentPanel (opt)</text>
+      </g>
+    </g>
+
+    <!-- Hooks row -->
+    <g data-reflow-group="hooks" class="fade-section" style="animation-delay: 0.15s">
+      <g data-interactive="use-diagram-viewer"
+         data-ref="web-ui/src/hooks/use-diagram-viewer.ts:49-224"
+         data-category="function"
+         data-label="useDiagramViewer"
+         data-link="05-data-flow.html">
+        <rect x="60" y="220" width="220" height="30" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+        <text x="72" y="240" class="violet" data-tt="use-diagram-viewer.ts:49 — state: tree, content, jumps">useDiagramViewer</text>
+      </g>
+
+      <g data-interactive="use-diagram"
+         data-ref="web-ui/src/diagram/use-diagram.ts:6-52"
+         data-category="function"
+         data-label="useDiagram">
+        <rect x="330" y="220" width="160" height="30" rx="3" fill="#2D3339" stroke="#A371F7" stroke-width="0.6"/>
+        <text x="342" y="240" class="violet" data-tt="use-diagram.ts:6 — HTML→Scene construction">useDiagram</text>
+      </g>
+    </g>
+
+    <!-- Rendering stack -->
+    <g data-reflow-group="rendering-stack" class="fade-section" style="animation-delay: 0.2s">
+      <g data-interactive="svg-scene"
+         data-ref="web-ui/src/diagram/rendering/svg-scene.ts:52-521"
+         data-category="module"
+         data-label="SvgScene"
+         data-link="03-scene-element-tree.html">
+        <rect x="140" y="280" width="160" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+        <text x="152" y="300" class="orange" data-tt="svg-scene.ts:52 — element tree, bounds, hit test">SvgScene</text>
+      </g>
+
+      <g data-interactive="scene-input"
+         data-ref="web-ui/src/diagram/input/scene-input.tsx:48-357"
+         data-category="module"
+         data-label="SceneInput"
+         data-link="04-scene-input.html">
+        <rect x="340" y="280" width="160" height="30" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+        <text x="352" y="300" class="orange" data-tt="scene-input.tsx:48 — hit test, selection, tooltips">SceneInput</text>
+      </g>
+
+      <g data-interactive="viewport"
+         data-ref="web-ui/src/diagram/rendering/viewport.tsx:48-463"
+         data-category="module"
+         data-label="Viewport"
+         data-link="02-viewport-and-overlay.html">
+        <rect x="540" y="280" width="150" height="30" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+        <text x="552" y="300" class="blue" data-tt="viewport.tsx:48 — pan/zoom, coordinate transform">Viewport</text>
+      </g>
+
+      <g data-interactive="over-layer"
+         data-ref="web-ui/src/diagram/rendering/over-layer.tsx:64-127"
+         data-category="module"
+         data-label="OverLayer"
+         data-link="02-viewport-and-overlay.html#over-layer">
+        <rect x="730" y="280" width="150" height="30" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+        <text x="742" y="300" class="blue" data-tt="over-layer.tsx:64 — badge rAF positioning">OverLayer</text>
+      </g>
+    </g>
+
+    <!-- Navigation actions -->
+    <g data-reflow-group="nav-actions" class="fade-section" style="animation-delay: 0.25s">
+      <text x="40" y="360" class="dim subhead">Navigation actions:</text>
+      <g data-interactive="fire-code-jump"
+         data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73"
+         data-category="function"
+         data-label="fireCodeJump">
+        <text x="60" y="380" data-tt="diagram-content-area.tsx:54 — trpc.diagrams.navigate()">fireCodeJump()</text>
+      </g>
+      <g data-interactive="open-popup"
+         data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107"
+         data-category="function"
+         data-label="openPopup">
+        <text x="240" y="380" data-tt="diagram-content-area.tsx:75 — fetch + push to popup stack">openPopup()</text>
+      </g>
+      <g data-interactive="execute-jump"
+         data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135"
+         data-category="function"
+         data-label="executeJump">
+        <text x="400" y="380" data-tt="diagram-content-area.tsx:109 — same/cross-diagram navigation">executeJump()</text>
+      </g>
+    </g>
+
+    <!-- TRPC client -->
+    <g data-reflow-group="trpc-client" class="fade-section" style="animation-delay: 0.3s">
+      <rect x="60" y="410" width="340" height="30" rx="3" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="72" y="430" class="blue">TRPC Client ◄── navigation actions</text>
+    </g>
+  </g>
+
+  <!-- Arrows: panels to hooks -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.12s">
+    <line x1="175" y1="190" x2="175" y2="220" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <line x1="400" y1="190" x2="400" y2="220" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- Arrows: hooks to rendering -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.18s">
+    <line x1="410" y1="250" x2="410" y2="280" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- Arrow: actions to TRPC -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.28s">
+    <line x1="230" y1="390" x2="230" y2="410" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- Arrow: TRPC to server (HTTP) -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.32s">
+    <line x1="230" y1="550" x2="230" y2="590" stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"/>
+    <text x="240" y="575" class="blue subhead">HTTP</text>
+  </g>
+
+  <!-- ═══ Server tier ═══ -->
+  <g data-reflow-group="server-tier" class="fade-section" style="animation-delay: 0.35s">
+    <rect x="20" y="600" width="530" height="300" rx="4" fill="#24292E" stroke="#D29922" stroke-width="1.2"/>
+    <text x="32" y="622" class="orange heading">Node.js Server</text>
+
+    <g data-interactive="diagrams-api"
+       data-ref="src/trpc/diagrams-api.ts:75-153"
+       data-category="module"
+       data-label="diagrams-api"
+       data-link="07-backend-api.html">
+      <rect x="40" y="640" width="490" height="240" rx="3" fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="660" class="orange" data-tt="diagrams-api.ts:75 — server-side diagram operations">diagrams-api.ts</text>
+
+      <g data-interactive="api-list"
+         data-ref="src/trpc/diagrams-api.ts:75-103"
+         data-category="function"
+         data-label="listDiagrams">
+        <text x="60" y="690" data-tt="diagrams-api.ts:75 — fs.readdir + tree building">├─ list → fs.readdir</text>
+      </g>
+      <g data-interactive="api-get-content"
+         data-ref="src/trpc/diagrams-api.ts:105-130"
+         data-category="function"
+         data-label="getContent">
+        <text x="60" y="710" data-tt="diagrams-api.ts:105 — fs.readFile, 5MB limit">├─ getContent → fs.readFile</text>
+      </g>
+      <g data-interactive="api-navigate"
+         data-ref="src/trpc/diagrams-api.ts:132-137"
+         data-category="function"
+         data-label="navigate">
+        <text x="60" y="730" data-tt="diagrams-api.ts:132 — delegates to CodeVizClient">├─ navigate → CodeVizClient</text>
+      </g>
+      <g data-interactive="api-check-ext"
+         data-ref="src/trpc/diagrams-api.ts:139-153"
+         data-category="function"
+         data-label="checkExtension">
+        <text x="60" y="750" data-tt="diagrams-api.ts:139 — health + workspace check">└─ checkExt → CodeVizClient</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ═══ Code Viz tier ═══ -->
+  <g data-reflow-group="code-viz-tier" class="fade-section" style="animation-delay: 0.4s">
+    <rect x="570" y="600" width="510" height="300" rx="4" fill="#24292E" stroke="#3FB950" stroke-width="1.2"/>
+    <text x="582" y="622" class="green heading">Code Viz VSCode Extension (optional, :24680)</text>
+
+    <g data-interactive="check-health"
+       data-ref="src/diagram/code-viz-client.ts:45-54"
+       data-category="function"
+       data-label="checkHealth">
+      <text x="590" y="660" data-tt="code-viz-client.ts:45 — GET /api/health, 2.5s timeout">/api/health ← checkHealth()</text>
+    </g>
+    <g data-interactive="check-workspace"
+       data-ref="src/diagram/code-viz-client.ts:66-82"
+       data-category="function"
+       data-label="checkWorkspace">
+      <text x="590" y="690" data-tt="code-viz-client.ts:66 — GET /api/workspaces, realpath compare">/api/workspaces ← checkWorkspace()</text>
+    </g>
+    <g data-interactive="viz-navigate"
+       data-ref="src/diagram/code-viz-client.ts:84-106"
+       data-category="function"
+       data-label="navigate">
+      <text x="590" y="720" data-tt="code-viz-client.ts:84 — POST /api/navigate, opens file in VSCode">/api/navigate ← navigate()</text>
+    </g>
+  </g>
+
+  <!-- Arrow: server to code viz -->
+  <g data-arrow class="fade-section" style="animation-delay: 0.38s">
+    <line x1="530" y1="750" x2="570" y2="750" stroke="#3FB950" stroke-width="1" marker-end="url(#a)"/>
+    <text x="537" y="742" class="dim subhead">HTTP :24680</text>
+  </g>
+
+</svg>
+</body>
+</html>

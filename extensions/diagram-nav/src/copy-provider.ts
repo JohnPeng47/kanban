@@ -111,20 +111,18 @@ export function registerCopyProvider(context: vscode.ExtensionContext): void {
 				return;
 			}
 
-			// Find which anchors have text within the selection
+			// Find which anchors have text within the selection.
+			// Use per-selection text (not full lines) so column/box selections
+			// only match anchors visible inside the selected columns.
 			const matchedRefs = new Map<string, string>();
+			const selectedFragments = sorted
+				.filter((sel) => sel.start.line >= blockRange[0] && sel.end.line <= blockRange[1])
+				.map((sel) => document.getText(sel));
 
 			for (const anchor of anchors) {
-				const selStart = Math.max(overallStart.line, blockRange[0]);
-				const selEnd = Math.min(overallEnd.line, blockRange[1]);
-
-				for (let lineNum = selStart; lineNum <= selEnd; lineNum++) {
-					const line = document.lineAt(lineNum).text;
-					if (line.includes(anchor.text)) {
-						const ref = `${anchor.filePath}:${anchor.startLine}${anchor.endLine ? `-${anchor.endLine}` : ""}`;
-						matchedRefs.set(anchor.text, ref);
-						break;
-					}
+				if (selectedFragments.some((fragment) => fragment.includes(anchor.text))) {
+					const ref = `${anchor.filePath}:${anchor.startLine}${anchor.endLine ? `-${anchor.endLine}` : ""}`;
+					matchedRefs.set(anchor.text, ref);
 				}
 			}
 

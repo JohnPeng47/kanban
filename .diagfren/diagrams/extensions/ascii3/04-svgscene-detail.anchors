@@ -1,0 +1,22 @@
+# anchor-text                        code-ref                                                      label
+new SvgScene(svg)                    web-ui/src/diagram/rendering/svg-scene.ts:52-80               SvgScene constructor
+injectInteractionStyles(svg)         web-ui/src/diagram/rendering/svg-scene.ts:82-124              injectInteractionStyles — CSS injection
+buildElementTree()                   web-ui/src/diagram/rendering/svg-scene.ts:126-206             buildElementTree — tree construction
+SCENE_ELEMENT_SELECTOR               web-ui/src/diagram/rendering/svg-scene.ts:16                  SCENE_ELEMENT_SELECTOR constant
+resolveElementId                     web-ui/src/diagram/rendering/svg-scene.ts:19-37               resolveElementId — id from data attrs
+readMetadata                         web-ui/src/diagram/rendering/svg-scene.ts:40-48               readMetadata — data-* → Record<string,string>
+findVisualRect                       web-ui/src/diagram/rendering/svg-scene.ts:51-58               findVisualRect — direct <rect> child lookup
+parseInteractiveData                 web-ui/src/diagram/types.ts:143-161                           parseInteractiveData — metadata → interactive role
+getLocalBounds(id)                   web-ui/src/diagram/rendering/svg-scene.ts:241-247             getLocalBounds — element.localBounds
+getWorldBounds(id)                   web-ui/src/diagram/rendering/svg-scene.ts:249-260             getWorldBounds — cached world bounds
+getAncestorTransform(id)             web-ui/src/diagram/rendering/svg-scene.ts:262-278             getAncestorTransform — compose parent chain
+transformRect                        web-ui/src/diagram/types.ts:213-220                           transformRect — apply transform to Rect
+hitTest(screenPoint)                 web-ui/src/diagram/rendering/svg-scene.ts:347-358             hitTest — elementFromPoint + closest
+hitTestRect(sceneRect, mode)         web-ui/src/diagram/rendering/svg-scene.ts:360-375             hitTestRect — rect intersection/containment
+setTransform(id, transform)          web-ui/src/diagram/rendering/svg-scene.ts:271-286             setTransform + cache invalidation
+invalidateWorldBoundsCache           web-ui/src/diagram/rendering/svg-scene.ts:323-331             invalidateWorldBoundsCache — recursive down children
+growVisualBounds(id, dW, dH)         web-ui/src/diagram/rendering/svg-scene.ts:335-354             growVisualBounds — update SVG rect + localBounds
+addElement(id, dom, parentId)        web-ui/src/diagram/rendering/svg-scene.ts:390-437             addElement — register new scene element
+removeElement(id)                    web-ui/src/diagram/rendering/svg-scene.ts:439-463             removeElement — recursive remove from tree
+addSubtree(rootDomNode, parentId)    web-ui/src/diagram/rendering/svg-scene.ts:465-507             addSubtree — batch add tagged subtree
+getWorldTransform                    web-ui/src/diagram/rendering/svg-scene.ts:292-310             getWorldTransform — walk to root, compose

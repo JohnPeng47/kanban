@@ -1,0 +1,138 @@
+```diagram
+                                                    ┌─────────────────────────────────────────────────────┐
+                                                    │  useDiagram(html)                                    │
+                                                    │                                                     │
+                                                    │  html ──→ DOMParser ──→ <svg> ──→ body.appendChild  │
+                                                    │                                       │             │
+                                                    │                              new SvgScene(svg)      │
+                                                    │                                       │             │
+                                                    │                              body.removeChild(svg)  │
+                                                    │                                       │             │
+                                                    │                              return Scene           │
+                                                    │                              cleanup: .destroy()    │
+                                                    └───────────────────────────────┬─────────────────────┘
+                                                                                    │ Scene
+                                ┌───────────────────────────────────────────────────┼──────────────────────────────────────────────────┐
+                                │  DiagramContentArea                               │                                                  │
+                                │                                                  │                                                  │
+                                │  props: content, isLoading, error, selectedPath,  │  pendingJumpElementId, onRequestJump             │
+                                │         workspaceId, workspacePath                │                                                  │
+                                │                                                  ▼                                                  │
+                                │  States: empty ──→ loading ──→ error              Scene ready ──→ DiagramScene                       │
+                                │                                                                       │                             │
+                                └───────────────────────────────────────────────────────────────────────┼─────────────────────────────┘
+                                                                                                        │
+        ┌───────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────┐
+        │  DiagramScene                                                                                │                          │
+        │                                                                                              ▼                          │
+        │  ┌─────────────────────────────────────┐     ┌──────────────────────────────────────────────────────────────────────┐    │
+        │  │  Navigation Dispatch                 │     │  SceneInput                                                        │    │
+        │  │                                     │     │                                                                      │    │
+        │  │  handleNavigate(interactive, event)  │◄────│  onNavigate ──→ handleNavigate                                      │    │
+        │  │       │                             │     │  onSelectionChange ──→ (selection data)                              │    │
+        │  │       ├── Alt+click                 │     │  onContextMenu ──→ context menu state                               │    │
+        │  │       │    └─ fireCodeJump          │     │  badges ──→ allBadges (modal + link + user)                         │    │
+        │  │       │         │                   │     │                                                                      │    │
+        │  │       │    trpc.diagrams.navigate   │     │  ┌────────────────────────────────────────────────────────────────┐  │    │
+        │  │       │    (file, line, newTab)      │     │  │  Event Flow                                                   │  │    │
+        │  │       │                             │     │  │                                                                │  │    │
+        │  │       ├── modal? ──→ openPopup      │     │  │  Viewport callbacks ──→ handleSceneClick                       │  │    │
+        │  │       │    │                        │     │  │       │                      │                                 │  │    │
+        │  │       │    │  trpc.getContent(path)  │     │  │       │               scene.hitTest(screenPt)                  │  │    │
+        │  │       │    │  ──→ push PopupEntry    │     │  │       │                      │                                 │  │    │
+        │  │       │    │      to popupStack      │     │  │       │               ┌──────┴──────┐                          │  │    │
+        │  │       │                             │     │  │       │               │             │                          │  │    │
+        │  │       ├── link? ──→ executeJump     │     │  │       │          no hit         hit element                    │  │    │
+        │  │       │    │                        │     │  │       │           │                 │                          │  │    │
+        │  │       │    ├── same diagram:         │     │  │       │     clear selection    ┌───┴───┐                      │  │    │
+        │  │       │    │   centerOn(target)      │     │  │       │                        │       │                      │  │    │
+        │  │       │    └── cross diagram:        │     │  │       │                  shift+click  click                   │  │    │
+        │  │       │        onRequestJump(path)   │     │  │       │                   toggle    replace                   │  │    │
+        │  │       │                             │     │  │       │                  selection  selection                  │  │    │
+        │  │       └── default                   │     │  │       │                        │       │                      │  │    │
+        │  │            └─ fireCodeJump          │     │  │       │                        └───┬───┘                      │  │    │
+        │  │                                     │     │  │       │                            │                          │  │    │
+        │  └─────────────────────────────────────┘     │  │       │                   fire onNavigate                     │  │    │
+        │                                              │  │       │                                                       │  │    │
+        │  ┌──────────────────────────────┐            │  │       ├──→ handleSelectionDrag                                │  │    │
+        │  │  Popup Stack                 │            │  │       │      scene.hitTestRect(rect, "intersect")             │  │    │
+        │  │                              │            │  │       │      preview: toggle .selected CSS class              │  │    │
+        │  │  PopupEntry[]                │            │  │       │      overlay: dragPreviewPaths list                   │  │    │
+        │  │   ├── path                   │            │  │       │                                                       │  │    │
+        │  │   ├── content (HTML)         │            │  │       └──→ handleSelectionDragEnd                             │  │    │
+        │  │   ├── position               │            │  │              final hitTestRect ──→ setSelectedIds             │  │    │
+        │  │   └── anchorBounds           │            │  │              copy refs to clipboard                           │  │    │
+        │  │                              │            │  │              show toast                                        │  │    │
+        │  │  Each entry renders:         │            │  └────────────────────────────────────────────────────────────────┘  │    │
+        │  │  PopupDiagramOverlay         │            │                                                                      │    │
+        │  │   ├── backdrop (blur)        │            │  Tooltip: SVG mouseover on [data-tt] elements                        │    │
+        │  │   ├── close button (ESC/X)   │            │  Viewport** 03-viewport-and-transforms.txt: pan/zoom, transforms, OverLayer              │
+        │  │   ├── useDiagram(content)    │            │                                                                      │    │
+        │  │   └── PopupScene             │            └──────────────────────────────────────────────────────────────────────┘    │
+        │  │        └── SceneInput (nested│            │                                                                          │
+        │  │              recursive)      │            │  ┌────────────────────────────────────────────────────┐                   │
+        │  │  z-index: 50 + i*2           │            │  │  Badge Creation                                    │                   │
+        │  └──────────────────────────────┘            │  │                                                    │                   │
+        │                                              │  │  Auto-badges (from Scene elements):                │                   │
+        │  ┌──────────────────────────────┐            │  │   el.interactive.modal ──→ "⬡" purple badge       │                   │
+        │  │  Context Menu                │            │  │   el.interactive.link  ──→ "→" gold badge          │                   │
+        │  │                              │            │  │                                                    │                   │
+        │  │  right-click ──→ popup at    │            │  │  User badges (from context menu):                  │                   │
+        │  │    screen coords             │            │  │   Add Badge ──→ "📌" green, click to remove        │                   │
+        │  │  [Add Badge] ──→ userBadges  │            │  │                                                    │                   │
+        │  │  dismiss on pointerdown      │            │  │  All merged: [...autoBadges, ...userBadges]        │                   │
+        │  └──────────────────────────────┘            │  └────────────────────────────────────────────────────┘                   │
+        │                                                                                                                          │
+        └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+        ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        │  Scene Interface                                                                                                              │
+        │                                                                                                                               │
+        │  ┌─────────────────────────┐  ┌─────────────────────────────┐  ┌────────────────────────────────┐  ┌────────────────────────┐  │
+        │  │  Element Tree           │  │  Bounds                     │  │  Transforms                    │  │  Hit Testing           │  │
+        │  │                         │  │                             │  │                                │  │                        │  │
+        │  │  getRoot()              │  │  getLocalBounds(id)         │  │  setTransform(id, t)           │  │  hitTest(screenPt)     │  │
+        │  │  getElement(id)         │  │  getWorldBounds(id)         │  │  getTransform(id)              │  │   → elementFromPoint   │  │
+        │  │  getAllElements()       │  │   └─ cached, invalidated    │  │  getWorldTransform(id)         │  │   → closest [selector] │  │
+        │  │  getChildren(id)        │  │      on transform change    │  │   └─ compose chain to root    │  │                        │  │
+        │  └─────────────────────────┘  └─────────────────────────────┘  └────────────────────────────────┘  │  hitTestRect(rect,mode)│  │
+        │                                                                                                    │   → AABB intersect or  │  │
+        │  ┌─────────────────────────┐  ┌─────────────────────────────────────────────────────────────────┐  │     contain check      │  │
+        │  │  Mutations              │  │  Rendering / Lifecycle                                          │  └────────────────────────┘  │
+        │  │                         │  │                                                                 │                              │
+        │  │  growVisualBounds(id,   │  │  getSvgElement() ──→ SVGSVGElement                              │                              │
+        │  │    deltaW, deltaH)      │  │  destroy() ──→ clear all maps                                  │                              │
+        │  │  addElement(id, dom,    │  │                                                                 │                              │
+        │  │    parentId)            │  └─────────────────────────────────────────────────────────────────┘                              │
+        │  │  removeElement(id)      │                                                                                                   │
+        │  │  addSubtree(dom,        │                                                                                                   │
+        │  │    parentId)            │                                                                                                   │
+        │  └─────────────────────────┘                                                                                                   │
+        │                                                                                                                               │
+        │  Impl: SvgScene ──→ see modal: 06-scene-svgscene-detail.txt                                                                  │
+        └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+        ┌───────────────────────────────────────────────────────────────────────────────────────┐
+        │  SceneElement                                                                          │
+        │                                                                                        │
+        │  ┌────────────────────────┐  ┌────────────────────────┐  ┌──────────────────────────┐  │
+        │  │  Identity              │  │  Spatial               │  │  Roles                   │  │
+        │  │                        │  │                        │  │                          │  │
+        │  │  id: string            │  │  localBounds: Rect     │  │  interactive:            │  │
+        │  │  parentId: string?     │  │  transform:            │  │    InteractiveData?      │  │
+        │  │  childIds: string[]    │  │    Transform           │  │   ├ ref, parsedRef       │  │
+        │  │                        │  │  hasVisualRect:        │  │   ├ category, label      │  │
+        │  │  ID resolution:        │  │    boolean             │  │   ├ navTarget            │  │
+        │  │  ├ data-reflow-grp     │  │                        │  │   ├ modal: DiagramModal  │  │
+        │  │  ├ data-interactive    │  │  metadata:             │  │   └ link: DiagramLink   │  │
+        │  │  ├ data-arrow →        │  │    Record<str,str>     │  │                          │  │
+        │  │  │  "arrow-{n}"        │  │   (all data-* attr)    │  │  reflow:                │  │
+        │  │  └ root: "root"        │  │                        │  │    ReflowState?          │  │
+        │  │                        │  │                        │  │   └ originalBounds       │  │
+        │  └────────────────────────┘  └────────────────────────┘  └──────────────────────────┘  │
+        │                                                                                        │
+        └───────────────────────────────────────────────────────────────────────────────────────┘
+```
+

@@ -1,26 +1,32 @@
 import * as vscode from "vscode";
-import { parseAnchors } from "./anchors";
+import { loadAnchors, resolveAnchorsUri } from "./anchors";
 
 interface DiagramInfo {
 	relativePath: string;
 	anchorCount: number;
 }
 
-/** Scan workspace for diagram .txt files with anchors blocks. */
+/** Scan workspace for diagram .txt files that have `.diagfren/` sidecar anchor files. */
 async function findDiagrams(): Promise<DiagramInfo[]> {
-	const files = await vscode.workspace.findFiles("**/*.txt", "**/node_modules/**", 500);
+	// Scan .diagfren/ for .anchors files
+	const anchorsFiles = await vscode.workspace.findFiles(".diagfren/**/*.anchors", "**/node_modules/**", 500);
 	const diagrams: DiagramInfo[] = [];
 
-	for (const file of files) {
-		const doc = await vscode.workspace.openTextDocument(file);
-		const text = doc.getText();
+	for (const anchorsFile of anchorsFiles) {
+		// Derive the diagram .txt path from the .anchors path
+		const workspaceFolders = vscode.workspace.workspaceFolders;
+		if (!workspaceFolders?.[0]) continue;
 
-		// Only include files that have both a diagram block and an anchors block
-		if (!text.includes("```diagram") || !text.includes("```anchors")) continue;
+		const relative = vscode.workspace.asRelativePath(anchorsFile, false);
+		// Strip ".diagfren/" prefix and change extension back to .txt
+		const diagramRelative = relative.replace(/^\.diagfren\//, "").replace(/\.anchors$/, ".txt");
+		const diagramUri = vscode.Uri.joinPath(workspaceFolders[0].uri, diagramRelative);
 
-		const anchors = parseAnchors(text);
-		const relativePath = vscode.workspace.asRelativePath(file);
-		diagrams.push({ relativePath, anchorCount: anchors.length });
+		const anchors = await loadAnchors(diagramUri);
+		diagrams.push({
+			relativePath: diagramRelative,
+			anchorCount: anchors.length,
+		});
 	}
 
 	diagrams.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
@@ -78,7 +84,7 @@ function renderStatusPage(diagrams: DiagramInfo[]): string {
 	<h1>diagfren</h1>
 	<p class="summary">${total} diagram(s) detected, ${totalAnchors} total anchor(s)</p>
 	${total === 0
-		? "<p>No diagram files with <code>\`\`\`anchors</code> blocks found in this workspace.</p>"
+		? "<p>No diagrams with <code>.diagfren/</code> sidecar files found in this workspace.</p>"
 		: `<table>
 			<tr><th>Diagram</th><th>Anchors</th></tr>
 			${rows}

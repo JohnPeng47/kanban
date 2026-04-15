@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { type Anchor, findDiagramBlockRange, parseAnchors } from "./anchors";
+import { getCachedAnchors } from "./anchor-cache";
+import { type Anchor, findDiagramBlockRange } from "./anchors";
 
 interface DiagramDocumentLink extends vscode.DocumentLink {
 	anchor: Anchor;
@@ -11,10 +12,10 @@ export class DiagramLinkProvider implements vscode.DocumentLinkProvider {
 		document: vscode.TextDocument,
 		_token: vscode.CancellationToken,
 	): DiagramDocumentLink[] {
-		const text = document.getText();
-		const anchors = parseAnchors(text);
+		const anchors = getCachedAnchors(document.uri);
 		if (anchors.length === 0) return [];
 
+		const text = document.getText();
 		const blockRange = findDiagramBlockRange(text);
 		if (!blockRange) return [];
 

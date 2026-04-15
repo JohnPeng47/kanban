@@ -1,0 +1,25 @@
+# anchor-text                        code-ref                                                      label
+Tooltip system                       web-ui/src/diagram/input/scene-input.tsx:59-118               Tooltip event listeners (mouse + touch)
+handleSceneClick                     web-ui/src/diagram/input/scene-input.tsx:278-345              handleSceneClick — hit test + selection + navigate
+handleSelectionDrag(sceneRect)       web-ui/src/diagram/input/scene-input.tsx:152-176              handleSelectionDrag — live lasso preview
+handleSelectionDragEnd(sceneRect)    web-ui/src/diagram/input/scene-input.tsx:189-276              handleSelectionDragEnd — commit + clipboard
+hitTest(screenPoint)                 web-ui/src/diagram/rendering/svg-scene.ts:347-358             hitTest — elementFromPoint + closest
+hitTestRect(sceneRect, "intersect")  web-ui/src/diagram/rendering/svg-scene.ts:360-375             hitTestRect — rect intersection/containment
+dragPreviewPaths                     web-ui/src/diagram/input/scene-input.tsx:178-187              dragPreviewPaths — lasso overlay labels
+getSelectedInteractiveData           web-ui/src/diagram/input/scene-input.tsx:134-146              getSelectedInteractiveData helper
+onNavigate(interactive, domEvent)    web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161  handleNavigate dispatch
+fireCodeJump(interactive, domEvent)  web-ui/src/components/diagram-panels/diagram-content-area.tsx:57-76    fireCodeJump — TRPC navigate
+openPopup(interactive)               web-ui/src/components/diagram-panels/diagram-content-area.tsx:78-110   openPopup — fetch + push stack
+executeJump(interactive)             web-ui/src/components/diagram-panels/diagram-content-area.tsx:112-138  executeJump — same/cross diagram
+diagrams.navigate.mutate             src/trpc/app-router.ts:693-698                                diagrams.navigate tRPC procedure
+diagrams.getContent.query            src/trpc/app-router.ts:687-692                                diagrams.getContent tRPC procedure
+scene.getAllElements()               web-ui/src/components/diagram-panels/diagram-content-area.tsx:167-194  Badge generation from elements
+userBadges                           web-ui/src/components/diagram-panels/diagram-content-area.tsx:46       userBadges state (context menu badges)
+PopupDiagramOverlay                  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-155  PopupDiagramOverlay component
+PopupScene                           web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155 PopupScene wrapper
+SceneInput                           web-ui/src/diagram/input/scene-input.tsx:51-390               SceneInput component (full definition)
+Context Menu                         web-ui/src/components/diagram-panels/diagram-content-area.tsx:251-266  Context menu rendering
+useDiagram(html)                     web-ui/src/diagram/use-diagram.ts:9-63                        useDiagram hook — HTML → Scene
+SvgScene                             web-ui/src/diagram/rendering/svg-scene.ts:52-521              SvgScene class
+viewport.centerOn                    web-ui/src/diagram/rendering/viewport.tsx:121-145             centerOn imperative handle
+onRequestJump                        web-ui/src/hooks/use-diagram-viewer.ts:159-172                requestJump — select path + set pending jump

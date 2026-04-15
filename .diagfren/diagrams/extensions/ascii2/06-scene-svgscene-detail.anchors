@@ -1,0 +1,24 @@
+# anchor-text                    code-ref                                                    label
+Internal Maps                    web-ui/src/diagram/rendering/svg-scene.ts:53-58             Internal maps: elements, domElements, visualRects, worldBoundsCache
+Constructor Flow                 web-ui/src/diagram/rendering/svg-scene.ts:60-80             Constructor: viewBox removal, style injection, tree build
+buildElementTree()               web-ui/src/diagram/rendering/svg-scene.ts:126-206           buildElementTree: selector query, parent resolution, bounds, roles
+resolveElementId(g)              web-ui/src/diagram/rendering/svg-scene.ts:18-29             resolveElementId: reflow-group → interactive → arrow → null
+Walk DOM ancestry to find parentId  web-ui/src/diagram/rendering/svg-scene.ts:161-169        Parent resolution via DOM ancestry walking
+g.getBBox() ──→ localBounds      web-ui/src/diagram/rendering/svg-scene.ts:171-177           localBounds from getBBox()
+parseInteractiveData(id, metadata)  web-ui/src/diagram/types.ts:143-161                      parseInteractiveData: ref, category, label, modal, link
+Bounds System                    web-ui/src/diagram/rendering/svg-scene.ts:230-267           Bounds system: local, world (cached), ancestor transform
+getWorldBounds(id)               web-ui/src/diagram/rendering/svg-scene.ts:238-249           getWorldBounds: cache check, ancestor compose, transformRect
+getAncestorTransform(id)         web-ui/src/diagram/rendering/svg-scene.ts:251-267           getAncestorTransform: walk parent chain, compose
+invalidateWorldBoundsCache(id)   web-ui/src/diagram/rendering/svg-scene.ts:312-320           invalidateWorldBoundsCache: recursive child invalidation
+Hit Testing                      web-ui/src/diagram/rendering/svg-scene.ts:345-375           Hit testing: point (elementFromPoint) + rect (AABB)
+hitTest(screenPoint)             web-ui/src/diagram/rendering/svg-scene.ts:347-358           hitTest: elementFromPoint → closest selector → id lookup
+hitTestRect(sceneRect, mode)     web-ui/src/diagram/rendering/svg-scene.ts:360-375           hitTestRect: iterate interactive elements, AABB check
+Injected CSS Styles              web-ui/src/diagram/rendering/svg-scene.ts:82-124            Injected CSS: interactive hover, selected, modal/link dashed borders
+Transform Application            web-ui/src/diagram/rendering/svg-scene.ts:269-310           Transform get/set, CSS translate application
+setTransform(id, transform)      web-ui/src/diagram/rendering/svg-scene.ts:271-286           setTransform: update, invalidate, apply CSS (non-root only)
+getWorldTransform(id)            web-ui/src/diagram/rendering/svg-scene.ts:294-310           getWorldTransform: compose chain element→root
+growVisualBounds(id, dW, dH)     web-ui/src/diagram/rendering/svg-scene.ts:324-343           growVisualBounds: resize SVGRect + update localBounds
+addElement(id, dom, parentId)    web-ui/src/diagram/rendering/svg-scene.ts:379-424           addElement: parse, create SceneElement, link parent
+removeElement(id)                web-ui/src/diagram/rendering/svg-scene.ts:426-450           removeElement: recursive descent, unlink parent, clear maps
+addSubtree(rootDom, parentId)    web-ui/src/diagram/rendering/svg-scene.ts:452-494           addSubtree: batch add tagged elements with local parent resolution
+Dynamic Mutations                web-ui/src/diagram/rendering/svg-scene.ts:322-505           Dynamic mutations: grow, add, remove, addSubtree

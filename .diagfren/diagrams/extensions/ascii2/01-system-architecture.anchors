@@ -1,0 +1,15 @@
+# anchor-text                    code-ref                                              label
+App.tsx                          web-ui/src/App.tsx:92-95                              isDiagramViewerOpen state init from URL
+DiagramViewer                    web-ui/src/components/diagram-viewer.tsx:19-156       DiagramViewer 3-panel component
+useDiagramViewer                 web-ui/src/hooks/use-diagram-viewer.ts:49-224         useDiagramViewer hook (tree, content, jumps)
+useCodeVizStatus                 web-ui/src/hooks/use-code-viz-status.ts:14-50         useCodeVizStatus polling hook (30s interval)
+TRPC Router                      src/trpc/app-router.ts:680-702                        TRPC diagrams router (4 procedures)
+diagrams-api.ts                  src/trpc/diagrams-api.ts:73-155                       createDiagramsApi factory
+listDiagrams                     src/trpc/diagrams-api.ts:75-103                       listDiagrams — fs.readdir tree builder
+getDiagramContent                src/trpc/diagrams-api.ts:105-130                      getDiagramContent — fs.readFile with 5MB cap
+navigateToDiagramSource          src/trpc/diagrams-api.ts:132-137                      navigateToDiagramSource — delegates to CodeVizClient
+checkExtensionStatus             src/trpc/diagrams-api.ts:139-153                      checkExtensionStatus — health + workspace check
+code-viz-client.ts               src/diagram/code-viz-client.ts:108-112               codeVizClient exported object
+checkHealth()                    src/diagram/code-viz-client.ts:45-54                  checkHealth — GET /api/health
+checkWorkspace()                 src/diagram/code-viz-client.ts:66-82                  checkWorkspace — GET /api/workspaces + path match
+navigate()                       src/diagram/code-viz-client.ts:84-106                 navigate — POST /api/navigate

@@ -1,0 +1,98 @@
+```diagram
+DIAGRAM VIEWER — COMPONENT + HOOK WIRING
+
+═══ DiagramViewer 3-Panel Layout ══════════════════════════════════════════════════════════════════════════════
+
+┌─ DiagramViewer ──────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                                             │
+│  ┌─ TreePanel ──────────┐   ┌─ ContentArea ────────────────────────────┐   ┌─ AgentPanel (optional) ───┐  │
+│  │                       │   │                                         │   │                           │  │
+│  │  FileTreeNode[]       │   │  DiagramContentArea                     │   │  useDiagramAgentPanel     │  │
+│  │                       │   │    ** 05-scene-and-input.txt              │   │    → ReactElement | null  │  │
+│  │  selectedPath ●       │ R │    ** 06-scene-svgscene-detail.txt       │ R │                           │  │
+│  │  expandedFolders      │ e │                                         │ e │  ClineAgent integration   │  │
+│  │  onSelectPath()       │ s │  Props from useDiagramViewer:           │ s │                           │  │
+│  │  onToggleFolder()     │ i │    content, isLoading, error            │ i │                           │  │
+│  │                       │ z │    selectedPath, workspaceId            │ z │                           │  │
+│  │  w: 250 (min 180)     │ e │    onRequestJump, pendingJumpElementId  │ e │  w: 420 (min 320)         │  │
+│  │                       │   │    onJumpConsumed                       │   │                           │  │
+│  └─────────────────────────┘   └─────────────────────────────────────────┘   └───────────────────────────┘  │
+│       drag ──►              content fills remainder              ◄── drag                               │
+│                                                                                                         │
+│  CodeVizStatusIndicator — overlay badge top-right of content area                                       │
+│    state: connected | workspace-not-registered | disconnected                                           │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ useDiagramViewer Hook ════════════════════════════════════════════════════════════════════════════════
+
+  ┌─ State ────────────────────────┐       ┌─ Effects ─────────────────────────────────────────────────────┐
+  │                                │       │                                                               │
+  │  tree: FileTreeNode[]         │       │  1. Tree fetch (on mount / workspaceId change)                │
+  │  diagramsRootExists: boolean  │       │     trpc.diagrams.list.query({})                              │
+  │  isTreeLoading: boolean       │       │     → setTree, setDiagramsRootExists                         │
+  │  selectedPath: string | null  │       │     → auto-expand top-level dirs                             │
+  │  expandedFolders: Set<string> │       │     → derive workspacePath from diagramsRoot                 │
+  │  content: string | null       │       │                                                               │
+  │  isContentLoading: boolean    │       │  2. Content fetch (on selectedPath change)                    │
+  │  contentError: string | null  │       │     trpc.diagrams.getContent.query({ path })                  │
+  │  workspacePath: string | null │       │     → setContent or setContentError                          │
+  │  pendingJumpElementId         │       │                                                               │
+  │                               │       │  3. URL sync (on selectedPath change)                         │
+  └────────────────────────────────┘       │     history.replaceState → ?view=diagram&path=...            │
+                                           │                                                               │
+                                           └───────────────────────────────────────────────────────────────┘
+
+  ┌─ Callbacks ────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                                                                                        │
+  │  onSelectPath(path)                  — set selectedPath, triggers content fetch                       │
+  │  onToggleFolder(path)                — toggle folder in expandedFolders set                           │
+  │  requestJump(path, elementId)        — cross-diagram navigation:                                     │
+  │                                          setPendingJumpElementId(elementId)                           │
+  │                                          setSelectedPath(path) → triggers content fetch               │
+  │                                          history.pushState (enables browser back)                     │
+  │  consumeJump()                       — clear pendingJumpElementId after scene animates to target      │
+  │                                                                                                   │
+  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ Jump Protocol ═════════════════════════════════════════════════════════════════════════════════════════════
+
+  User clicks **-link          DiagramContentArea              useDiagramViewer              New Scene
+  in current scene             (navigation handler)            (hook state)                  (after load)
+       │                              │                              │                          │
+       ├─ link target has ──────────► │                              │                          │
+       │  path + elementId            │                              │                          │
+       │                              ├─ onRequestJump(p, eid) ────► │                          │
+       │                              │                              ├─ pendingJumpElementId    │
+       │                              │                              ├─ selectedPath = p        │
+       │                              │                              ├─ pushState(url)          │
+       │                              │                              │                          │
+       │                              │                              ├─ content fetch ─────────►│
+       │                              │                              │                          │
+       │                              │                              │         scene mounts ───►│
+       │                              │                              │         reads elementId  │
+       │                              │                              │         animates to box  │
+       │                              │                              │                          │
+       │                              │  onJumpConsumed() ◄──────────┤◄──── consumeJump()       │
+       │                              │                              ├─ pendingJumpElementId    │
+       │                              │                              │   = null                 │
+
+
+═══ useCodeVizStatus Hook ════════════════════════════════════════════════════════════════════════════════
+
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                                                                        │
+  │  Poll every 30s: trpc.diagrams.checkExtension.query()                  │
+  │                                                                        │
+  │  Server response:                    Hook state:                       │
+  │    available=false              ───►  "disconnected"                   │
+  │    available=true, registered=false ► "workspace-not-registered"       │
+  │    available=true, registered=true ►  "connected"                     │
+  │                                                                        │
+  │  Drives CodeVizStatusIndicator badge color                             │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+```
+

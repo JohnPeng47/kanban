@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { type Anchor, findDiagramBlockRange, parseAnchors } from "./anchors";
+import { getCachedAnchors } from "./anchor-cache";
+import { type Anchor, findDiagramBlockRange } from "./anchors";
 
 /**
  * Provides "Go to Definition" for anchor text in diagram files.
@@ -16,10 +17,10 @@ export class DiagramDefinitionProvider implements vscode.DefinitionProvider {
 		position: vscode.Position,
 		_token: vscode.CancellationToken,
 	): vscode.LocationLink[] | null {
-		const text = document.getText();
-		const anchors = parseAnchors(text);
+		const anchors = getCachedAnchors(document.uri);
 		if (anchors.length === 0) return null;
 
+		const text = document.getText();
 		const blockRange = findDiagramBlockRange(text);
 		if (!blockRange) return null;
 

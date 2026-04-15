@@ -1,0 +1,102 @@
+```diagram
+DIAGRAM FEATURE — SYSTEM OVERVIEW & DATA FLOW
+
+  ┌─ TIER 1: BROWSER ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+  │                                                                                                                            │
+  │  URL: ?view=diagram&path=...&at=...                                                                                        │
+  │        │                                                                                                                   │
+  │        ▼                                                                                                                   │
+  │  ┌─ DiagramViewer ──────────────────────────────────────────────────────────────────────────────────────────────────────
+  │  │  3-panel layout with resize handles                                                                                │   │
+  │  │  ** 02-viewer-layout.txt                                                                                           │   │
+  │  │                                                                                                                     │   │
+  │  │  ┌─ useDiagramViewer(workspaceId) ────────────────────────────────────────────────────────────────────────────────
+  │  │  │  Owns ALL viewer state:                                                                                     │   │   │
+  │  │  │    tree, selectedPath, expandedFolders, content, workspacePath                                               │   │   │
+  │  │  │    pendingJumpElementId, requestJump(), consumeJump()                                                        │   │   │
+  │  │  │                                                                                                              │   │   │
+  │  │  │  TRPC calls:                                                                                                 │   │   │
+  │  │  │    mount  ──→ diagrams.list.query ──────────────────────────────┐                                            │   │   │
+  │  │  │    select ──→ diagrams.getContent.query ───────────────────────┤                                            │   │   │
+  │  │  │                                                                │                                             │   │   │
+  │  │  └────────────────────────────────────────────────────────────────┤                                            │   │   │
+  │  │                                                                   │                                            │   │   │
+  │  │  ┌─ useCodeVizStatus(workspaceId) ──┐                              │                                            │   │   │
+  │  │  │  Poll every 30s                  │                             │                                            │   │   │
+  │  │  │  diagrams.checkExtension.query ──┤                             │                                            │   │   │
+  │  │  │  → "connected" | "disconnected"  │                             │                                            │   │   │
+  │  │  │  | "workspace-not-registered"    │                             │                                            │   │   │
+  │  │  └──────────────────────────────────┘                             │                                            │   │   │
+  │  │                                                                   │                                            │   │   │
+  │  │  ┌─ DiagramContentArea ──────────────────────────────────┐        │                                            │   │   │
+  │  │  │  ** 05-content-and-navigation.txt                     │        │                                            │   │   │
+  │  │  │                                                       │        │                                            │   │   │
+  │  │  │  fireCodeJump() ──→ diagrams.navigate.mutate ──┤        │                                            │   │   │
+  │  │  │  openPopup()    ──→ diagrams.getContent.query ────────┤        │                                            │   │   │
+  │  │  │  executeJump()  ──→ requestJump(path, elementId)      │        │                                            │   │   │
+  │  │  │                                                       │        │                                            │   │   │
+  │  │  └───────────────────────────────────────────────────────┘        │                                            │   │   │
+  │  └──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────┘   │
+  │                                                                     │                                                │
+  │                       getRuntimeTrpcClient(workspaceId) ◄─────┘                                                │
+  │                                     │                                                                                │
+  └─────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────┘
+                                        │ HTTP (tRPC over fetch)
+  ┌─ TIER 2: NODE.JS SERVER ────────────┼──────────────────────────────────────────────────────────────────────────────────────
+  │                                     ▼                                                                                    │
+  │  ┌─ TRPC app-router ──────────────────────────────────────────────────────────────────┐                                   │
+  │  │  diagrams.list           → listDiagrams(scope, input) ──→ buildDiagramTree()       │                                  │
+  │  │  diagrams.getContent     → getDiagramContent(scope, input) ──→ fs.readFile()       │                                  │
+  │  │  diagrams.navigate       → navigateToDiagramSource(scope, input) ──→ codeVizClient │                                  │
+  │  │  diagrams.checkExtension → checkExtensionStatus(scope) ──→ codeVizClient           │                                  │
+  │  └───────────────────────────────────────────────────┬────────────────────────────────┘                                  │
+  │                                                      │                                                                   │
+  │  ┌─ diagrams-api.ts ─────────────────────────────────┤──────────────────────────────────────┐                            │
+  │  │  Path safety: isPathSafe(), hasUnsafeSegments()                                         │                            │
+  │  │  File limit: 5 MB max                                                                   │                            │
+  │  │  Root: {workspacePath}/diagrams/                                                        │                            │
+  │  │  Tree: recursive readdir, filters *.html, sorts dirs-first                              │                            │
+  │  └────────────────────────────────────────────────────┤─────────────────────────────────────┘                            │
+  │                                                       │                                                                  │
+  │  ┌─ code-viz-client.ts ──────────────┐                │                                                                  │
+  │  │  Base URL: localhost:{24680}      │◄───────────┘                                                                      │
+  │  │  Timeout: 2.5s per request        │                                                                                   │
+  │  │  Methods:                         │                                                                                   │
+  │  │    checkHealth()     GET  /health │──────┐                                                                            │
+  │  │    checkWorkspace()  GET  /workspaces │──┤                                                                            │
+  │  │    navigate()        POST /navigate  │──┤                                                                            │
+  │  │                                      │  │                                                                             │
+  │  └──────────────────────────────────────┘  │                                                                             │
+  │                                            │                                                                             │
+  └────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────┘
+                                               │ HTTP :24680
+  ┌─ TIER 3: CODE VIZ EXTENSION ───────────────┼──────────────────────────────────────────────────
+  │  VSCode Extension (optional, local)        ▼                                                │
+  │                                                                                             │
+  │  GET  /api/health      → { status, pid, isRouter, port }                                    │
+  │  GET  /api/workspaces  → { workspaces: [{ root, port }] }  (realpath comparison)            │
+  │  POST /api/navigate    → { ok, error? }  (opens file:line in editor, supports newTab)       │
+  └─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ REQUEST SEQUENCE ══════════════════════════════════════════════════════
+
+ Browser                Server                    Code Viz
+ ───────                ──────                    ────────
+    │                            │                          │
+    │── diagrams.list ──────────►│                          │
+    │◄── { tree, root } ────────│                          │
+    │                            │                          │
+    │── diagrams.getContent ───►│                          │
+    │◄── { content: HTML } ─────│                          │
+    │                            │                          │
+    │   [user clicks element]    │                          │
+    │── diagrams.navigate ─────►│── POST /api/navigate ──►│
+    │◄── { ok } ────────────────│◄── { ok } ──────────────│
+    │                            │                          │
+    │   [every 30s]              │                          │
+    │── diagrams.checkExt ─────►│── GET /api/health ─────►│
+    │                            │── GET /api/workspaces ─►│
+    │◄── { available, registered}│◄── responses ───────────│
+```
+

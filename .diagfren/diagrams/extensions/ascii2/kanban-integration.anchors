@@ -1,0 +1,12 @@
+# anchor-text                code-ref                                                              label
+DiagramViewer                 web-ui/src/components/diagram-viewer.tsx:1-120                         DiagramViewer top-level component
+DiagramContentArea            web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354  DiagramContentArea component
+useDiagramViewer              web-ui/src/hooks/use-diagram-viewer.ts:1-180                           useDiagramViewer state hook
+useDiagramAgentPanel          web-ui/src/hooks/use-diagram-agent-panel.tsx:1-60                      useDiagramAgentPanel hook
+TRPC Router (app-router.ts)   src/trpc/app-router.ts:1-700                                          Main TRPC router
+diagrams-api.ts               src/trpc/diagrams-api.ts:1-150                                        Diagram TRPC procedures
+listDiagrams                  src/trpc/diagrams-api.ts:75-105                                       List diagrams from filesystem
+getDiagramContent             src/trpc/diagrams-api.ts:107-135                                      Read diagram HTML content
+navigateToDiagramSource       src/trpc/diagrams-api.ts:137-155                                      Navigate to source via CodeViz
+checkExtensionStatus          src/trpc/diagrams-api.ts:157-175                                      Check CodeViz extension health
+CodeVizClient                 src/diagram/code-viz-client.ts:1-80                                   HTTP client for CodeViz extension

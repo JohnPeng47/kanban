@@ -1,0 +1,20 @@
+# anchor-text                    code-ref                                                    label
+Viewport (container div)         web-ui/src/diagram/rendering/viewport.tsx:48-61            Viewport component signature and props destructuring
+applyTransform(t)                web-ui/src/diagram/rendering/viewport.tsx:90-96            applyTransform: set CSS transform on transformDiv
+scene.getSvgElement()            web-ui/src/diagram/rendering/viewport.tsx:78-88            Mount SVG element into transformDiv via useEffect
+OverLayer                        web-ui/src/diagram/rendering/over-layer.tsx:64-127          OverLayer component (see over-layer diagram)
+selectionRect overlay            web-ui/src/diagram/rendering/viewport.tsx:431-441          Selection rect overlay div
+selectionOverlayPaths            web-ui/src/diagram/rendering/viewport.tsx:442-460          Selection overlay path labels
+{children}                       web-ui/src/diagram/rendering/viewport.tsx:430               Children pass-through
+Transform { tx, ty, scale }      web-ui/src/diagram/types.ts:1-24                           Transform, Point, Rect, IDENTITY_TRANSFORM
+screenToScene(screenPt)          web-ui/src/diagram/rendering/viewport.tsx:98-107           screenToScene coordinate conversion
+composeTransforms(parent, child) web-ui/src/diagram/types.ts:204-210                        composeTransforms helper
+transformRect(rect, t)           web-ui/src/diagram/types.ts:213-220                        transformRect helper
+syncRootTransform(t)             web-ui/src/diagram/rendering/viewport.tsx:110-115          syncRootTransform keeps Scene in sync
+centerOn(scenePoint, opts?)      web-ui/src/diagram/rendering/viewport.tsx:118-148          centerOn imperative handle
+Wheel Zoom (pivot around cursor) web-ui/src/diagram/rendering/viewport.tsx:151-176          Wheel zoom with cursor pivot
+Pinch-to-Zoom (multi-touch)      web-ui/src/diagram/rendering/viewport.tsx:198-280          Pinch-to-zoom pointer handling
+MIN_SCALE=0.1  MAX_SCALE=5       web-ui/src/diagram/rendering/viewport.tsx:15-18            Zoom constants (MIN/MAX_SCALE, SENSITIVITY, DRAG_THRESHOLD)
+Pan (normal drag)                web-ui/src/diagram/rendering/viewport.tsx:282-331          Pan via normal drag
+Selection Lasso (Ctrl+drag)      web-ui/src/diagram/rendering/viewport.tsx:295-320          Selection lasso (Ctrl+drag)
+Window pointerup listener        web-ui/src/diagram/rendering/viewport.tsx:338-399          Window-level pointerup listener

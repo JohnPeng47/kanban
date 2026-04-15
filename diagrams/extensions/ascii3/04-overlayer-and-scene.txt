@@ -1,0 +1,96 @@
+```diagram
+OVERLAYER & SCENE/SVGSCENE — BADGE RENDERING AND SCENE GRAPH
+
+═══ OVERLAYER ═══════════════════════════════════════════════════════════════════════════════════════
+
+  Viewport owns transformRef (mutable ref, no re-renders)
+       │
+       ▼
+  ┌─ OverLayer({ badges, scene, transformRef }) ─────────────────────────────────────────────┐
+  │                                                                                           │
+  │  div.absolute.inset-0 (z-index: 10, overflow: hidden)                                    │
+  │                                                                                           │
+  │  ┌─ rAF sync loop ───────────────────────────────────────────────────────────────────────┐│
+  │  │  useEffect runs when badges/scene/transformRef change                                 ││
+  │  │  Every frame:                                                                         ││
+  │  │    for each badge:                                                                    ││
+  │  │      pos = resolveAnchor(badge.anchor, transformRef.current, scene)                   ││
+  │  │      dom.style.left = pos.x + "px"                                                   ││
+  │  │      dom.style.top  = pos.y + "px"                                                   ││
+  │  │  (bypasses React — direct DOM mutation for 60fps)                                     ││
+  │  └───────────────────────────────────────────────────────────────────────────────────────┘│
+  │                                                                                           │
+  │  Each badge: <button> 18x18px rounded-full, centered via margin -9px                      │
+  │    onClick → badge.onClick() (e.stopPropagation to avoid viewport click)                  │
+  │    hover:scale-125 transition                                                             │
+  │                                                                                           │
+  └───────────────────────────────────────────────────────────────────────────────────────────┘
+
+═══ SCENE INTERFACE ═════════════════════════════════════════════════════════════════════════════════
+
+  ┌─ Scene (interface) ──────────────────────────────────────────────────────────────────────┐
+  │                                                                                          │
+  │  Element Tree                      Bounds                      Transforms                │
+  │  ────────────                      ──────                      ──────────                 │
+  │  getRoot()                         getLocalBounds(id)          setTransform(id, t)        │
+  │  getElement(id)                    getWorldBounds(id)          getTransform(id)           │
+  │  getAllElements()                                              getWorldTransform(id)      │
+  │  getChildren(id)                                                                         │
+  │                                                                                          │
+  │  Mutations                         Hit Testing                 Rendering/Lifecycle        │
+  │  ─────────                         ───────────                 ─────────────────────      │
+  │  growVisualBounds(id, dW, dH)      hitTest(screenPt)           getSvgElement()            │
+  │  addElement(id, dom, parent)       hitTestRect(sceneRect,      destroy()                  │
+  │  removeElement(id)                   "intersect"|"contain")                               │
+  │  addSubtree(dom, parent)                                                                 │
+  └──────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ SVGSCENE IMPLEMENTATION ═════════════════════════════════════════════════════════════════════════
+
+  ┌─ SvgScene  see modal: 04-svgscene-detail.txt ────────────────────────────────────────────┐
+  │                                                                                           │
+  │  Private state:                                                                           │
+  │    svg: SVGSVGElement               (the actual <svg> DOM node)                           │
+  │    elements: Map<string, SceneElement>                                                    │
+  │    domElements: Map<string, SVGGElement>                                                  │
+  │    visualRects: Map<string, SVGRectElement>                                               │
+  │    worldBoundsCache: Map<string, Rect>                                                    │
+  │                                                                                           │
+  │  Construction:                                                                            │
+  │    1. Remove viewBox, set width/height for 1:1 rendering                                  │
+  │    2. Inject interaction CSS (hover, selected, modal/link dashed borders)                  │
+  │    3. buildElementTree() — query SCENE_ELEMENT_SELECTOR, build parent-child graph          │
+  │                                                                                           │
+  │  SCENE_ELEMENT_SELECTOR = "[data-reflow-group], [data-interactive], [data-arrow]"         │
+  │                                                                                           │
+  │  SceneElement roles parsed from metadata:                                                 │
+  │    interactive ← data-interactive + data-ref → parseInteractiveData()                     │
+  │    reflow ← data-reflow-group or data-arrow → ReflowState                                 │
+  └───────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ SCENEELEMENT ════════════════════════════════════════════════════════════════════════════════════
+
+  ┌─ SceneElement ──────────────────────────────────────────────────────────────────────────┐
+  │                                                                                         │
+  │  id ─────────── "root" | data-reflow-group | data-interactive | "arrow-{n}"             │
+  │  parentId ───── string | null (null for root)                                           │
+  │  childIds ───── string[] (document order)                                               │
+  │  localBounds ── Rect { x, y, width, height } (from getBBox)                             │
+  │  transform ──── Transform { tx, ty, scale }                                             │
+  │  metadata ───── Record<string, string> (all data-* attributes)                          │
+  │  hasVisualRect ─ boolean (has direct <rect> child for grow/reflow)                      │
+  │                                                                                         │
+  │  interactive ── InteractiveData | null                                                  │
+  │    ├── ref, parsedRef (filePath:startLine-endLine)                                      │
+  │    ├── category (module|function|type|data|flow|call|concept|annotation)                │
+  │    ├── label, tooltip                                                                   │
+  │    ├── navTarget (ref or data-nav override)                                             │
+  │    ├── modal: DiagramModal | null (data-modal → path + position)                        │
+  │    └── link: DiagramLink | null  (data-link → path#elementId)                           │
+  │                                                                                         │
+  │  reflow ─────── ReflowState | null  { originalBounds }                                  │
+  └─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+

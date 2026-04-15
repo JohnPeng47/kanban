@@ -1,0 +1,28 @@
+# anchor-text                        code-ref                                                      label
+DiagramViewer                        web-ui/src/components/diagram-viewer.tsx:19-156               DiagramViewer component (3-panel + resize)
+useDiagramViewer(workspaceId)        web-ui/src/hooks/use-diagram-viewer.ts:49-224                 useDiagramViewer hook (tree fetch, content fetch, jump state)
+useCodeVizStatus(workspaceId)        web-ui/src/hooks/use-code-viz-status.ts:14-50                 useCodeVizStatus polling hook (30s)
+DiagramContentArea                   web-ui/src/components/diagram-panels/diagram-content-area.tsx:290-360  DiagramContentArea wrapper
+getRuntimeTrpcClient(workspaceId)    web-ui/src/runtime/trpc-client.ts:13-29                       getRuntimeTrpcClient factory
+TRPC app-router                      src/trpc/app-router.ts:680-702                                tRPC diagrams router definition
+diagrams.list                        src/trpc/app-router.ts:681-686                                diagrams.list procedure
+diagrams.getContent                  src/trpc/app-router.ts:687-692                                diagrams.getContent procedure
+diagrams.navigate                    src/trpc/app-router.ts:693-698                                diagrams.navigate procedure
+diagrams.checkExtension              src/trpc/app-router.ts:699-701                                diagrams.checkExtension procedure
+listDiagrams(scope, input)           src/trpc/diagram-helpers.ts:70-98                             listDiagrams — tree + root path
+getDiagramContent(scope, input)      src/trpc/diagram-helpers.ts:100-125                           getDiagramContent — fs.readFile with safety
+navigateToDiagramSource(scope, input)  src/trpc/diagram-helpers.ts:127-131                         navigateToDiagramSource — forwards to codeVizClient
+checkExtensionStatus(scope)          src/trpc/diagram-helpers.ts:133-147                           checkExtensionStatus — health + workspace check
+buildDiagramTree()                   src/trpc/diagram-helpers.ts:32-68                             buildDiagramTree recursive *.html scanner
+isPathSafe()                         src/trpc/diagram-helpers.ts:22-26                             isPathSafe path traversal guard
+hasUnsafeSegments()                  src/trpc/diagram-helpers.ts:28-30                             hasUnsafeSegments segment check
+diagrams-api.ts                      src/trpc/diagram-helpers.ts:1-147                             Diagram API helpers (path safety, tree, content, navigate)
+code-viz-client.ts                   src/diagram/code-viz-client.ts:1-112                          Code Viz HTTP client module
+codeVizClient                        src/diagram/code-viz-client.ts:108-112                        codeVizClient exported object
+checkHealth()                        src/diagram/code-viz-client.ts:45-55                          checkHealth — GET /health
+checkWorkspace()                     src/diagram/code-viz-client.ts:66-82                          checkWorkspace — GET /workspaces
+navigate()                           src/diagram/code-viz-client.ts:84-106                         navigate — POST /navigate
+fireCodeJump()                       web-ui/src/components/diagram-panels/diagram-content-area.tsx:57-76    fireCodeJump — TRPC navigate.mutate
+openPopup()                          web-ui/src/components/diagram-panels/diagram-content-area.tsx:78-110   openPopup — fetch content + push popup stack
+executeJump()                        web-ui/src/components/diagram-panels/diagram-content-area.tsx:112-138  executeJump — same/cross diagram jump
+requestJump(path, elementId)         web-ui/src/hooks/use-diagram-viewer.ts:159-172                requestJump — set pending jump + select path

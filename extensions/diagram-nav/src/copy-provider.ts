@@ -1,32 +1,28 @@
 import * as vscode from "vscode";
-import { findDiagramBlockRange, parseAnchors } from "./anchors";
+import { hasCachedAnchors, getCachedAnchors, refreshAnchors } from "./anchor-cache";
+import { findDiagramBlockRange } from "./anchors";
 
 /**
  * Register a clipboard intercept that appends code-refs to copied diagram text.
  *
  * Uses a context variable so the keybinding only activates when the current
- * file has an anchors block.
+ * file has a `.diagfren/` sidecar with anchors.
  */
 export function registerCopyProvider(context: vscode.ExtensionContext): void {
 	// Track whether the active file has anchors
-	function updateContext(editor: vscode.TextEditor | undefined) {
+	async function updateContext(editor: vscode.TextEditor | undefined) {
 		if (!editor || editor.document.languageId !== "plaintext") {
 			vscode.commands.executeCommand("setContext", "diagfren.hasAnchors", false);
 			return;
 		}
-		const text = editor.document.getText();
-		const hasAnchors = text.includes("```anchors");
-		vscode.commands.executeCommand("setContext", "diagfren.hasAnchors", hasAnchors);
+		await refreshAnchors(editor.document.uri);
+		const has = hasCachedAnchors(editor.document.uri);
+		vscode.commands.executeCommand("setContext", "diagfren.hasAnchors", has);
 	}
 
 	updateContext(vscode.window.activeTextEditor);
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(updateContext),
-		vscode.workspace.onDidChangeTextDocument((e) => {
-			if (vscode.window.activeTextEditor?.document === e.document) {
-				updateContext(vscode.window.activeTextEditor);
-			}
-		}),
 	);
 
 	// Debug command — shows what getText(selection) returns in a new editor tab
@@ -93,19 +89,19 @@ export function registerCopyProvider(context: vscode.ExtensionContext): void {
 
 			// Compute the overall selection span across all cursors
 			const sorted = selections.slice().sort((a, b) => a.start.compareTo(b.start));
-			const overallStart = sorted[0]!.start;
-			const overallEnd = sorted[sorted.length - 1]!.end;
 
 			const text = document.getText();
 			const blockRange = findDiagramBlockRange(text);
 
 			// If selection isn't in the diagram block, plain copy
+			const overallStart = sorted[0]!.start;
+			const overallEnd = sorted[sorted.length - 1]!.end;
 			if (!blockRange || overallEnd.line < blockRange[0] || overallStart.line > blockRange[1]) {
 				await vscode.env.clipboard.writeText(selectedText);
 				return;
 			}
 
-			const anchors = parseAnchors(text);
+			const anchors = getCachedAnchors(document.uri);
 			if (anchors.length === 0) {
 				await vscode.env.clipboard.writeText(selectedText);
 				return;
@@ -131,11 +127,12 @@ export function registerCopyProvider(context: vscode.ExtensionContext): void {
 				return;
 			}
 
+			const relativePath = vscode.workspace.asRelativePath(document.uri);
 			const refLines = Array.from(matchedRefs.entries())
 				.map(([anchorText, ref]) => `${anchorText}  ${ref}`)
 				.join("\n");
 
-			await vscode.env.clipboard.writeText(`${selectedText}\n\n---\n${refLines}`);
+			await vscode.env.clipboard.writeText(`${selectedText}\n\n---\nsource: ${relativePath}\n${refLines}`);
 			vscode.window.setStatusBarMessage(`Copied with ${matchedRefs.size} code-ref(s)`, 3000);
 		}),
 	);

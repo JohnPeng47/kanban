@@ -1,0 +1,38 @@
+# anchor-text                        code-ref                                                      label
+useDiagram                           web-ui/src/diagram/use-diagram.ts:9-63                        useDiagram hook — HTML → Scene
+SvgScene (implements Scene)          web-ui/src/diagram/rendering/svg-scene.ts:52-521              SvgScene class
+SceneElement                         web-ui/src/diagram/rendering/scene.ts:10-44                   SceneElement interface
+InteractiveData                      web-ui/src/diagram/types.ts:120-140                           InteractiveData type
+DiagramModal                         web-ui/src/diagram/types.ts:95-100                            DiagramModal type
+DiagramLink                          web-ui/src/diagram/types.ts:102-107                           DiagramLink type
+ReflowState                          web-ui/src/diagram/types.ts:109-112                           ReflowState type
+SCENE_ELEMENT_SELECTOR               web-ui/src/diagram/rendering/svg-scene.ts:16                  SCENE_ELEMENT_SELECTOR constant
+buildElementTree()                   web-ui/src/diagram/rendering/svg-scene.ts:126-206             buildElementTree — tree construction
+parseInteractiveData()               web-ui/src/diagram/types.ts:143-161                           parseInteractiveData — metadata → InteractiveData
+getRoot()                            web-ui/src/diagram/rendering/svg-scene.ts:221-223             getRoot method
+getElement(id)                       web-ui/src/diagram/rendering/svg-scene.ts:225-227             getElement method
+getAllElements()                     web-ui/src/diagram/rendering/svg-scene.ts:229-231             getAllElements method
+getChildren(id)                      web-ui/src/diagram/rendering/svg-scene.ts:233-239             getChildren method
+getWorldBounds(id)                   web-ui/src/diagram/rendering/svg-scene.ts:249-260             getWorldBounds — cached world bounds
+setTransform                         web-ui/src/diagram/rendering/svg-scene.ts:271-286             setTransform + cache invalidation
+getTransform(id)                     web-ui/src/diagram/rendering/svg-scene.ts:288-290             getTransform method
+hitTest                              web-ui/src/diagram/rendering/svg-scene.ts:347-358             hitTest — elementFromPoint + closest
+hitTestRect                          web-ui/src/diagram/rendering/svg-scene.ts:360-375             hitTestRect — rect intersection/containment
+growVisualBounds                     web-ui/src/diagram/rendering/svg-scene.ts:335-354             growVisualBounds — resize SVG rect + invalidate
+addElement(id,dom,par)               web-ui/src/diagram/rendering/svg-scene.ts:390-437             addElement — register new element
+removeElement(id)                    web-ui/src/diagram/rendering/svg-scene.ts:439-463             removeElement — recursive remove
+addSubtree(dom,par)                  web-ui/src/diagram/rendering/svg-scene.ts:465-507             addSubtree — batch add tagged subtree
+invalidateWorldBoundsCache           web-ui/src/diagram/rendering/svg-scene.ts:323-331             invalidateWorldBoundsCache — recursive down children
+OverLayer                            web-ui/src/diagram/rendering/over-layer.tsx:64-127            OverLayer component
+rAF sync loop                        web-ui/src/diagram/rendering/over-layer.tsx:68-89             rAF sync loop
+resolveAnchor                        web-ui/src/diagram/rendering/over-layer.tsx:6-52              resolveAnchor — badge anchor → screen position
+Viewport                             web-ui/src/diagram/rendering/viewport.tsx:48-465              Viewport component
+syncRootTransform                    web-ui/src/diagram/rendering/viewport.tsx:110-115             syncRootTransform — scene.setTransform("root", t)
+transformRef                         web-ui/src/diagram/rendering/viewport.tsx:60                   transformRef — mutable transform (no re-renders)
+SceneInput                           web-ui/src/diagram/input/scene-input.tsx:51-390               SceneInput component
+handleSceneClick                     web-ui/src/diagram/input/scene-input.tsx:278-345              handleSceneClick — hit test + selection + navigate
+handleSelectionDrag                  web-ui/src/diagram/input/scene-input.tsx:152-176              handleSelectionDrag — live lasso preview
+handleSelectionDragEnd               web-ui/src/diagram/input/scene-input.tsx:189-276              handleSelectionDragEnd — commit + clipboard
+getSelectedInteractiveData           web-ui/src/diagram/input/scene-input.tsx:134-146              getSelectedInteractiveData helper
+dragPreviewPaths                     web-ui/src/diagram/input/scene-input.tsx:178-187              dragPreviewPaths useMemo
+DiagramScene                         web-ui/src/components/diagram-panels/diagram-content-area.tsx:29-273  DiagramScene inner component

@@ -1,0 +1,155 @@
+```diagram
+SCENEINPUT + DIAGRAMCONTENTAREA — EVENT FLOW, SELECTION, NAVIGATION, POPUPS
+
+═══ SCENEINPUT EVENT FLOW ═══════════════════════════════════════════════════════════════════════════
+
+  SVG mouseover/move/out/pointerdown (DOM listeners)
+       │
+       ▼
+  ┌─ Tooltip system ────────────────────────────────────────────────────────┐
+  │  Desktop: mouseover → closest [data-tt] → show tooltip at cursor       │
+  │           mousemove → reposition                                        │
+  │           mouseout → hide                                               │
+  │  Touch:   pointerdown → closest [data-tt] → show, tap elsewhere → hide │
+  │  Content: "<span class=tt-file>path</span>" + optional hint + action hint   │
+  │  Fixed position div, opacity transition, z-index 100                    │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  Viewport events
+       │
+       ├─ onSceneClick ──────────────────────────────────────────────────────────────
+       │       │
+       │       ▼
+       │  ┌─ handleSceneClick ───────────────────────────────────────────────────────┐
+       │  │  1. Hide tooltip                                                         │
+       │  │  2. hitTest(screenPoint) → hitId or null                                 │
+       │  │                                                                          │
+       │  │  hitId == null:                                                           │
+       │  │    Clear all selection visuals, fire onSelectionChange([])               │
+       │  │                                                                          │
+       │  │  hitId has interactive data:                                              │
+       │  │    Shift+click → toggle in selection set                                 │
+       │  │    Normal click → replace selection with single item                     │
+       │  │    CSS class "selected" toggled on SVG <g> elements                      │
+       │  │    Fire onNavigate(interactive, domEvent) ──→ DiagramContentArea         │
+       │  │                                                                          │
+       │  │  hitId without interactive: clear selection                              │
+       │  └────────────────────────────────────────────────────────────────────────────┘
+       │
+       ├─ onSelectionDrag ───────────────────────────────────────────────────────────
+       │       │
+       │       ▼
+       │  ┌─ handleSelectionDrag(sceneRect) ─────────────────────────────────────────┐
+       │  │  hitTestRect(sceneRect, "intersect") → candidate IDs                     │
+       │  │  Filter to elements with interactive data                                 │
+       │  │  Live-update CSS "selected" class (add/remove as lasso moves)             │
+       │  │  Build dragPreviewPaths for overlay labels                                │
+       │  └──────────────────────────────────────────────────────────────────────────┘
+       │
+       ├─ onSelectionDragEnd ────────────────────────────────────────────────────────
+       │       │
+       │       ▼
+       │  ┌─ handleSelectionDragEnd(sceneRect) ──────────────────────────────────────┐
+       │  │  Final hitTestRect → commit selection                                    │
+       │  │  Collect unique refs, copy to clipboard via navigator.clipboard           │
+       │  │  Show toast: "Copied N ref(s)" or warning                                │
+       │  │  Fire onSelectionChange(elements)                                        │
+       │  └──────────────────────────────────────────────────────────────────────────┘
+       │
+       └─ onContextMenu ──→ forwarded to DiagramContentArea
+              ** see below
+
+
+═══ DIAGRAMSCENE NAVIGATION DISPATCH ═════════════════════════════════════════════════════════════
+
+  onNavigate(interactive, domEvent)
+       │
+       ├─ Alt+click? ────────────────→ fireCodeJump(interactive, domEvent)
+       │                                │  TRPC: diagrams.navigate.mutate
+       │                                │  { root, filePath, line, newTab: ctrl/meta }
+       │                                │  → Code Viz Extension opens file in editor
+       │                                └─ Toast on error
+       │
+       ├─ Has modal? ────────────────→ openPopup(interactive)
+       │                                │  Resolve relative path against current diagram dir
+       │                                │  TRPC: diagrams.getContent.query({ path })
+       │                                │  Get anchor bounds from scene.getWorldBounds()
+       │                                │  Push onto popupStack → renders PopupDiagramOverlay
+       │                                └─ Toast on error
+       │
+       ├─ Has link? ─────────────────→ executeJump(interactive)
+       │                                │  Resolve relative path
+       │                                │  Same diagram? → viewport.centerOn(target, animate)
+       │                                │  Different diagram? → onRequestJump(path, elementId)
+       │                                └─ ** 02-viewer-layout.txt (jump protocol)
+       │
+       └─ Default ───────────────────→ fireCodeJump(interactive, domEvent)
+
+
+═══ OVERLAY BADGES ══════════════════════════════════════════════════════════════════════════════════
+
+  DiagramScene builds badges from scene elements:
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │  scene.getAllElements()                                                  │
+  │    │                                                                     │
+  │    ├── el.interactive.modal?  →  Badge "⬡" purple (#A371F7)             │
+  │    │     anchor: element top-right                                       │
+  │    │     onClick: openPopup(el.interactive)                              │
+  │    │                                                                     │
+  │    └── el.interactive.link?   →  Badge "→" gold (#D4A72C)              │
+  │          anchor: element top-right                                       │
+  │          onClick: executeJump(el.interactive)                            │
+  │                                                                          │
+  │  + userBadges (from context menu "Add Badge")                            │
+  │      anchor: scene space at right-click point                            │
+  │      onClick: remove self                                                │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+═══ POPUP STACK & CONTEXT MENU ══════════════════════════════════════════════════════════════════════
+
+  ┌─ PopupDiagramOverlay ──────────────────────────────────────────────────────────────────────┐
+  │                                                                                             │
+  │  absolute inset-0, z-index: 50 + i*2 (stacking)                                            │
+  │                                                                                             │
+  │  ┌─ backdrop ─────────────┐  ┌─ popup ───────────────────────────────────────┐              │
+  │  │ bg-surface-0/50        │  │  border, rounded-lg, shadow-2xl               │              │
+  │  │ backdrop-blur-[2px]    │  │  size: fit to diagram (min 200x150,           │              │
+  │  │ click → onClose        │  │         max 85% of container)                 │              │
+  │  └────────────────────────┘  │                                               │              │
+  │                              │  ┌─ Close button (X, top-right) ──┐           │              │
+  │                              │  └────────────────────────────────┘           │              │
+  │                              │                                               │              │
+  │                              │  ┌─ PopupScene ─────────────────────────────┐ │              │
+  │                              │  │  useDiagram(content) → Scene             │ │              │
+  │                              │  │  SceneInput (full interactive: pan,zoom,  │ │              │
+  │                              │  │    hit test, tooltips, navigation)        │ │              │
+  │                              │  │  onNavigate → parent's handleNavigate     │ │              │
+  │                              │  └──────────────────────────────────────────┘ │              │
+  │                              │                                               │              │
+  │                              └───────────────────────────────────────────────┘              │
+  │  ESC → onClose                                                                              │
+  │  popupStack.slice(0, i) on close → removes this popup and all above it                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Context Menu ─────────────────────────────────────────────────────────────────────────────┐
+  │  Fixed position at right-click screen coords                                               │
+  │  z-200, border-border-bright, bg-surface-2                                                 │
+  │  One action: "Add Badge" → creates scene-space badge at click point                        │
+  │  Dismissed on any outside pointerdown                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ useDiagram HOOK ═══════════════════════════════════════════════════════════════════════════════
+
+  useDiagram(html)
+       │
+       ├─ html changes → DOMParser.parseFromString(html, "text/html")
+       ├─ Extract <svg> element
+       ├─ Temporarily append to document.body (getBBox needs live DOM)
+       ├─ new SvgScene(svg) → Scene
+       ├─ Remove from document.body (Viewport will re-mount)
+       └─ Cleanup: scene.destroy() on unmount or html change
+```
+

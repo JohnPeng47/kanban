@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 /** A parsed anchor mapping visible diagram text to a code reference. */
 export interface Anchor {
 	/** The exact visible string in the diagram. */
@@ -13,34 +15,82 @@ export interface Anchor {
 }
 
 /**
- * Parse the ```anchors block from a diagram .txt file.
+ * Resolve the `.diagfren/` sidecar path for a given document.
  *
- * Expected format (whitespace-separated columns):
+ * For a diagram at `diagrams/extensions/ascii3/01-system-and-data-flow.txt`,
+ * returns the workspace URI for `.diagfren/diagrams/extensions/ascii3/01-system-and-data-flow.anchors`.
+ */
+export function resolveAnchorsUri(documentUri: vscode.Uri): vscode.Uri | null {
+	const workspaceFolders = vscode.workspace.workspaceFolders;
+	if (!workspaceFolders?.[0]) return null;
+
+	const relativePath = vscode.workspace.asRelativePath(documentUri, false);
+	// Replace .txt extension with .anchors
+	const anchorsRelative = relativePath.replace(/\.txt$/, ".anchors");
+	return vscode.Uri.joinPath(workspaceFolders[0].uri, ".diagfren", anchorsRelative);
+}
+
+/**
+ * Load anchors for a document from its `.diagfren/` sidecar file.
+ * Returns empty array if no sidecar file exists.
+ */
+export async function loadAnchors(documentUri: vscode.Uri): Promise<Anchor[]> {
+	const anchorsUri = resolveAnchorsUri(documentUri);
+	if (!anchorsUri) return [];
+
+	try {
+		const bytes = await vscode.workspace.fs.readFile(anchorsUri);
+		const text = Buffer.from(bytes).toString("utf-8");
+		return parseAnchorsContent(text);
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Synchronously load anchors for a document from its `.diagfren/` sidecar file.
+ * Uses openTextDocument which may return a cached version.
+ * Returns empty array if no sidecar file exists.
+ */
+export function loadAnchorsSync(documentUri: vscode.Uri): Anchor[] | null {
+	const anchorsUri = resolveAnchorsUri(documentUri);
+	if (!anchorsUri) return null;
+	// Return null to signal "needs async resolution" — callers that need
+	// sync access should use the cached approach or pre-load.
+	return null;
+}
+
+/**
+ * Check whether a `.diagfren/` sidecar file exists for the given document.
+ */
+export async function hasAnchorsFile(documentUri: vscode.Uri): Promise<boolean> {
+	const anchorsUri = resolveAnchorsUri(documentUri);
+	if (!anchorsUri) return false;
+
+	try {
+		await vscode.workspace.fs.stat(anchorsUri);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Parse raw anchors content (no fence markers — just the column data).
+ *
+ * Expected format:
  * ```
- * ```anchors
  * # anchor-text            code-ref                         label
  * DiagramContentArea        src/foo.tsx:286-354              DiagramContentArea component
- * ```
  * ```
  *
  * Uses two-or-more-spaces as the column delimiter to allow spaces within
  * anchor text and labels.
  */
-export function parseAnchors(text: string): Anchor[] {
+export function parseAnchorsContent(text: string): Anchor[] {
 	const anchors: Anchor[] = [];
 
-	// Find the anchors block
-	const startMatch = text.match(/^```anchors\s*$/m);
-	if (!startMatch || startMatch.index === undefined) return anchors;
-
-	const blockStart = startMatch.index + startMatch[0].length;
-	const blockEnd = text.indexOf("```", blockStart);
-	if (blockEnd === -1) return anchors;
-
-	const block = text.slice(blockStart, blockEnd);
-	const lines = block.split("\n");
-
-	for (const line of lines) {
+	for (const line of text.split("\n")) {
 		const trimmed = line.trim();
 		if (!trimmed || trimmed.startsWith("#")) continue;
 
@@ -65,6 +115,20 @@ export function parseAnchors(text: string): Anchor[] {
 	}
 
 	return anchors;
+}
+
+/**
+ * Parse the ```anchors block from inline diagram text (legacy support).
+ */
+export function parseAnchors(text: string): Anchor[] {
+	const startMatch = text.match(/^```anchors\s*$/m);
+	if (!startMatch || startMatch.index === undefined) return [];
+
+	const blockStart = startMatch.index + startMatch[0].length;
+	const blockEnd = text.indexOf("```", blockStart);
+	if (blockEnd === -1) return [];
+
+	return parseAnchorsContent(text.slice(blockStart, blockEnd));
 }
 
 function parseCodeRef(ref: string): { filePath: string; startLine: number; endLine: number | null } | null {

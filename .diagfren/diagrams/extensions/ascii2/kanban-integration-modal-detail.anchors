@@ -1,0 +1,12 @@
+# anchor-text                code-ref                                                              label
+DiagramContentArea            web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354   DiagramContentArea component
+useDiagram(content)           web-ui/src/diagram/use-diagram.ts:8-52                                  useDiagram hook
+DiagramScene                  web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269    DiagramScene inner component
+SceneInput                    web-ui/src/diagram/input/scene-input.tsx:48-357                         SceneInput component
+PopupOverlay                  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145   PopupDiagramOverlay component
+ContextMenu                   web-ui/src/components/diagram-panels/diagram-content-area.tsx:195-229  Context menu state + handler
+Viewport                      web-ui/src/diagram/rendering/viewport.tsx:48-463                        Viewport component
+fireCodeJump                  web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73     fireCodeJump → TRPC navigate
+openPopup                     web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107    openPopup → fetch + push to stack
+executeJump                   web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135   executeJump: same-diagram or cross
+PopupScene                    web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155  PopupScene: SceneInput with parent nav

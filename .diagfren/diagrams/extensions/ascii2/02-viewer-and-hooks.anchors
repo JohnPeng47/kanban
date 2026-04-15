@@ -1,0 +1,10 @@
+# anchor-text                    code-ref                                                        label
+DiagramViewer                    web-ui/src/components/diagram-viewer.tsx:19-156                 DiagramViewer component (3-panel flex layout)
+TreePanel                        web-ui/src/components/diagram-panels/diagram-tree-panel.tsx     TreePanel (file tree sidebar)
+ContentArea                      web-ui/src/components/diagram-panels/diagram-content-area.tsx   DiagramContentArea (scene host)
+CodeVizStatusIndicator           web-ui/src/components/diagram-panels/code-viz-status-indicator.tsx  CodeViz badge overlay
+useDiagramViewer                 web-ui/src/hooks/use-diagram-viewer.ts:49-224                   useDiagramViewer hook
+pendingJumpElementId             web-ui/src/hooks/use-diagram-viewer.ts:65                       pendingJumpElementId state
+requestJump(path, elementId)     web-ui/src/hooks/use-diagram-viewer.ts:159-172                  requestJump — cross-diagram navigation
+consumeJump()                    web-ui/src/hooks/use-diagram-viewer.ts:174-176                  consumeJump — clear pending jump
+useCodeVizStatus                 web-ui/src/hooks/use-code-viz-status.ts:14-50                   useCodeVizStatus (30s poll)

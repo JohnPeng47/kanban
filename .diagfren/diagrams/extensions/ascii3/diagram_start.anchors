@@ -1,0 +1,21 @@
+# anchor-text                          code-ref                                                      label
+Viewport container div                  web-ui/src/diagram/rendering/viewport.tsx:421-464             Viewport JSX — container div with pointer handlers
+onPointerDown (line 198)               web-ui/src/diagram/rendering/viewport.tsx:198-233             onPointerDown — records start state for pan/click/select
+pointerDownRef                          web-ui/src/diagram/rendering/viewport.tsx:67                  pointerDownRef — mutable pan/click state
+transformDiv                            web-ui/src/diagram/rendering/viewport.tsx:430                 transformDiv — holds the SVG, CSS transform applied
+OverLayer                               web-ui/src/diagram/rendering/over-layer.tsx:64-127            OverLayer component — badge positioning
+badgeRefsMap                            web-ui/src/diagram/rendering/over-layer.tsx:65                badgeRefsMap — Map<string, HTMLButtonElement>
+onWindowPointerUp line 340             web-ui/src/diagram/rendering/viewport.tsx:340-401             onWindowPointerUp — classify as drag or click
+screenToScene                           web-ui/src/diagram/rendering/viewport.tsx:98-107              screenToScene — screen px → scene coordinates
+SCENE_ELEMENT_SELECTOR                  web-ui/src/diagram/rendering/svg-scene.ts:16                 SCENE_ELEMENT_SELECTOR constant
+getElement                              web-ui/src/diagram/rendering/svg-scene.ts:225-227            getElement method
+applySelectionVisual                    web-ui/src/diagram/input/scene-input.tsx:123-132             applySelectionVisual — toggle "selected" CSS class
+onNavigate                              web-ui/src/diagram/input/scene-input.tsx:35                  onNavigate prop — (interactive, domEvent) => void
+DiagramScene.handleNavigate (line 140)  web-ui/src/components/diagram-panels/diagram-content-area.tsx:140-164  handleNavigate — route click to action
+fireCodeJump                            web-ui/src/components/diagram-panels/diagram-content-area.tsx:57-76   fireCodeJump — trpc navigate to editor
+openPopup                               web-ui/src/components/diagram-panels/diagram-content-area.tsx:78-110  openPopup — load modal content + push popupStack
+executeJump                             web-ui/src/components/diagram-panels/diagram-content-area.tsx:112-138 executeJump — same-diagram centerOn or cross-diagram jump
+badges useMemo                          web-ui/src/components/diagram-panels/diagram-content-area.tsx:167-194  badges useMemo — build badge array from elements
+SvgScene (implements Scene)             web-ui/src/diagram/rendering/svg-scene.ts:52-521             SvgScene class
+SceneInput                              web-ui/src/diagram/input/scene-input.tsx:51-390              SceneInput component
+InteractiveData                         web-ui/src/diagram/types.ts:55-64                            InteractiveData type

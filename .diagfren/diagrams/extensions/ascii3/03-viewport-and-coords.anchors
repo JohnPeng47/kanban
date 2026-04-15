@@ -1,0 +1,23 @@
+# anchor-text                        code-ref                                                      label
+containerRef                         web-ui/src/diagram/rendering/viewport.tsx:48-465              Viewport component (forwardRef)
+transformDivRef                      web-ui/src/diagram/rendering/viewport.tsx:63                   transformDivRef — inner div that holds SVG
+Transform { tx, ty, scale }          web-ui/src/diagram/types.ts:17-22                             Transform type definition
+MIN_SCALE                            web-ui/src/diagram/rendering/viewport.tsx:16                   MIN_SCALE = 0.1
+MAX_SCALE                            web-ui/src/diagram/rendering/viewport.tsx:17                   MAX_SCALE = 5
+ZOOM_SENSITIVITY                     web-ui/src/diagram/rendering/viewport.tsx:15                   ZOOM_SENSITIVITY = 0.002
+DRAG_THRESHOLD                       web-ui/src/diagram/rendering/viewport.tsx:18                   DRAG_THRESHOLD = 4px
+screenToScene(screenPoint)           web-ui/src/diagram/rendering/viewport.tsx:98-107              screenToScene coordinate conversion
+applyTransform(t)                    web-ui/src/diagram/rendering/viewport.tsx:90-96               applyTransform imperative DOM write
+syncRootTransform(t)                 web-ui/src/diagram/rendering/viewport.tsx:110-115             syncRootTransform — scene.setTransform("root", t)
+onWheel                              web-ui/src/diagram/rendering/viewport.tsx:151-176             Wheel zoom handler
+centerOn(scenePoint,                 web-ui/src/diagram/rendering/viewport.tsx:121-145             centerOn imperative handle
+PAN (default)                        web-ui/src/diagram/rendering/viewport.tsx:198-234             Pan pointer-down handler
+SELECTION LASSO                      web-ui/src/diagram/rendering/viewport.tsx:295-320             Selection lasso (Ctrl+drag branch)
+PINCH-TO-ZOOM (touch)                web-ui/src/diagram/rendering/viewport.tsx:243-281             Pinch-to-zoom move handler
+onPointerDown                        web-ui/src/diagram/rendering/viewport.tsx:198-234             pointerDown — pan/selection start
+onPointerMove                        web-ui/src/diagram/rendering/viewport.tsx:236-335             pointerMove — pan/lasso/pinch dispatch
+onPointerCancel                      web-ui/src/diagram/rendering/viewport.tsx:403-408             pointerCancel cleanup
+scene.getSvgElement()                web-ui/src/diagram/rendering/viewport.tsx:78-88               SVG mount into transformDiv
+OverLayer                            web-ui/src/diagram/rendering/over-layer.tsx:64-127            OverLayer component
+selectionRect                        web-ui/src/diagram/rendering/viewport.tsx:75                   selectionRect state (lasso rectangle)
+selectionOverlayPaths                web-ui/src/diagram/rendering/viewport.tsx:33                   selectionOverlayPaths prop (lasso labels)

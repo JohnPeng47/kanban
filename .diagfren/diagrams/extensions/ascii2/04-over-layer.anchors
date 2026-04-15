@@ -1,0 +1,20 @@
+# anchor-text                          code-ref                                                    label
+OverLayer EOC                           web-ui/src/diagram/rendering/over-layer.tsx:64-127           OverLayer component
+Badge <button> EBD                      web-ui/src/diagram/rendering/over-layer.tsx:96-124           Badge button rendering with ref callback
+badgeRefsMap                            web-ui/src/diagram/rendering/over-layer.tsx:65                badgeRefsMap for direct DOM access
+rAF SYNC LOOP                          web-ui/src/diagram/rendering/over-layer.tsx:68-89             rAF sync loop
+BadgeAnchor                             web-ui/src/diagram/types.ts:166-173                          BadgeAnchor union type
+{ space:"screen", x, y }               web-ui/src/diagram/rendering/over-layer.tsx:8-9               Screen-space anchor resolution
+{ space:"scene", x, y }                web-ui/src/diagram/rendering/over-layer.tsx:11-15             Scene-space anchor resolution
+{ space:"element", elementId, corner }  web-ui/src/diagram/rendering/over-layer.tsx:17-51            Element-space anchor resolution with corner picking
+resolveAnchor(anchor, transform, scene)  web-ui/src/diagram/rendering/over-layer.tsx:6-52            resolveAnchor function
+OverlayBadge interface                  web-ui/src/diagram/types.ts:176-186                          OverlayBadge interface
+transformDiv                            web-ui/src/diagram/rendering/viewport.tsx:77-80               transformDiv (SVG mount, CSS transform)
+Viewport                                web-ui/src/diagram/rendering/viewport.tsx:48-463              Viewport component (pan/zoom container)
+OverlayBadge[]                          web-ui/src/diagram/types.ts:176-186                          OverlayBadge array prop
+Scene                                   web-ui/src/diagram/rendering/scene.ts:47-94                  Scene interface
+Ref<Transform>                          web-ui/src/diagram/types.ts:17-22                            Transform type definition
+getWorldBounds                          web-ui/src/diagram/rendering/scene.ts:58                     Scene.getWorldBounds method
+requestAnimationFrame                   web-ui/src/diagram/rendering/over-layer.tsx:86                rAF call inside sync loop
+cancelAnimationFrame                    web-ui/src/diagram/rendering/over-layer.tsx:89                rAF cleanup on unmount
+badge.onClick()                         web-ui/src/diagram/rendering/over-layer.tsx:116               Badge click handler (stopPropagation)

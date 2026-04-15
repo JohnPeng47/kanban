@@ -1,0 +1,102 @@
+```diagram
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  SvgScene Implementation Detail                                                                                                   │
+│                                                                                                                                    │
+│  ┌──────────────────────────────────────────────┐           ┌────────────────────────────────────────────────────────────────────┐  │
+│  │  Internal Maps                               │           │  Constructor Flow                                                  │  │
+│  │                                              │           │                                                                    │  │
+│  │  elements: Map<id, SceneElement>             │           │  1. Remove viewBox, set width/height for 1:1 rendering             │  │
+│  │  domElements: Map<id, SVGGElement>           │           │  2. Set overflow:visible, display:block                            │  │
+│  │  visualRects: Map<id, SVGRectElement>        │           │  3. injectInteractionStyles(svg)                                   │  │
+│  │  worldBoundsCache: Map<id, Rect>             │           │  4. buildElementTree()                                             │  │
+│  │                                              │           │                                                                    │  │
+│  └──────────────────────────────────────────────┘           └────────────────────────────────────────────────────────────────────┘  │
+│                                                                                                                                    │
+│  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  buildElementTree()                                                                                                        │    │
+│  │                                                                                                                             │    │
+│  │  selector: "[data-reflow-group], [data-interactive], [data-arrow]"                                                          │    │
+│  │                                                                                                                             │    │
+│  │  1. Create root element (id="root", parentId=null)                                                                          │    │
+│  │                                                                                                                             │    │
+│  │  2. querySelectorAll ──→ tagged <g> elements                                                                                │    │
+│  │       │                                                                                                                     │    │
+│  │       ▼                                                                                                                     │    │
+│  │  3. resolveElementId(g)                      4. For each (g, id):                                                           │    │
+│  │       │                                          │                                                                          │    │
+│  │       ├── data-reflow-group ──→ its value        ├── readMetadata(g) ──→ all data-* attrs                                   │    │
+│  │       ├── data-interactive  ──→ its value        ├── findVisualRect(g) ──→ direct <rect> child                               │    │
+│  │       ├── data-arrow        ──→ "arrow-{n}"      │                                                                          │    │
+│  │       └── none              ──→ skip              ├── Walk DOM ancestry to find parentId                                     │    │
+│  │                                                   │    ancestor.closest tagged <g> ──→ parentId                              │    │
+│  │                                                   │    no ancestor ──→ parentId = "root"                                     │    │
+│  │                                                   │                                                                          │    │
+│  │                                                   ├── g.getBBox() ──→ localBounds                                           │    │
+│  │                                                   │                                                                          │    │
+│  │                                                   ├── parseInteractiveData(id, metadata) ──→ interactive                    │    │
+│  │                                                   │    (only if metadata.interactive exists)                                  │    │
+│  │                                                   │    parses: ref, category, label, tooltip, navTarget, modal, link          │    │
+│  │                                                   │                                                                          │    │
+│  │                                                   └── reflow: { originalBounds } if data-reflow-group or data-arrow          │    │
+│  │                                                                                                                             │    │
+│  │  5. Root localBounds = svg.width x svg.height                                                                               │    │
+│  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                                                    │
+│  ┌────────────────────────────────────────────────────────┐    ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  Bounds System                                         │    │  Hit Testing                                                    │  │
+│  │                                                        │    │                                                                  │  │
+│  │  getLocalBounds(id):                                   │    │  hitTest(screenPoint) ── point query                             │  │
+│  │    └─ return element.localBounds directly              │    │    │                                                             │  │
+│  │                                                        │    │    ├── document.elementFromPoint(x, y)                           │  │
+│  │  getWorldBounds(id):                                   │    │    ├── check svg.contains(domElement)                            │  │
+│  │    ├── check worldBoundsCache ──→ return if cached     │    │    ├── closest("[data-reflow-group],                             │  │
+│  │    ├── getAncestorTransform(id)                        │    │    │           [data-interactive],                               │  │
+│  │    │     walk parent chain to root                     │    │    │           [data-arrow]")                                    │  │
+│  │    │     compose transforms in order                   │    │    └── lookup in domElements map ──→ id                         │  │
+│  │    ├── transformRect(localBounds, ancestorTransform)    │    │                                                                  │  │
+│  │    └── store in cache                                  │    │  hitTestRect(sceneRect, mode) ── area query                      │  │
+│  │                                                        │    │    │                                                             │  │
+│  │  Cache invalidation:                                   │    │    ├── for each element with interactive != null:                │  │
+│  │    setTransform(id, t) ──→ invalidateWorldBoundsCache  │    │    │     getWorldBounds(id)                                      │  │
+│  │    growVisualBounds(id) ──→ invalidateWorldBoundsCache  │    │    │                                                             │  │
+│  │    addElement() ──→ invalidate parent subtree          │    │    ├── mode "contain": rectContains(sceneRect, worldBounds)      │  │
+│  │                                                        │    │    └── mode "intersect": rectsIntersect(sceneRect, worldBounds)  │  │
+│  │    invalidateWorldBoundsCache(id):                     │    │                                                                  │  │
+│  │      delete cache[id]                                  │    └──────────────────────────────────────────────────────────────────┘  │
+│  │      recurse into all childIds                         │                                                                        │
+│  └────────────────────────────────────────────────────────┘    ┌──────────────────────────────────────────────────────────────────┐  │
+│                                                                │  Injected CSS Styles                                            │  │
+│  ┌────────────────────────────────────────────────────────┐    │                                                                  │  │
+│  │  Transform Application                                 │    │  [data-interactive]:                                             │  │
+│  │                                                        │    │    cursor:pointer, transition filter                             │  │
+│  │  setTransform(id, transform):                          │    │    :hover / .selected ──→ brightness(1.5) + drop-shadow          │  │
+│  │    ├── update element.transform                        │    │                                                                  │  │
+│  │    ├── invalidateWorldBoundsCache(id)                   │    │  .selected > rect:first-of-type:                                │  │
+│  │    └── if id != "root":                                │    │    stroke: #4C9AFF, stroke-width: 2, drop-shadow                │  │
+│  │        g.style.transform =                             │    │                                                                  │  │
+│  │          translate({tx}px, {ty}px)                      │    │  [data-modal] > rect: purple dashed, animated dash-modal         │  │
+│  │                                                        │    │  [data-link]  > rect: gold dashed, animated dash-link            │  │
+│  │  getWorldTransform(id):                                │    │                                                                  │  │
+│  │    walk element → root                                 │    │  Injected as <style> inside SVG, before first child              │  │
+│  │    compose all transforms                              │    │                                                                  │  │
+│  │    (element's own included)                            │    └──────────────────────────────────────────────────────────────────┘  │
+│  └────────────────────────────────────────────────────────┘                                                                        │
+│                                                                                                                                    │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  Dynamic Mutations                                                                                                         │    │
+│  │                                                                                                                             │    │
+│  │  growVisualBounds(id, dW, dH)               addElement(id, dom, parentId)                removeElement(id)                  │    │
+│  │    ├── update SVGRectElement attrs           ├── readMetadata, findVisualRect            ├── recurse: remove all children    │    │
+│  │    ├── update element.localBounds            ├── getBBox → localBounds                   ├── splice from parent.childIds    │    │
+│  │    └── invalidate cache                      ├── parse interactive + reflow              └── delete from all maps           │    │
+│  │                                              ├── add to elements + domElements                                              │    │
+│  │  addSubtree(rootDom, parentId)                ├── push to parent.childIds                                                   │    │
+│  │    ├── querySelectorAll tagged <g>           └── invalidate parent cache                                                    │    │
+│  │    ├── build local domToId map                                                                                              │    │
+│  │    ├── resolve parents within subtree                                                                                       │    │
+│  │    └── call addElement for each                                                                                             │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                                                    │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+

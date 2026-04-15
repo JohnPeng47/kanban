@@ -1,0 +1,28 @@
+# anchor-text                    code-ref                                                                     label
+useDiagram(html)                 web-ui/src/diagram/use-diagram.ts:8-52                                       useDiagram hook: HTML parse → SvgScene lifecycle
+SvgScene                         web-ui/src/diagram/rendering/svg-scene.ts:52-80                              SvgScene constructor: viewBox removal, style injection, tree build
+DiagramContentArea               web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354        DiagramContentArea component
+DiagramScene                     web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269         DiagramScene: navigation + popups + badges
+handleNavigate(interactive, event)  web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161     handleNavigate dispatch logic
+fireCodeJump                     web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73          fireCodeJump: TRPC navigate call
+openPopup                        web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107         openPopup: fetch modal content, push to stack
+executeJump                      web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135        executeJump: same-diagram pan or cross-diagram jump
+SceneInput                       web-ui/src/diagram/input/scene-input.tsx:48-357                              SceneInput component
+handleSceneClick                 web-ui/src/diagram/input/scene-input.tsx:245-312                             handleSceneClick: hit test → selection → navigate
+scene.hitTest(screenPt)          web-ui/src/diagram/rendering/svg-scene.ts:347-358                            hitTest: elementFromPoint → closest selector match
+fire onNavigate                  web-ui/src/diagram/input/scene-input.tsx:307-309                             onNavigate dispatch after selection update
+handleSelectionDrag              web-ui/src/diagram/input/scene-input.tsx:149-173                             handleSelectionDrag: live lasso preview
+handleSelectionDragEnd           web-ui/src/diagram/input/scene-input.tsx:186-243                             handleSelectionDragEnd: finalize + clipboard copy
+Tooltip                          web-ui/src/diagram/input/scene-input.tsx:59-118                              Tooltip: mouseover/touch on data-tt elements
+PopupEntry[]                     web-ui/src/components/diagram-panels/diagram-content-area.tsx:20-26          PopupEntry type
+PopupDiagramOverlay              web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145        PopupDiagramOverlay: backdrop, close, nested SceneInput
+Badge Creation                   web-ui/src/components/diagram-panels/diagram-content-area.tsx:164-193        Badge creation: auto (modal/link) + user badges
+Context Menu                     web-ui/src/components/diagram-panels/diagram-content-area.tsx:195-229        Context menu: add badge
+Scene Interface                  web-ui/src/diagram/rendering/scene.ts:47-94                                  Scene interface: 5 method groups
+Element Tree                     web-ui/src/diagram/rendering/scene.ts:48-54                                  Element Tree methods
+Bounds                           web-ui/src/diagram/rendering/scene.ts:55-58                                  Bounds methods (local + world)
+Transforms                       web-ui/src/diagram/rendering/scene.ts:60-64                                  Transform methods
+Hit Testing                      web-ui/src/diagram/rendering/scene.ts:79-84                                  Hit testing methods
+Mutations                        web-ui/src/diagram/rendering/scene.ts:67-78                                  Mutation methods
+Rendering / Lifecycle            web-ui/src/diagram/rendering/scene.ts:86-93                                  Rendering + lifecycle
+SceneElement                     web-ui/src/diagram/rendering/scene.ts:10-44                                  SceneElement interface

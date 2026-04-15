@@ -1,0 +1,64 @@
+```diagram
+DIAGRAM FEATURE — 3-TIER SYSTEM ARCHITECTURE
+
+                      BROWSER                                    NODE.JS SERVER                            CODE VIZ EXTENSION
+             ┌──────────────────────────────────┐           ┌─────────────────────────────────┐       ┌──────────────────────────────────┐
+             │                                  │           │                                 │       │                                  │
+             │  App.tsx                         │           │  TRPC Router                    │       │  VSCode Extension (optional)     │
+             │  ?view=diagram → open            │           │  app-router.ts L680-702         │       │  localhost:24680                 │
+             │  isDiagramViewerOpen state       │   HTTP    │                                 │       │                                  │
+             │         │                        │ ────────► │  diagrams.* procedures          │       │                                  │
+             │         ▼                        │           │    │                            │       │                                  │
+             │  ┌────────────────────────┐      │           │    ├─ list          ──→ fs      │       │                                  │
+             │  │                        │      │           │    ├─ getContent    ──→ fs      │       │                                  │
+             │  │ DiagramViewer          │      │           │    ├─ navigate      ──→ CV      │──────►│  /api/navigate                   │
+             │  │  ** 02-viewer-and-hooks.txt │ │           │    └─ checkExtension──→ CV      │──────►│  /api/health                     │
+             │  │                        │      │           │                                 │──────►│  /api/workspaces                 │
+             │  │ Hooks:                 │      │           │  diagrams-api.ts                │       │                                  │
+             │  │  useDiagramViewer      │      │           │    path safety: isPathSafe,     │       │  Capabilities:                   │
+             │  │  useCodeVizStatus      │      │           │    hasUnsafeSegments            │       │    open file at line in editor   │
+             │  │  useDiagramAgentPanel  │      │           │    5MB file size limit          │       │    workspace registration check  │
+             │  │                        │      │           │                                 │       │    health monitoring             │
+             │  └────────────────────────┘      │           │  code-viz-client.ts             │       └──────────────────────────────────┘
+             │                                  │           │    checkHealth()   → :24680     │
+             └──────────────────────────────────┘           │    checkWorkspace() → :24680    │
+                                                            │    navigate()       → :24680    │
+                                                            │                                 │
+                                                            └─────────────────────────────────┘
+
+═══ Data Flow ═════════════════════════════════════════════════════════════════════════════════════════════
+
+ Browser                              Server                              Code Viz Extension
+ ───────                              ──────                              ──────────────────
+
+ 1. Mount / URL has ?view=diagram
+    App.tsx sets isDiagramViewerOpen
+    ──→ renders <DiagramViewer>
+
+ 2. Tree loading                      diagrams.list.query
+    useDiagramViewer ───────────────► listDiagrams
+                     ◄─────────────── FileTreeNode[]
+                                      (reads {workspace}/diagrams/)
+
+ 3. File selection                    diagrams.getContent.query
+    onSelectPath(path) ────────────► getDiagramContent
+                       ◄──────────── { content: string (HTML) }
+                                      (reads file, 5MB cap)
+
+ 4. Code navigation                  diagrams.navigate.mutate            /api/navigate
+    fireCodeJump ──────────────────► navigateToDiagramSource ─────► navigate(root, file, line)
+                                                                  ◄───── { ok: boolean }
+
+ 5. Extension health poll (30s)      diagrams.checkExtension.query       /api/health + /api/workspaces
+    useCodeVizStatus ────────► checkExtensionStatus ────────► checkHealth()
+                                                    ────────► checkWorkspace(path)
+                     ◄─────────────── { available, workspaceRegistered }
+
+ 6. Cross-diagram jump
+    requestJump(path, elementId)
+    → setSelectedPath → triggers #3
+    → setPendingJumpElementId
+    → pushState (browser back support)
+    ** 02-viewer-and-hooks.txt
+```
+

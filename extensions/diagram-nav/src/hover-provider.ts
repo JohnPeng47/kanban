@@ -1,15 +1,15 @@
 import * as vscode from "vscode";
-import { getCachedAnchors } from "./anchor-cache";
+import { getAnchors } from "./anchor-cache";
 import { findDiagramBlockRange } from "./anchors";
 
 /** Shows code-ref info on hover over anchor text in diagram files. */
 export class DiagramHoverProvider implements vscode.HoverProvider {
-	provideHover(
+	async provideHover(
 		document: vscode.TextDocument,
 		position: vscode.Position,
 		_token: vscode.CancellationToken,
-	): vscode.Hover | null {
-		const anchors = getCachedAnchors(document.uri);
+	): Promise<vscode.Hover | null> {
+		const anchors = await getAnchors(document.uri);
 		if (anchors.length === 0) return null;
 
 		const text = document.getText();

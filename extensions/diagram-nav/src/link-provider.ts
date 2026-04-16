@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getCachedAnchors } from "./anchor-cache";
+import { getAnchors, onDidChangeAnchors } from "./anchor-cache";
 import { type Anchor, findDiagramBlockRange } from "./anchors";
 
 interface DiagramDocumentLink extends vscode.DocumentLink {
@@ -8,11 +8,14 @@ interface DiagramDocumentLink extends vscode.DocumentLink {
 
 /** Provides ctrl+click navigation links for anchor text in diagram files. */
 export class DiagramLinkProvider implements vscode.DocumentLinkProvider {
-	provideDocumentLinks(
+	/** VSCode listens to this to know when to re-query provideDocumentLinks. */
+	onDidChangeDocumentLinks = onDidChangeAnchors.event;
+
+	async provideDocumentLinks(
 		document: vscode.TextDocument,
 		_token: vscode.CancellationToken,
-	): DiagramDocumentLink[] {
-		const anchors = getCachedAnchors(document.uri);
+	): Promise<DiagramDocumentLink[]> {
+		const anchors = await getAnchors(document.uri);
 		if (anchors.length === 0) return [];
 
 		const text = document.getText();

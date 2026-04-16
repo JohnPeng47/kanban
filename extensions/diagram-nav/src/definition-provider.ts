@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getCachedAnchors } from "./anchor-cache";
+import { getAnchors } from "./anchor-cache";
 import { type Anchor, findDiagramBlockRange } from "./anchors";
 
 /**
@@ -12,12 +12,12 @@ import { type Anchor, findDiagramBlockRange } from "./anchors";
  * ctrl+alt+click "Open to the Side" works natively.
  */
 export class DiagramDefinitionProvider implements vscode.DefinitionProvider {
-	provideDefinition(
+	async provideDefinition(
 		document: vscode.TextDocument,
 		position: vscode.Position,
 		_token: vscode.CancellationToken,
-	): vscode.LocationLink[] | null {
-		const anchors = getCachedAnchors(document.uri);
+	): Promise<vscode.LocationLink[] | null> {
+		const anchors = await getAnchors(document.uri);
 		if (anchors.length === 0) return null;
 
 		const text = document.getText();
@@ -35,7 +35,7 @@ export class DiagramDefinitionProvider implements vscode.DefinitionProvider {
 				const idx = line.indexOf(anchor.text, startIndex);
 				if (idx === -1) break;
 				if (position.character >= idx && position.character < idx + anchor.text.length) {
-					return buildLocationLinks(document, anchor, position.line, idx);
+					return buildLocationLinks(anchor, position.line, idx);
 				}
 				startIndex = idx + anchor.text.length;
 			}
@@ -46,7 +46,6 @@ export class DiagramDefinitionProvider implements vscode.DefinitionProvider {
 }
 
 function buildLocationLinks(
-	document: vscode.TextDocument,
 	anchor: Anchor,
 	line: number,
 	col: number,

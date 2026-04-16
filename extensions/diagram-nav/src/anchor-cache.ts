@@ -4,23 +4,43 @@ import { type Anchor, loadAnchors } from "./anchors";
 /**
  * Cache of parsed anchors per document URI, loaded from `.diagfren/` sidecar files.
  *
- * Synchronous providers (DefinitionProvider, HoverProvider) can't await file reads,
- * so we pre-load anchors when documents are opened/changed and serve from cache.
+ * Providers call `getAnchors()` which returns from cache or loads on demand.
+ * The `onDidChange` emitter notifies the DocumentLinkProvider to re-query.
  */
 const cache = new Map<string, Anchor[]>();
 
-/** Get cached anchors for a document. Returns empty array if not yet loaded. */
+/** Fires when cached anchors change — link provider listens to re-provide links. */
+export const onDidChangeAnchors = new vscode.EventEmitter<void>();
+
+/** Get anchors for a document, loading from sidecar if not cached. */
+export async function getAnchors(documentUri: vscode.Uri): Promise<Anchor[]> {
+	const key = documentUri.toString();
+	const cached = cache.get(key);
+	if (cached !== undefined) return cached;
+
+	const anchors = await loadAnchors(documentUri);
+	cache.set(key, anchors);
+	return anchors;
+}
+
+/** Get cached anchors synchronously. Returns empty array if not yet loaded. */
 export function getCachedAnchors(documentUri: vscode.Uri): Anchor[] {
 	return cache.get(documentUri.toString()) ?? [];
 }
 
-/** Refresh the cache for a single document. */
+/** Refresh the cache for a single document and fire change event. */
 export async function refreshAnchors(documentUri: vscode.Uri): Promise<void> {
 	const anchors = await loadAnchors(documentUri);
-	if (anchors.length > 0) {
-		cache.set(documentUri.toString(), anchors);
-	} else {
-		cache.delete(documentUri.toString());
+	const key = documentUri.toString();
+	const prev = cache.get(key);
+	cache.set(key, anchors);
+
+	// Only fire if the result actually changed
+	const changed = prev === undefined
+		|| prev.length !== anchors.length
+		|| JSON.stringify(prev) !== JSON.stringify(anchors);
+	if (changed) {
+		onDidChangeAnchors.fire();
 	}
 }
 
@@ -40,6 +60,7 @@ export function registerAnchorCache(context: vscode.ExtensionContext): void {
 	}
 
 	context.subscriptions.push(
+		onDidChangeAnchors,
 		vscode.window.onDidChangeActiveTextEditor((editor) => {
 			if (editor?.document.languageId === "plaintext") {
 				refreshAnchors(editor.document.uri);

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { type Anchor, loadAnchors } from "./anchors";
+import { type Anchor, loadAnchors, resolveAnchorsUri } from "./anchors";
 
 /**
  * Cache of parsed anchors per document URI, loaded from `.diagfren/` sidecar files.
@@ -59,6 +59,9 @@ export function registerAnchorCache(context: vscode.ExtensionContext): void {
 		}
 	}
 
+	// Sweep orphaned sidecars whose source diagrams no longer exist
+	pruneOrphanedSidecars();
+
 	context.subscriptions.push(
 		onDidChangeAnchors,
 		vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -74,13 +77,61 @@ export function registerAnchorCache(context: vscode.ExtensionContext): void {
 	);
 
 	// Watch .diagfren/ for changes so edits to sidecar files refresh the cache
-	const watcher = vscode.workspace.createFileSystemWatcher("**/.diagfren/**/*.anchors");
+	const anchorsWatcher = vscode.workspace.createFileSystemWatcher("**/.diagfren/**/*.anchors");
 	context.subscriptions.push(
-		watcher,
-		watcher.onDidChange(() => refreshAllVisible()),
-		watcher.onDidCreate(() => refreshAllVisible()),
-		watcher.onDidDelete(() => refreshAllVisible()),
+		anchorsWatcher,
+		anchorsWatcher.onDidChange(() => refreshAllVisible()),
+		anchorsWatcher.onDidCreate(() => refreshAllVisible()),
+		anchorsWatcher.onDidDelete(() => refreshAllVisible()),
 	);
+
+	// Watch diagram .txt files for deletion — clean up orphaned .diagfren/ sidecars
+	const txtWatcher = vscode.workspace.createFileSystemWatcher("**/*.txt");
+	context.subscriptions.push(
+		txtWatcher,
+		txtWatcher.onDidDelete(async (deletedUri) => {
+			const anchorsUri = resolveAnchorsUri(deletedUri);
+			if (!anchorsUri) return;
+
+			try {
+				await vscode.workspace.fs.delete(anchorsUri);
+			} catch {
+				// Sidecar didn't exist — nothing to clean up
+			}
+
+			// Evict from cache
+			const key = deletedUri.toString();
+			if (cache.delete(key)) {
+				onDidChangeAnchors.fire();
+			}
+		}),
+	);
+}
+
+/** Delete `.diagfren/` sidecar files whose source diagram no longer exists. */
+async function pruneOrphanedSidecars(): Promise<void> {
+	const workspaceFolders = vscode.workspace.workspaceFolders;
+	if (!workspaceFolders?.[0]) return;
+
+	const root = workspaceFolders[0].uri;
+	const anchorsFiles = await vscode.workspace.findFiles(".diagfren/**/*.anchors", "**/node_modules/**", 500);
+
+	for (const anchorsFile of anchorsFiles) {
+		const relative = vscode.workspace.asRelativePath(anchorsFile, false);
+		const diagramRelative = relative.replace(/^\.diagfren\//, "").replace(/\.anchors$/, ".txt");
+		const diagramUri = vscode.Uri.joinPath(root, diagramRelative);
+
+		try {
+			await vscode.workspace.fs.stat(diagramUri);
+		} catch {
+			// Source diagram gone — delete the orphaned sidecar
+			try {
+				await vscode.workspace.fs.delete(anchorsFile);
+			} catch {
+				// Already gone
+			}
+		}
+	}
 }
 
 function refreshAllVisible(): void {

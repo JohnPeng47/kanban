@@ -22,6 +22,13 @@ async function findDiagrams(): Promise<DiagramInfo[]> {
 		const diagramRelative = relative.replace(/^\.diagfren\//, "").replace(/\.anchors$/, ".txt");
 		const diagramUri = vscode.Uri.joinPath(workspaceFolders[0].uri, diagramRelative);
 
+		// Skip orphaned sidecars whose source diagram no longer exists
+		try {
+			await vscode.workspace.fs.stat(diagramUri);
+		} catch {
+			continue;
+		}
+
 		const anchors = await loadAnchors(diagramUri);
 		diagrams.push({
 			relativePath: diagramRelative,

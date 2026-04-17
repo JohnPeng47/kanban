@@ -7,4 +7,5 @@
 2. Web Application (Original)
 -> this is built into the kanban application itself
 -> Demo: build kanban normally and start it in this folder. Then navigate to <host>/kanban/?view=diagram&path=ascii3%2F04-overlayer-and-scene.html to see it
+   
 ![demo](docs/assets/kanban.gif)

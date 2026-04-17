@@ -1,0 +1,18 @@
+# anchor-text	code-ref	label
+RuntimeClineMcpServer	src/core/api-contract.ts:680-699	discriminated union: stdio | sse | streamableHttp server config
+ClineMcpSettingsService	src/cline-sdk/cline-mcp-settings-service.ts:151-154	settings service interface — loadSettings / saveSettings
+ClineMcpRuntimeService	src/cline-sdk/cline-mcp-runtime-service.ts:102-110	ClineMcpRuntimeService interface — createToolBundle, getAuthStatuses, authorizeServer
+createToolBundle	src/cline-sdk/cline-mcp-runtime-service.ts:729-772	loads settings, creates manager, registers servers, discovers tools per server
+ClineMcpToolBundle	src/cline-sdk/cline-mcp-runtime-service.ts:96-100	tool bundle type: tools[], warnings[], dispose()
+createSdkInMemoryMcpManager	src/cline-sdk/sdk-provider-boundary.ts:519-525	wraps InMemoryMcpManager constructor from @clinebot/core
+startTaskSession	src/cline-sdk/cline-session-runtime.ts:153-165	createToolBundle, catch failure as warning, store in map
+mcpToolBundleByTaskId	src/cline-sdk/cline-session-runtime.ts:125	Map<string, ClineMcpToolBundle> — per-task bundle tracking
+releaseTaskMcpToolBundle	src/cline-sdk/cline-session-runtime.ts:375-382	dispose + remove bundle from map on session end
+startOauthCallbackListener	src/cline-sdk/cline-mcp-runtime-service.ts:638-689	creates pending callback entry with timeout, returns redirectUrl + awaitAuthorizationCode
+createOauthProviderContext	src/cline-sdk/cline-mcp-runtime-service.ts:294-423	builds OAuthClientProvider with persist/patch helpers for token and state management
+createTransport	src/cline-sdk/cline-mcp-runtime-service.ts:248-278	factory picking StdioClientTransport, SSEClientTransport, or StreamableHTTPClientTransport
+broadcastAuthStatuses	src/cline-sdk/cline-mcp-runtime-service.ts:724-726	calls onAuthStatusesChanged callback to push auth state to frontend
+useRuntimeSettingsClineMcpController	web-ui/src/hooks/use-runtime-settings-cline-mcp-controller.ts:127-357	React hook — load/save MCP settings, run OAuth, track auth statuses, Linear preset
+[→ cline-architecture]	docs/kanban/cline-integration/05-cline-architecture.txt:1	session stack where MCP bundle is created and injected
+[→ cline-provider-and-auth]	docs/kanban/cline-integration/07-cline-provider-and-auth.txt:1	OAuth patterns and provider auth boundary
+[→ settings-and-onboarding]	docs/kanban/frontend/15-settings-and-onboarding.txt:1	settings dialog that manages MCP server configuration

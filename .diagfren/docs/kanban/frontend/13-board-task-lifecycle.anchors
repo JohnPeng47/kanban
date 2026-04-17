@@ -1,0 +1,21 @@
+# anchor-text	code-ref	label
+useBoardInteractions	web-ui/src/hooks/use-board-interactions.ts:96-902	Central orchestrator for board drag-drop, task start, trash, auto-review
+kickoffTaskInProgress	web-ui/src/hooks/use-board-interactions.ts:285-361	ensureWorkspace + startSession, revert on fail
+handleDragEnd	web-ui/src/hooks/use-board-interactions.ts:589-669	Route drag results to trash/start/restore
+session-watcher useEffect	web-ui/src/hooks/use-board-interactions.ts:432-507	Auto-transition cards on session state changes
+useTaskSessions	web-ui/src/hooks/use-task-sessions.ts:73-296	Frontend TRPC facade: start/stop/send/cleanup
+ensureTaskWorkspace	web-ui/src/hooks/use-task-sessions.ts:121-145	TRPC workspace.ensureWorktree
+startTaskSession	web-ui/src/hooks/use-task-sessions.ts:147-184	TRPC runtime.startTaskSession
+stopTaskSession	web-ui/src/hooks/use-task-sessions.ts:186-199	TRPC runtime.stopTaskSession
+sendTaskSessionInput	web-ui/src/hooks/use-task-sessions.ts:201-238	Terminal controller or TRPC fallback
+cleanupTaskWorkspace	web-ui/src/hooks/use-task-sessions.ts:240-261	TRPC workspace.deleteWorktree (post-trash)
+useLinkedBacklogTaskActions	web-ui/src/hooks/use-linked-backlog-task-actions.ts:22-223	Dependency chains and auto-start on trash
+useProgrammaticCardMoves	web-ui/src/hooks/use-programmatic-card-moves.ts:42-250	Single-slot animation queue for card moves
+tryProgrammaticCardMove	web-ui/src/hooks/use-programmatic-card-moves.ts:92-127	Returns "started" | "blocked" | "unavailable"
+useReviewAutoActions	web-ui/src/hooks/use-review-auto-actions.ts:36-276	Auto-commit/PR/trash on review cards
+evaluateAutoReview	web-ui/src/hooks/use-review-auto-actions.ts:109-256	Scan review column, schedule auto-actions (500ms debounce)
+[→ app-and-hook-wiring]	docs/kanban/frontend/12-app-and-hook-wiring.txt:1	App.tsx hook wiring
+[→ pty-launch-pipeline]	docs/kanban/task-execution/02-pty-launch-pipeline.txt:1	PTY launch pipeline (runtime side)
+[→ cline-architecture]	docs/kanban/cline-integration/05-cline-architecture.txt:1	Cline SDK task session start
+[→ workspace-sync-cycle]	docs/kanban/state-and-streaming/10-workspace-sync-cycle.txt:1	Board state persistence and workspace sync
+[→ state-hub-and-registry]	docs/kanban/state-and-streaming/09-state-hub-and-registry.txt:1	Runtime summary updates and metadata store

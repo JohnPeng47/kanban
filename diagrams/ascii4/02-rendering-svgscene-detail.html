@@ -646,5 +646,102 @@
   </g>
 
 </svg>
+<script type="text/plain" id="ascii-source">
+SvgScene IMPLEMENTATION DETAIL (modal expansion of 02-rendering.txt)
+====================================================================
+** 04-types-and-data-model.txt  (composeTransforms, transformRect, rectsIntersect, parseInteractiveData)
+
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  SvgScene                                                                                     ESS  │
+  │                                                                                                    │
+  │  ┌──── Private State ─────────────────────────────────────────────────────────────────────────────┐ │
+  │  │  svg:              SVGSVGElement                     ← the root <svg>                         │ │
+  │  │  elements:         Map<string, SceneElement>         ← id → node (full scene graph)           │ │
+  │  │  domElements:      Map<string, SVGGElement>          ← id → DOM <g> backlink                  │ │
+  │  │  visualRects:      Map<string, SVGRectElement>       ← id → first child <rect> (border)       │ │
+  │  │  worldBoundsCache: Map<string, Rect>                 ← lazy, invalidated on transform Δ       │ │
+  │  │  rootId:           "root"                            ← synthetic root node                     │ │
+  │  └────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+  │                                                                                                    │
+  │                                                                                                    │
+  │  ═══ buildElementTree [EBT] ═════════════════════════════════════════════════════════════════════    │
+  │                                                                                                    │
+  │  1. Query: svg.querySelectorAll("[data-reflow-group], [data-interactive], [data-arrow]")            │
+  │                                                                                                    │
+  │  2. Create root SceneElement (id="root", bounds = svg width x height)                              │
+  │                                                                                                    │
+  │  3. For each tagged <g>:                                                                           │
+  │     ┌─────────────────────────────────────────────────────────────────────────────┐                 │
+  │     │  resolveElementId(g) [ERI]:                                                │                 │
+  │     │    data-reflow-group → use its value                                       │                 │
+  │     │    data-interactive  → use its value                                       │                 │
+  │     │    data-arrow        → "arrow-{counter++}"                                 │                 │
+  │     │                                                                            │                 │
+  │     │  readMetadata(g) → all data-* attrs as Record<string,string>               │                 │
+  │     │  findVisualRect(g) → first child <rect> or null                            │                 │
+  │     │                                                                            │                 │
+  │     │  Parent resolution: walk DOM ancestors until                                │                 │
+  │     │    another tagged <g> is found → parentId                                  │                 │
+  │     │    or svg is reached → parentId = "root"                                   │                 │
+  │     │                                                                            │                 │
+  │     │  Roles parsed from metadata:                                               │                 │
+  │     │    interactive = parseInteractiveData(id, metadata) [EPI]                  │                 │
+  │     │    reflow = has reflow-group or arrow? → { originalBounds }               │                 │
+  │     └─────────────────────────────────────────────────────────────────────────────┘                 │
+  │                                                                                                    │
+  │                                                                                                    │
+  │  ═══ Bounds Computation ═══════════════════════════════════════════════════════════════════════     │
+  │                                                                                                    │
+  │  getLocalBounds(id) → element.localBounds  (from getBBox at construction)                          │
+  │                                                                                                    │
+  │  getWorldBounds(id) [EWB]:                                                                         │
+  │    cached? → return                                                                                │
+  │    else: getAncestorTransform(id)  →  compose parent chain (skip root)                             │
+  │           transformRect(localBounds, ancestorTransform)                                            │
+  │           cache result                                                                             │
+  │                                                                                                    │
+  │  composeTransforms(parent, child) [ECT]:                                                           │
+  │    tx = parent.tx + child.tx * parent.scale                                                        │
+  │    ty = parent.ty + child.ty * parent.scale                                                        │
+  │    scale = parent.scale * child.scale                                                              │
+  │                                                                                                    │
+  │                                                                                                    │
+  │  ═══ Transforms ══════════════════════════════════════════════════════════════════════════════     │
+  │                                                                                                    │
+  │  setTransform(id, t) [EST]:                                                                        │
+  │    element.transform = t                                                                           │
+  │    invalidateWorldBoundsCache(id)  ← recursive: clears id + all descendants                        │
+  │    if id != root:                                                                                  │
+  │      domElement.style.transform = translate(tx,ty)   ← CSS displacement                           │
+  │    (root transform is managed by Viewport's transformDiv)                                          │
+  │                                                                                                    │
+  │  getWorldTransform(id):                                                                            │
+  │    walk parent chain → collect all transforms → composeTransforms in order                         │
+  │                                                                                                    │
+  │                                                                                                    │
+  │  ═══ Hit Testing ═════════════════════════════════════════════════════════════════════════════     │
+  │                                                                                                    │
+  │  hitTest(screenPt) [EHT]:                                                                          │
+  │    document.elementFromPoint(x, y)                                                                 │
+  │    ├─ not in our svg? → null                                                                       │
+  │    └─ .closest("[data-reflow-group], [data-interactive], [data-arrow]")                             │
+  │       match against domElements map → return id                                                    │
+  │                                                                                                    │
+  │  hitTestRect(sceneRect, mode) [EHR]:                                                               │
+  │    for each element with .interactive:                                                              │
+  │      getWorldBounds(id) → test intersection/containment                                            │
+  │      mode "intersect": rectsIntersect(sceneRect, worldBounds)                                      │
+  │      mode "contain":   rectContains(sceneRect, worldBounds)                                        │
+  │                                                                                                    │
+  │                                                                                                    │
+  │  ═══ Dynamic Mutations ═══════════════════════════════════════════════════════════════════════     │
+  │                                                                                                    │
+  │  addElement(id, domNode, parentId)    → create SceneElement, link to parent                        │
+  │  removeElement(id)                    → recursive: remove descendants, unlink from parent           │
+  │  addSubtree(rootDomNode, parentId)    → querySelectorAll in subtree, resolve parents, batch add    │
+  │  growVisualBounds(id, dw, dh)         → resize SVGRectElement + update localBounds                 │
+  │                                                                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</script>
 </body>
 </html>

@@ -2,7 +2,6 @@ import { parseSourceSpan } from "../diagram-data";
 import {
 	composeTransforms,
 	IDENTITY_TRANSFORM,
-	type Point,
 	parseInteractiveData,
 	type Rect,
 	type ReflowState,
@@ -355,11 +354,10 @@ export class SvgScene implements Scene {
 
 	// ─── Hit Testing ───────────────────────────────────────────
 
-	hitTest(screenPoint: Point): string | null {
-		const domElement = document.elementFromPoint(screenPoint.x, screenPoint.y);
-		if (!domElement || !this.svg.contains(domElement)) return null;
+	identifyElement(domEl: Element): string | null {
+		if (!this.svg.contains(domEl)) return null;
 
-		const closest = (domElement as Element).closest?.(SCENE_ELEMENT_SELECTOR);
+		const closest = domEl.closest?.(SCENE_ELEMENT_SELECTOR);
 		if (!closest || !(closest instanceof SVGGElement)) return null;
 
 		for (const [id, g] of this.domElements) {

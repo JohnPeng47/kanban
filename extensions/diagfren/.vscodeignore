@@ -1,0 +1,10 @@
+src/
+node_modules/
+tsconfig.json
+.vscodeignore
+.vscode-test.mjs
+.vscode-test/
+test-workspace/
+dist/
+out/test/
+**/*.map

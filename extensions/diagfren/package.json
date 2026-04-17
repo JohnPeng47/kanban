@@ -1,0 +1,58 @@
+{
+  "name": "diagfren",
+  "displayName": "diagfren",
+  "description": "Ctrl+click code references in ASCII diagrams to jump to source.",
+  "version": "0.0.1",
+  "publisher": "kanban",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:plaintext",
+    "onLanguage:markdown"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "diagfren.statusPage",
+        "title": "diagfren: Status Page"
+      },
+      {
+        "command": "diagfren.copyWithRefs",
+        "title": "diagfren: Copy with Code Refs"
+      },
+      {
+        "command": "diagfren.debugCopy",
+        "title": "diagfren: Debug Copy"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "diagfren.copyWithRefs",
+        "key": "ctrl+c",
+        "mac": "cmd+c",
+        "when": "editorTextFocus && editorLangId == plaintext && editorHasSelection && diagfren.hasAnchors"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "pretest": "tsc",
+    "test": "vscode-test",
+    "test:xvfb": "xvfb-run -a npm test",
+    "package": "npx @vscode/vsce package --no-dependencies --out dist/"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "mocha": "^11.7.5",
+    "typescript": "^5.4.0"
+  }
+}

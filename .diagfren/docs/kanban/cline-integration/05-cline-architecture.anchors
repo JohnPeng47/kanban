@@ -1,0 +1,26 @@
+# anchor-text	code-ref	label
+runtime-api.ts	src/trpc/runtime-api.ts:153-155	startTaskSession TRPC procedure entry
+getScopedClineTaskSessionService	src/trpc/runtime-api.ts:182	resolve scoped ClineTaskSessionService
+cline-task-session-service.ts	src/cline-sdk/cline-task-session-service.ts:74-97	ClineTaskSessionService interface
+ClineMessageRepository	src/cline-sdk/cline-task-session-service.ts:179	InMemoryClineTaskSessionService class
+handleTaskEvent	src/cline-sdk/cline-task-session-service.ts:839	handleTaskEvent — process SDK events into task messages
+cline-session-runtime.ts	src/cline-sdk/cline-session-runtime.ts:84-106	ClineSessionRuntime interface
+ClineSdkSessionHost	src/cline-sdk/sdk-runtime-boundary.ts:28	re-exported SessionHost type alias
+ClineMcpRuntimeService	src/cline-sdk/cline-mcp-runtime-service.ts:102	ClineMcpRuntimeService interface
+sdk-runtime-boundary.ts	src/cline-sdk/sdk-runtime-boundary.ts:207	createClineSdkSessionHost — SDK host factory (boundary)
+createClineSdkSessionHost	src/cline-sdk/sdk-runtime-boundary.ts:207	createClineSdkSessionHost — SDK host factory (boundary)
+cline-provider-service.ts	src/cline-sdk/cline-provider-service.ts:372	createClineProviderService factory
+sdk-provider-boundary.ts	src/cline-sdk/sdk-provider-boundary.ts:267	list available provider catalog
+createSdkInMemoryMcpManager	src/cline-sdk/sdk-provider-boundary.ts:519	MCP manager factory
+cline-watcher-registry	src/cline-sdk/cline-watcher-registry.ts:8	ClineWatcherRegistry interface
+cline-runtime-logger	src/cline-sdk/cline-runtime-logger.ts:62	Kanban-specific Cline logger factory
+cline-telemetry-service	src/cline-sdk/cline-telemetry-service.ts:20	singleton telemetry service accessor
+cline-slash-commands	src/cline-sdk/cline-slash-commands.ts:6	built-in slash command definitions
+cline-tool-call-display	src/cline-sdk/cline-tool-call-display.ts:219	format tool call for UI display
+cline-context-overflow-compaction	src/cline-sdk/cline-context-overflow-compaction.ts:36	detect context overflow errors
+[→ cline-event-and-state]	docs/kanban/cline-integration/06-cline-event-and-state.txt:1	Cline event pipeline and state
+[→ cline-provider-and-auth]	docs/kanban/cline-integration/07-cline-provider-and-auth.txt:1	Cline provider and OAuth
+[→ cline-mcp-servers]	docs/kanban/cline-integration/08-cline-mcp-servers.txt:1	MCP server integration
+[→ trpc-router-and-api-map]	docs/kanban/trpc-contract/11-trpc-router-and-api-map.txt:1	TRPC router namespace map
+[→ state-hub-and-registry]	docs/kanban/state-and-streaming/09-state-hub-and-registry.txt:1	State hub and workspace registry
+[→ pty-launch-pipeline]	docs/kanban/task-execution/02-pty-launch-pipeline.txt:1	PTY launch pipeline (contrast)

@@ -1,0 +1,157 @@
+```diagram
+KANBAN TRPC ROUTER & API MAP
+
+═══════════════════════════════════════════════════════════════════════════════════
+  SECTION 1 — NAMESPACE DIAGRAM
+═══════════════════════════════════════════════════════════════════════════════════
+
+  runtimeAppRouter
+  ┌──────────────────────────────────────────────────────────────────────────────┐
+  │                                                                              │
+  │  ┌─ runtime ─────────────────────┐  ┌─ workspace ──────────────────────┐    │
+  │  │  startTaskSession             │  │  getGitSummary                   │    │
+  │  │  stopTaskSession              │  │  runGitSyncAction                │    │
+  │  │  sendTaskSessionInput         │  │  checkoutGitBranch               │    │
+  │  │  getTaskChatMessages          │  │  discardGitChanges               │    │
+  │  │  sendTaskChatMessage          │  │  getChanges                      │    │
+  │  │  reloadTaskChatSession        │  │  ensureWorktree                  │    │
+  │  │  abortTaskChatTurn            │  │  deleteWorktree                  │    │
+  │  │  cancelTaskChatTurn           │  │  getTaskContext                  │    │
+  │  │  getConfig / saveConfig       │  │  searchFiles                     │    │
+  │  │  getClineProviderCatalog      │  │  getState / saveState            │    │
+  │  │  getClineProviderModels       │  │  notifyStateUpdated              │    │
+  │  │  saveClineProviderSettings    │  │  getWorkspaceChanges             │    │
+  │  │  addClineProvider             │  │  getGitLog / getGitRefs          │    │
+  │  │  updateClineProvider          │  │  getCommitDiff                   │    │
+  │  │  runClineProviderOAuthLogin   │  └──────────────────────────────────┘    │
+  │  │  getClineMcpAuthStatuses      │                                          │
+  │  │  runClineMcpServerOAuth       │  ┌─ projects ───────────────────────┐    │
+  │  │  getClineMcpSettings          │  │  list                            │    │
+  │  │  saveClineMcpSettings         │  │  add                             │    │
+  │  │  getClineSlashCommands        │  │  remove                          │    │
+  │  │  getClineAccountProfile       │  │  pickDirectory                   │    │
+  │  │  getClineKanbanAccess         │  └──────────────────────────────────┘    │
+  │  │  getFeaturebaseToken          │                                          │
+  │  │  startShellSession            │  ┌─ hooks ──────────────────────────┐    │
+  │  │  runCommand                   │  │  ingest                          │    │
+  │  │  resetAllState                │  └──────────────────────────────────┘    │
+  │  │  openFile                     │                                          │
+  │  └───────────────────────────────┘  ┌─ diagrams ───────────────────────┐    │
+  │                                     │  list                            │    │
+  │  [→ system-overview]               │  getContent                      │    │
+  │                                     │  navigate                        │    │
+  │                                     │  checkExtension                  │    │
+  │                                     └──────────────────────────────────┘    │
+  └──────────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════════
+  SECTION 2 — NAMESPACE CAPABILITY SUMMARY
+═══════════════════════════════════════════════════════════════════════════════════
+
+  runtime.*  — the largest namespace, groups into five capability areas:
+
+    TASK SESSIONS        start/stop/send for Cline and terminal sessions + shell
+    CLINE CHAT           message CRUD, reload, abort, cancel, slash commands
+    CONFIG               global config get/save, debug reset
+    PROVIDER & AUTH      provider catalog, models, save, add, update, OAuth,
+                         account profile, access gate, Featurebase token
+                         [→ cline-provider-and-auth]
+    MCP                  auth statuses, OAuth per server, settings load/save
+                         [→ cline-provider-and-auth]
+
+  workspace.*  — all require workspace scope (x-kanban-workspace-id header):
+
+    GIT OPS              summary, sync actions, checkout, discard, log, refs, diff
+    WORKTREE             ensure / delete task worktrees
+    STATE                get/save snapshot, notify updated, workspace changes,
+                         task context          [→ state-hub-and-registry]
+    SEARCH               fuzzy file search
+
+  workspaceProcedure enforces x-kanban-workspace-id header.
+  t.procedure allows calls without a resolved workspace (global config, providers).
+
+
+═══════════════════════════════════════════════════════════════════════════════════
+  SECTION 3 — ROUTING DIAGRAM (app-router → API modules)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  ┌─ app-router.ts ────────────────────────────────────────────────────────────┐
+  │                                                                             │
+  │  runtimeAppRouter = t.router({                                              │
+  │     runtime:   t.router({...})  ──→ ctx.runtimeApi.*                        │
+  │     workspace: t.router({...})  ──→ ctx.workspaceApi.*                      │
+  │     projects:  t.router({...})  ──→ ctx.projectsApi.*                       │
+  │     hooks:     t.router({...})  ──→ ctx.hooksApi.*                          │
+  │     diagrams:  t.router({...})  ──→ ctx.diagramsApi.*                       │
+  │  })                                                                         │
+  │                                                                             │
+  └────────┬───────────┬───────────┬──────────┬──────────┬─────────────────────┘
+           │           │           │          │          │
+           ▼           ▼           ▼          ▼          ▼
+  ┌─────────────┐ ┌──────────┐ ┌─────────┐ ┌──────┐ ┌──────────┐
+  │ runtime-api │ │workspace │ │projects │ │hooks │ │diagrams  │
+  │    .ts      │ │ -api.ts  │ │-api.ts  │ │-api  │ │-api.ts   │
+  │             │ │          │ │         │ │ .ts  │ │          │
+  │createRuntime│ │createWork│ │createPro│ │create│ │createDia │
+  │  Api()      │ │ spaceApi │ │jectsApi │ │Hooks │ │gramsApi  │
+  │             │ │   ()     │ │   ()    │ │Api() │ │   ()     │
+  └──────┬──────┘ └──────────┘ └─────────┘ └──────┘ └──────────┘
+         │
+         │  runtime-api has the heaviest dependency tree:
+         │
+         ├──→ cline-provider-service    (provider catalog, models, OAuth)
+         ├──→ cline-mcp-settings-service (MCP server config load/save)
+         ├──→ cline-mcp-runtime-service  (MCP auth statuses, OAuth flow)
+         ├──→ agent-registry             (resolveAgentCommand, buildConfigResponse)
+         ├──→ ClineTaskSessionService    (via deps.getScopedClineTaskSessionService)
+         └──→ TerminalSessionManager     (via deps.getScopedTerminalManager)
+
+
+═══════════════════════════════════════════════════════════════════════════════════
+  SECTION 4 — RUNTIME-API FORK POINT (Cline vs Terminal)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  startTaskSession(workspaceScope, input)
+  ┌────────────────────────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │  1. Parse input, resolve task CWD (worktree if non-home session)           │
+  │  2. Determine effectiveAgentId from config or restored summary             │
+  │                                                                            │
+  │              effectiveAgentId === "cline" ?                                 │
+  │                     │                                                      │
+  │           ┌─── YES ─┴─ NO ───┐                                             │
+  │           │                  │                                              │
+  │           ▼                  ▼                                              │
+  │  ┌─ Cline Path ────┐  ┌─ Terminal Path ──────────┐                         │
+  │  │                  │  │                          │                         │
+  │  │ clineProvider    │  │ resolveAgentCommand()    │                         │
+  │  │  .resolveLaunch  │  │   → { binary, args }    │                         │
+  │  │   Config()       │  │                          │                         │
+  │  │       │          │  │ terminalManager          │                         │
+  │  │       ▼          │  │  .startTaskSession({     │                         │
+  │  │ clineTaskSession │  │    taskId, agentId,      │                         │
+  │  │  Service         │  │    binary, args, cwd,    │                         │
+  │  │  .startTask      │  │    prompt, ...           │  [→ pty-launch-pipeline]│
+  │  │   Session({      │  │  })                      │                         │
+  │  │    taskId, cwd,  │  │                          │                         │
+  │  │    prompt,       │  └──────────────────────────┘                         │
+  │  │    providerId,   │                                                       │
+  │  │    modelId,      │  [→ cline-architecture]                              │
+  │  │    mode, ...     │                                                       │
+  │  │  })              │                                                       │
+  │  └─────────────────┘                                                       │
+  │                                                                            │
+  │  3. Both paths capture a turn checkpoint (best-effort)                     │
+  │  4. Return { ok: true, summary }                                           │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+  Resume-from-trash adds a probe step: if no terminal agentId is known,
+  try clineTaskSessionService.rebindPersistedTaskSession() to detect
+  whether the task was originally a Cline session.
+
+  stopTaskSession / sendTaskSessionInput follow the same dual-check:
+  try Cline service first, fall back to terminal manager.
+
+```

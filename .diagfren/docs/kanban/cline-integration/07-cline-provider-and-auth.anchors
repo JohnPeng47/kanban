@@ -1,0 +1,16 @@
+# anchor-text	code-ref	label
+createClineProviderService	src/cline-sdk/cline-provider-service.ts:372	createClineProviderService factory — returns provider facade object
+resolveLaunchConfig	src/cline-sdk/cline-provider-service.ts:513	resolve providerId + modelId + apiKey + baseUrl + reasoningEffort for task start
+ResolvedClineLaunchConfig	src/cline-sdk/cline-provider-service.ts:57-63	launch config shape: providerId, modelId, apiKey, baseUrl, reasoningEffort
+runOauthLogin	src/cline-sdk/cline-provider-service.ts:885	run managed OAuth login flow for cline/oca/openai-codex
+ManagedClineOauthProviderId	src/cline-sdk/sdk-provider-boundary.ts:37	"cline" | "oca" | "openai-codex" union type
+sdk-provider-boundary.ts	src/cline-sdk/sdk-provider-boundary.ts:1	SDK provider boundary module — sole @clinebot/* import for providers
+ProviderSettingsManager	src/cline-sdk/sdk-provider-boundary.ts:279	singleton ProviderSettingsManager from @clinebot/core
+loginManagedOauthProvider	src/cline-sdk/sdk-provider-boundary.ts:240	dispatch OAuth login to loginClineOAuth / loginOcaOAuth / loginOpenAICodex
+ManagedOauthCredentials	src/cline-sdk/sdk-provider-boundary.ts:42-47	{ access, refresh, expires, accountId? } credential shape
+saveSdkProviderSettings	src/cline-sdk/sdk-provider-boundary.ts:454	normalize and persist provider settings via ProviderSettingsManager
+getSelectedProviderSettings	src/cline-sdk/cline-provider-service.ts:263	resolve active provider settings from lastUsed or default
+refreshManagedOauthSettings	src/cline-sdk/cline-provider-service.ts:318	refresh OAuth credentials and persist if changed
+[→ cline-architecture]	docs/kanban/cline-integration/05-cline-architecture.txt:1	where ResolvedClineLaunchConfig is consumed by session stack
+[→ settings-and-onboarding]	docs/kanban/frontend/15-settings-and-onboarding.txt:1	browser settings dialog that triggers OAuth and provider selection
+[→ trpc-router-and-api-map]	docs/kanban/trpc-contract/11-trpc-router-and-api-map.txt:1	TRPC procedures exposing provider service methods

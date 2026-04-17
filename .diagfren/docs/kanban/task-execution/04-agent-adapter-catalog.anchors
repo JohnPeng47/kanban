@@ -1,0 +1,21 @@
+# anchor-text	code-ref	label
+claudeAdapter	src/terminal/agent-session-adapters.ts:616-721	claudeAdapter — Claude Code PTY adapter
+codexAdapter	src/terminal/agent-session-adapters.ts:744-817	codexAdapter — OpenAI Codex PTY adapter
+geminiAdapter	src/terminal/agent-session-adapters.ts:819-895	geminiAdapter — Gemini CLI PTY adapter
+opencodeAdapter	src/terminal/agent-session-adapters.ts:1124-1189	opencodeAdapter — OpenCode PTY adapter
+droidAdapter	src/terminal/agent-session-adapters.ts:1191-1271	droidAdapter — Factory Droid PTY adapter
+clineAdapter	src/terminal/agent-session-adapters.ts:1273-1328	clineAdapter — Cline PTY adapter (CLI fallback)
+prepareAgentLaunch	src/terminal/agent-session-adapters.ts:1339-1348	prepareAgentLaunch dispatch entry point
+ADAPTERS	src/terminal/agent-session-adapters.ts:1330-1337	ADAPTERS record mapping agentId to adapter
+RUNTIME_AGENT_CATALOG	src/core/agent-catalog.ts:12-61	RUNTIME_AGENT_CATALOG — all six agent definitions
+RUNTIME_LAUNCH_SUPPORTED_AGENT_IDS	src/core/agent-catalog.ts:65-72	Launch-supported agent ID whitelist
+detectInstalledCommands	src/terminal/agent-registry.ts:51-62	detectInstalledCommands — PATH binary detection
+resolveAgentCommand	src/terminal/agent-registry.ts:82-99	resolveAgentCommand — resolve selected agent to launch command
+createHookRuntimeEnv	src/terminal/hook-runtime-context.ts:17-22	createHookRuntimeEnv — injects KANBAN_HOOK_TASK_ID/WORKSPACE_ID
+buildHookCommand	src/terminal/agent-session-adapters.ts:93-108	buildHookCommand — assembles kanban hooks ingest CLI string
+codexPromptDetector	src/terminal/agent-session-adapters.ts:723-735	codexPromptDetector — detects Codex prompt-ready marker
+shouldInspectCodexOutputForTransition	src/terminal/agent-session-adapters.ts:737-742	shouldInspectCodexOutputForTransition — gates output inspection
+runCodexWrapperSubcommand	src/commands/hooks.ts:637-732	codex-wrapper — spawns real binary with JSONL log monitoring
+[→ pty-launch-pipeline]	docs/kanban/task-execution/02-pty-launch-pipeline.txt:1	Cross-link: PTY launch pipeline where adapters plug in
+[→ pty-session-internals]	docs/kanban/task-execution/03-pty-session-internals.txt:1	Cross-link: PTY session internals for trust detection and protocol
+[→ cline-architecture]	docs/kanban/cline-integration/05-cline-architecture.txt:1	Cross-link: Cline SDK architecture (non-PTY path)

@@ -1,0 +1,18 @@
+# anchor-text	code-ref	label
+applyClineSessionEvent	src/cline-sdk/cline-event-adapter.ts:184	translate raw SDK events into summary + message mutations
+readAgentEvent	src/cline-sdk/cline-event-adapter.ts:61	parse agent_event wrapper → ClineSdkAgentEvent
+readChunkEvent	src/cline-sdk/cline-event-adapter.ts:77	parse chunk event → ClineSdkChunkEvent
+readHookEvent	src/cline-sdk/cline-event-adapter.ts:92	parse hook event → ClineSdkHookEvent
+readEndedEvent	src/cline-sdk/cline-event-adapter.ts:104	parse ended event → ClineSdkEndedEvent
+ClineTaskSessionEntry	src/cline-sdk/cline-session-state.ts:9-16	mutable in-memory unit for one task session
+ClineTaskMessage	src/cline-sdk/cline-session-state.ts:18-33	single chat message shape (id, role, content, meta)
+InMemoryClineMessageRepository	src/cline-sdk/cline-message-repository.ts:39	in-memory entries Map + summary/message listener fanout
+emitSummary	src/cline-sdk/cline-message-repository.ts:107-112	clone summary and fan out to all summaryListeners
+emitMessage	src/cline-sdk/cline-message-repository.ts:114-119	clone message and fan out to all messageListeners
+hydrateTaskMessages	src/cline-sdk/cline-message-repository.ts:86-105	load persisted SDK messages into Kanban ClineTaskMessage format
+compactPersistedMessagesForContextOverflow	src/cline-sdk/cline-context-overflow-compaction.ts:98-125	discard first half of history + prepend compaction notice
+handleSessionEvent	src/cline-sdk/cline-session-runtime.ts:466-484	extract sessionId → map to taskId → forward via onTaskEvent
+handleTaskEvent	src/cline-sdk/cline-task-session-service.ts:839-865	call applyClineSessionEvent + checkpoint + force-abort guards
+[→ cline-architecture]	docs/kanban/cline-integration/05-cline-architecture.txt:1	session stack that produces SDK events
+[→ state-hub-and-registry]	docs/kanban/state-and-streaming/09-state-hub-and-registry.txt:1	summary fanout destination (StateHub)
+[→ chat-and-terminal-stacks]	docs/kanban/frontend/14-chat-and-terminal-stacks.txt:1	message fanout destination (browser consumption)

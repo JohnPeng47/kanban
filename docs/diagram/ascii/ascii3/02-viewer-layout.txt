@@ -1,61 +1,63 @@
 ```diagram
 DIAGRAMVIEWER — 3-PANEL LAYOUT, HOOKS, AND JUMP PROTOCOL
 
-┌─ DiagramViewer [DW] ──────────────────────────────────────────────────────────────────────────────────────────────┐
-│  containerRef                                                                                                     │
+┌─ DiagramViewer ──────────────────────────────────────────────────────────────────────────────────────────── E01
+│  [E02] containerRef                                                                                       │
 │  ┌──────────────────────┬──┬───────────────────────────────────────────────────────────┬──┬──────────────────────┐ │
-│  │ DiagramTreePanel [TP]│RH│  DiagramContentArea [CA]                                 │RH│  Agent Panel        │ │
-│  │                      │  │  (relative flex-1)                                       │  │  (conditional)      │ │
-│  │  tree: FileTreeNode[]│  │                                                          │  │                     │ │
-│  │  selectedPath        │  │  ┌───────────────────────────────────────────────────┐   │  │  useDiagramAgent    │ │
-│  │  expandedFolders     │  │  │  DiagramScene [DS]                                │   │  │  Panel              │ │
+│  │ DiagramTreePanel     │RH│  DiagramContentArea                                      │RH│  Agent Panel        │ │
+│  │                 E03  │  │  (relative flex-1)                                   E05 │  │  (conditional)  E07 │ │
+│  │                      │  │                                                          │  │                     │ │
+│  │  [E04] tree:         │  │  ┌───────────────────────────────────────────────────┐   │  │  [E08] useDiagram-  │ │
+│  │  FileTreeNode[]      │  │  │  DiagramScene                                E06 │   │  │  Agent Panel        │ │
+│  │  selectedPath        │  │  │                                                   │   │  │                     │ │
+│  │  expandedFolders     │  │  │  [E09] SceneInput → Viewport → SVG               │   │  │                     │ │
 │  │  onSelectPath ───────┼──┼──┼→ triggers content fetch in useDiagramViewer       │   │  │                     │ │
 │  │  onToggleFolder      │  │  │                                                   │   │  │                     │ │
-│  │                      │  │  │  SceneInput → Viewport → SVG                     │   │  │                     │ │
-│  │  width: controlled   │  │  │  PopupDiagramOverlay (stacked)                    │   │  │                     │ │
-│  │  by resize drag      │  │  │  Context menu                                     │   │  │  width: controlled  │ │
-│  │                      │  │  │  ** 03-viewport-and-coords.txt                    │   │  │  by resize drag     │ │
-│  │                      │  │  │  ** 05-content-and-navigation.txt             DS  │   │  │                     │ │
+│  │                      │  │  │  [E10] PopupDiagramOverlay (stacked)              │   │  │                     │ │
+│  │  width: controlled   │  │  │  Context menu                                     │   │  │  width: controlled  │ │
+│  │  by resize drag      │  │  │  ** 03-viewport-and-coords.txt                    │   │  │  by resize drag     │ │
+│  │                      │  │  │  ** 05-content-and-navigation.txt                 │   │  │                     │ │
 │  │                      │  │  └───────────────────────────────────────────────────┘   │  │                     │ │
 │  │                      │  │                                                          │  │                     │ │
-│  │                      │  │  ┌─ CodeVizStatusIndicator ──────┐                       │  │                     │ │
-│  │                      │  │  │  absolute top-2 right-2 z-10  │                       │  │                     │ │
-│  │                  TP  │  │  │  state: connected|disconn|... │                       │  │                     │ │
+│  │                      │  │  ┌─ CodeVizStatusIndicator ──────┐ E11                   │  │                     │ │
+│  │                      │  │  │  [E12] absolute top-2 right-2 │                       │  │                     │ │
+│  │                      │  │  │  z-10                          │                       │  │                     │ │
+│  │                      │  │  │  state: connected|disconn|... │                       │  │                     │ │
 │  │                      │  │  └───────────────────────────────┘                       │  │                     │ │
 │  └──────────────────────┘  └──────────────────────────────────────────────────────────┘  └──────────────────────┘ │
-│        displayTreePanelWidth                                                              displayAgentPanelWidth │
-│  RH = ResizeHandle (vertical, ew-resize drag)                                                                    │
+│        [E13] displayTreePanelWidth                                                        displayAgentPanelWidth │
+│  [E14] RH = ResizeHandle (vertical, ew-resize drag)                                                             │
 └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
 ═══ useDiagramViewer HOOK STATE ══════════════════════════════════════════════════════════════════════
 
-  ┌─ useDiagramViewer(workspaceId, initialPath) ────────────────────────────────────────────────┐
+  ┌─ useDiagramViewer(workspaceId, initialPath) ────────────────────────────────────────────────── E15
   │                                                                                             │
-  │  State fields:                          TRPC interactions:                                  │
+  │  [E16] State fields:                   TRPC interactions:                                   │
   │  ─────────────                          ──────────────────                                  │
   │  tree: FileTreeNode[]            ◄────── diagrams.list.query({})                            │
   │  diagramsRootExists: boolean     ◄──┘    (on mount / workspaceId change)                    │
   │  isTreeLoading: boolean                                                                     │
   │  workspacePath: string | null    ◄──┘    extracted from diagramsRoot                        │
   │                                                                                             │
-  │  selectedPath: string | null     ◄────── onSelectPath(path) or requestJump(path, ...)       │
+  │  [E17] selectedPath: string|null ◄────── onSelectPath(path) or requestJump(path, ...)       │
   │  expandedFolders: Set<string>    ◄────── onToggleFolder(path)                               │
   │  content: string | null          ◄────── diagrams.getContent.query({ path })                │
   │  isContentLoading: boolean               (on selectedPath change)                           │
   │  contentError: string | null                                                                │
   │                                                                                             │
-  │  pendingJumpElementId: string|null ◄──── requestJump(path, elementId)                       │
+  │  [E18] pendingJumpElementId: string|null ◄──── requestJump(path, elementId)                 │
   │  consumeJump: () => void           ────► setPendingJumpElementId(null)                      │
-  │                                                                                         VH  │
+  │                                                                                             │
   └─────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
 ═══ CROSS-DIAGRAM JUMP PROTOCOL ═══════════════════════════════════════════════════════════════════
 
-  DiagramContentArea            useDiagramViewer               DiagramContentArea (new)
-  (diagram A)                   (shared hook)                  (diagram B)
-  ─────────────                 ────────────────               ──────────────
+  [E19] DiagramContentArea         useDiagramViewer               DiagramContentArea (new)
+  (diagram A)                      (shared hook)                  (diagram B)
+  ─────────────                    ────────────────               ──────────────
        │                              │                              │
   1.   │── executeJump(data) ────────►│                              │
        │   link.target = {path, id}   │                              │
@@ -81,9 +83,48 @@ DIAGRAMVIEWER — 3-PANEL LAYOUT, HOOKS, AND JUMP PROTOCOL
 ```
 
 ```code-refs
-DW  web-ui/src/components/diagram-viewer.tsx:19-156                     DiagramViewer component
-TP  web-ui/src/components/diagram-panels/diagram-tree-panel.tsx:1-1     DiagramTreePanel (file tree sidebar)
-CA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354  DiagramContentArea wrapper
-DS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269   DiagramScene inner component
-VH  web-ui/src/hooks/use-diagram-viewer.ts:49-224                       useDiagramViewer hook
+CDW  web-ui/src/components/diagram-viewer.tsx:19-156                     DiagramViewer component
+CTP  web-ui/src/components/diagram-panels/diagram-tree-panel.tsx:1-1     DiagramTreePanel (file tree sidebar)
+CCA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354  DiagramContentArea wrapper
+CDS  web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269   DiagramScene inner component
+CVH  web-ui/src/hooks/use-diagram-viewer.ts:49-224                       useDiagramViewer hook
+```
+
+```entities
+name                             id_type   id    parent  description
+DiagramViewer                    box       E01   -       Top-level 3-panel viewer component
+containerRef                     text      E02   E01     Container ref for layout measurement
+DiagramTreePanel                 box       E03   E01     File tree sidebar panel
+Tree panel contents              text      E04   E03     tree, selectedPath, expandedFolders, callbacks
+DiagramContentArea               box       E05   E01     Center content panel (flex-1)
+DiagramScene                     box       E06   E05     Inner scene component with viewport
+Agent Panel                      box       E07   E01     Conditional right-side agent panel
+Agent panel contents             text      E08   E07     useDiagramAgent Panel
+Scene pipeline                   text      E09   E06     SceneInput → Viewport → SVG rendering pipeline
+Scene overlays                   text      E10   E06     PopupDiagramOverlay, context menu, cross-refs
+CodeVizStatusIndicator           box       E11   E05     Extension connection status badge
+Status details                   text      E12   E11     Absolute positioned, state display
+Panel widths                     text      E13   E01     displayTreePanelWidth, displayAgentPanelWidth
+ResizeHandle legend              text      E14   E01     RH = ResizeHandle explanation
+useDiagramViewer                 box       E15   -       Hook state detail box
+State fields (tree)              text      E16   E15     tree, diagramsRootExists, isTreeLoading, workspacePath
+State fields (selection)         text      E17   E15     selectedPath, expandedFolders, content, loading, error
+State fields (jump)              text      E18   E15     pendingJumpElementId, consumeJump
+Jump protocol sequence           text      E19   -       Cross-diagram jump sequence diagram
+```
+
+```arrows
+from   to     label
+E04    E06    onSelectPath triggers content fetch
+E06    E09    scene renders via pipeline
+E15    E05    hook state drives content area
+E18    E19    pendingJumpElementId drives jump protocol
+E19    E15    executeJump calls requestJump on hook
+```
+
+```notes
+Code-ref IDs use a "C" prefix (e.g. CDW, CTP) and entity IDs use an "E" prefix
+(e.g. E01, E05) to disambiguate the two namespaces. Every text paragraph in the
+diagram is labeled with its entity ID in [EXX] brackets. Box entities show their
+ID at the box corner. Cross-diagram jump targets: ** filename.txt#EXX.
 ```

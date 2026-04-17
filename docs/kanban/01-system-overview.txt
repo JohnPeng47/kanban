@@ -1,0 +1,156 @@
+```diagram
+KANBAN — SYSTEM OVERVIEW
+
+  Hub diagram — links to all other diagrams in the set.
+
+
+═══ THREE-TIER ARCHITECTURE ══════════════════════════════════════════════════════════════════
+
+  ┌─ TIER 1: BROWSER (web-ui/src) ──────────────────────────────────────────────────────────┐
+  │                                                                                          │
+  │  ┌─ App ──────────────────────────────────────────────────────────────────────────────┐  │
+  │  │  React composition root: kanban-board, card-detail, diagram-viewer, settings       │  │
+  │  │  ~20 top-level hooks orchestrate state sync, sessions, drag-drop, git actions      │  │
+  │  │  [→ app-and-hook-wiring]                                                           │  │
+  │  └────────────────────────────────────────────────────────────────────────────────────┘  │
+  │                                                                                          │
+  │  ┌─ Key frontend subsystems ──────────────────────────────────────────────────────────┐  │
+  │  │  Board & task lifecycle    card states, drag-drop, review  [→ board-task-lifecycle] │  │
+  │  │  Chat & terminal stacks   Cline chat + PTY terminal UI    [→ chat-and-terminal-stacks]│
+  │  │  Settings & onboarding    provider setup, MCP, shortcuts  [→ settings-and-onboarding]│ │
+  │  │  Workspace sync           hydration + persistence cycle   [→ workspace-sync-cycle] │  │
+  │  └────────────────────────────────────────────────────────────────────────────────────┘  │
+  │         │                                              ▲                                  │
+  │         │  TRPC mutations / queries                    │  WebSocket (snapshot + deltas)   │
+  └─────────┼──────────────────────────────────────────────┼──────────────────────────────────┘
+            │                                              │
+  ══════════╪══════════════════════════════════════════════╪══ TRPC + WebSocket boundary ═════
+            │ [→ trpc-router-and-api-map]                  │
+  ┌─ TIER 2: RUNTIME (src/) ───────────────────────────────┼──────────────────────────────────┐
+  │         ▼                                              │                                  │
+  │  ┌─ runtime-server ───────────────────────────────────┤──────────────────────────────┐  │
+  │  │  HTTP + WS listener, serves web-ui, routes /api/trpc/* and /api/runtime/ws        │  │
+  │  └────────────────────────────────────────────────────┤──────────────────────────────┘  │
+  │         │                                              │                                  │
+  │  ┌─ app-router (TRPC) ──────────────┐    ┌─ runtime-state-hub ───────────────────────┐  │
+  │  │  6 namespaces: runtime,          │    │  Fans out session summaries + chat msgs   │  │
+  │  │  workspace, projects, hooks,     │    │  to workspace-scoped WebSocket clients    │  │
+  │  │  diagrams, health                │    │  Batches at 150ms per workspace           │  │
+  │  │  Delegates to runtime-api        │    │  [→ state-hub-and-registry]               │  │
+  │  └──────────────┬───────────────────┘    └───────────────────────────────────────────┘  │
+  │                  │                                                                        │
+  │  ┌─ runtime-api ┼───────────────────────────────────────────────────────────────────┐    │
+  │  │  Coordinator: routes to terminal or Cline based on agent type                    │    │
+  │  │               │                                                                  │    │
+  │  │  ┌─ workspace-registry ────────────────────────────────────────────────────┐    │    │
+  │  │  │  Tracks active workspace, lazy-loads terminal managers, hydrates disk   │    │    │
+  │  │  └────────────────────────────────────────────────────────────────────────┘    │    │
+  │  └───────────────┼──────────────────────────────────────────────────────────────┘    │
+  │                  │                                                                    │
+  │        ┌─────────┴──────────┐                                                         │
+  │        ▼                    ▼                                                         │
+  │  ┌─ terminal-session ┐  ┌─ cline-task-session ──┐                                    │
+  │  │  -manager         │  │  -service             │                                    │
+  │  │  PTY lifecycle    │  │  Native Cline SDK     │                                    │
+  │  │  for non-Cline    │  │  sessions via         │                                    │
+  │  │  agents           │  │  @clinebot/*          │                                    │
+  │  └────────┬──────────┘  └──────────┬────────────┘                                    │
+  │           │                        │                                                  │
+  └───────────┼────────────────────────┼──────────────────────────────────────────────────┘
+              │                        │
+  ════════════╪════════════════════════╪══ PTY / SDK boundary ════════════════════════════
+              │                        │
+  ┌─ TIER 3: EXECUTION ───────────────┼───────────────────────────────────────────────────┐
+  │           ▼                        ▼                                                   │
+  │  ┌─ PTY Processes ──────────┐  ┌─ Cline SDK (@clinebot/*) ────────────────────────┐  │
+  │  │  Claude Code, Codex,     │  │  Provider auth + OAuth  [→ cline-provider-and-auth]│  │
+  │  │  Gemini, OpenCode, Droid │  │  Session persistence    [→ cline-architecture]    │  │
+  │  │                          │  │  Event pipeline         [→ cline-event-and-state] │  │
+  │  │  [→ pty-launch-pipeline] │  │  MCP servers            [→ cline-mcp-servers]     │  │
+  │  │  [→ agent-adapter-catalog]│  └──────────────────────────────────────────────────┘  │
+  │  │  [→ pty-session-internals]│                                                        │
+  │  └──────────────────────────┘                                                        │
+  └───────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ REQUEST PATH ═════════════════════════════════════════════════════════════════════════════
+
+  User action (click "Start", send prompt)
+       │
+       ▼
+  Hook (useTaskSessions / useBoardInteractions)  [→ board-task-lifecycle]
+       │
+       ▼
+  TRPC client ──→ app-router ──→ runtime-api.startTaskSession()
+                                      │
+                                      ├─ agentId === "cline" ?
+                                      │
+                               ┌── YES ──────┐   ┌── NO ───────────────────┐
+                               │             │   │                         │
+                               │  cline-task │   │  terminal-session       │
+                               │  -session   │   │  -manager               │
+                               │  -service   │   │  .startTaskSession()    │
+                               │  .start()   │   │                         │
+                               │             │   │ [→ pty-launch-pipeline] │
+                               │ [→ cline-   │   │ [→ agent-adapter-catalog]│
+                               │ architecture]   └─────────────────────────┘
+                               └─────────────┘
+
+
+═══ STREAM PATH ══════════════════════════════════════════════════════════════════════════════
+
+  Terminal summaries              Cline summaries + messages
+  (onSummary)                     (onSummary, onMessage)  [→ cline-event-and-state]
+       │                                │
+       └──────────┬─────────────────────┘
+                  │
+                  ▼
+         runtime-state-hub  [→ state-hub-and-registry]
+                  │
+                  │  batched (150ms per workspace)
+                  ▼
+         WebSocket ──→ browser hooks ──→ React UI  [→ workspace-sync-cycle]
+
+
+═══ CORE CONCEPTS ════════════════════════════════════════════════════════════════════════════
+
+  ┌─ workspace ──────────────────────────────────────────────────────────────────┐
+  │  A git repository registered with Kanban; most state is workspace-scoped.   │
+  └──────────────────────────────────────────────────────────────────────────────┘
+  ┌─ task card ──────────────────────────────────────────────────────────────────┐
+  │  A kanban card: unit of work with prompt, base ref, review settings.        │
+  │  [→ board-task-lifecycle]                                                    │
+  └──────────────────────────────────────────────────────────────────────────────┘
+  ┌─ worktree ───────────────────────────────────────────────────────────────────┐
+  │  A per-task git worktree so agents work on an isolated branch.              │
+  └──────────────────────────────────────────────────────────────────────────────┘
+  ┌─ task session ───────────────────────────────────────────────────────────────┐
+  │  A running or stopped agent (PTY or Cline SDK) tied to a task card.         │
+  │  [→ pty-session-internals]  [→ cline-architecture]                          │
+  └──────────────────────────────────────────────────────────────────────────────┘
+  ┌─ home agent session ─────────────────────────────────────────────────────────┐
+  │  A synthetic workspace-scoped session for the sidebar, not tied to a task.  │
+  │  [→ chat-and-terminal-stacks]                                                │
+  └──────────────────────────────────────────────────────────────────────────────┘
+  ┌─ runtime summary ────────────────────────────────────────────────────────────┐
+  │  Normalized session state (running/idle/awaiting_review) streamed to UI.    │
+  │  [→ state-hub-and-registry]                                                  │
+  └──────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ OWNERSHIP ════════════════════════════════════════════════════════════════════════════════
+
+  ┌─ Kanban owns ────────────────────────────────────────────────────────────────┐
+  │  Board state, worktree lifecycle, non-Cline process lifecycle,              │
+  │  runtime config (selected agent, autonomous mode, shortcuts)                │
+  │  [→ settings-and-onboarding]                                                 │
+  └──────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Cline SDK owns ────────────────────────────────────────────────────────────┐
+  │  Provider settings, API keys, OAuth tokens, session persistence, MCP config │
+  │  [→ cline-provider-and-auth]  [→ cline-mcp-servers]                          │
+  └──────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Browser owns ───────────────────────────────────────────────────────────────┐
+  │  UI state (panel visibility, selected card), optimistic rendering,          │
+  │  terminal attach/detach and xterm.js rendering                              │
+  └──────────────────────────────────────────────────────────────────────────────┘
+```

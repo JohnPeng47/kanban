@@ -1,0 +1,13 @@
+# anchor-text	code-ref	label
+RuntimeSettingsDialog	web-ui/src/components/runtime-settings-dialog.tsx:283	Main settings dialog component
+ClineSetupSection	web-ui/src/components/shared/cline-setup-section.tsx:49	Cline provider + model + MCP setup section
+handleSave	web-ui/src/components/runtime-settings-dialog.tsx:547	Save orchestration: validate, save provider, save MCP, save config, save theme
+useRuntimeSettingsClineController	web-ui/src/hooks/use-runtime-settings-cline-controller.ts:193	Cline provider state machine for settings dialog
+useRuntimeSettingsClineMcpController	web-ui/src/hooks/use-runtime-settings-cline-mcp-controller.ts:127	MCP server management hook for settings dialog
+useStartupOnboarding	web-ui/src/hooks/use-startup-onboarding.ts:30	Onboarding hook: detects first-run or unauthenticated state
+StartupOnboardingDialog	web-ui/src/components/startup-onboarding-dialog.tsx:17	Onboarding dialog with slide carousel
+useRuntimeConfig	web-ui/src/runtime/use-runtime-config.ts:23	Loads and saves Kanban runtime config via TRPC
+[→ cline-provider-and-auth]	docs/kanban/cline-integration/07-cline-provider-and-auth.txt:1	Backend provider service and OAuth flow
+[→ cline-mcp-servers]	docs/kanban/cline-integration/08-cline-mcp-servers.txt:1	Backend MCP server management service
+[→ trpc-router-and-api-map]	docs/kanban/trpc-contract/11-trpc-router-and-api-map.txt:1	TRPC procedures for settings and provider operations
+[→ app-and-hook-wiring]	docs/kanban/frontend/12-app-and-hook-wiring.txt:1	App.tsx dialog open state and hook wiring

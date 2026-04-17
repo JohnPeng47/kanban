@@ -1,0 +1,21 @@
+# anchor-text            code-ref                                    label
+App                               web-ui/src/App.tsx:81                                 App composition root component
+runtime-server                    src/server/runtime-server.ts:96                       createRuntimeServer — HTTP + WS listener
+app-router                        src/trpc/app-router.ts:417-703                        runtimeAppRouter — all TRPC procedures
+runtime-api                       src/trpc/runtime-api.ts:85-646                        createRuntimeApi — session/settings/git coordinator
+runtime-state-hub                 src/server/runtime-state-hub.ts:63-604                createRuntimeStateHub — WebSocket fan-out
+workspace-registry                src/server/workspace-registry.ts:186-475              createWorkspaceRegistry — workspace/manager tracking
+[→ app-and-hook-wiring]           docs/kanban/frontend/12-app-and-hook-wiring.txt:1     App.tsx hook wiring
+[→ board-task-lifecycle]          docs/kanban/frontend/13-board-task-lifecycle.txt:1    Board card states and task lifecycle
+[→ chat-and-terminal-stacks]      docs/kanban/frontend/14-chat-and-terminal-stacks.txt:1  Cline chat + PTY terminal UI stacks
+[→ settings-and-onboarding]       docs/kanban/frontend/15-settings-and-onboarding.txt:1  Settings dialog and onboarding flow
+[→ workspace-sync-cycle]          docs/kanban/state-and-streaming/10-workspace-sync-cycle.txt:1  Hydration and persistence round-trip
+[→ trpc-router-and-api-map]       docs/kanban/trpc-contract/11-trpc-router-and-api-map.txt:1  TRPC router namespace map
+[→ state-hub-and-registry]        docs/kanban/state-and-streaming/09-state-hub-and-registry.txt:1  State hub and workspace registry
+[→ pty-launch-pipeline]           docs/kanban/task-execution/02-pty-launch-pipeline.txt:1  PTY agent launch pipeline
+[→ agent-adapter-catalog]         docs/kanban/task-execution/04-agent-adapter-catalog.txt:1  Per-agent adapter matrix
+[→ pty-session-internals]         docs/kanban/task-execution/03-pty-session-internals.txt:1  PTY session state machine and internals
+[→ cline-architecture]            docs/kanban/cline-integration/05-cline-architecture.txt:1  Cline SDK integration stack
+[→ cline-event-and-state]         docs/kanban/cline-integration/06-cline-event-and-state.txt:1  Cline event pipeline and state
+[→ cline-provider-and-auth]       docs/kanban/cline-integration/07-cline-provider-and-auth.txt:1  Cline provider settings and OAuth
+[→ cline-mcp-servers]             docs/kanban/cline-integration/08-cline-mcp-servers.txt:1  MCP server integration

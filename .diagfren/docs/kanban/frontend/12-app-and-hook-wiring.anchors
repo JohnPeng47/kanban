@@ -1,0 +1,45 @@
+# anchor-text	code-ref	label
+App	web-ui/src/App.tsx:81	App composition root — wires all top-level hooks and renders surfaces
+useProjectNavigation	web-ui/src/hooks/use-project-navigation.ts:81	Project list, selection, add/remove, git-init prompt
+useProjectUiState	web-ui/src/hooks/use-project-ui-state.ts:32	Display-ready project list and loading flags
+useKanbanAccessGate	web-ui/src/hooks/use-kanban-access-gate.ts:9	License/access gating check
+useTaskSessions	web-ui/src/hooks/use-task-sessions.ts:73	TRPC facade for start/stop/send/cleanup task sessions
+useTaskEditor	web-ui/src/hooks/use-task-editor.ts:76	Create/edit task forms, prompt state, branch ref, save logic
+useTaskStartActions	web-ui/src/hooks/use-task-start-actions.ts:52	Combines create + start into one-shot board/chat actions
+useTaskBranchOptions	web-ui/src/hooks/use-task-branch-options.ts:19	Derives branch ref options from workspace git state
+useBoardInteractions	web-ui/src/hooks/use-board-interactions.ts:96	Drag-drop, card select, trash, review, dependency edges
+useLinkedBacklogTaskActions	web-ui/src/hooks/use-linked-backlog-task-actions.ts:22	Auto-starts linked backlog tasks on dependency completion
+useProgrammaticCardMoves	web-ui/src/hooks/use-programmatic-card-moves.ts:42	Subscribes to server-pushed column transitions
+useWorkspaceSync	web-ui/src/hooks/use-workspace-sync.ts:53	Applies streamed snapshot/delta into board + sessions state
+useWorkspacePersistence	web-ui/src/runtime/use-workspace-persistence.ts:30	Debounced save of board edits to server with revision lock
+useDocumentVisibility	web-ui/src/hooks/use-document-visibility.ts:5	Tracks browser tab visibility for sync pause/resume
+useHomeSidebarAgentPanel	web-ui/src/hooks/use-home-sidebar-agent-panel.tsx:46	Composes sidebar agent chat/terminal for home workspace
+useRuntimeProjectConfig	web-ui/src/runtime/use-runtime-project-config.ts:13	Fetches per-project runtime config (agent, provider, shortcuts)
+useStartupOnboarding	web-ui/src/hooks/use-startup-onboarding.ts:30	First-launch onboarding dialog state + agent selection
+useDebugTools	web-ui/src/hooks/use-debug-tools.ts:23	Debug mode flag, reset-all-state action
+useFeaturebaseFeedbackWidget	web-ui/src/hooks/use-featurebase-feedback-widget.ts:133	External feedback widget with auth token
+useAppHotkeys	web-ui/src/hooks/use-app-hotkeys.ts:26	Global keyboard shortcuts (Ctrl+N, Ctrl+`, etc)
+useShortcutActions	web-ui/src/hooks/use-shortcut-actions.ts:40	User-defined command shortcuts via terminal
+useGitActions	web-ui/src/hooks/use-git-actions.ts:87	Git fetch/pull/push/commit/open-PR actions + error state
+useReviewReadyNotifications	web-ui/src/hooks/use-review-ready-notifications.ts:74	Browser notifications when tasks need review
+useOpenWorkspace	web-ui/src/hooks/use-open-workspace.ts:40	Open-in-editor action with target selection
+useTerminalPanels	web-ui/src/hooks/use-terminal-panels.ts:123	Home + detail terminal open/close/expand/collapse state
+useTerminalConnectionReady	web-ui/src/runtime/use-terminal-connection-ready.ts:8	Tracks PTY WebSocket readiness for shortcut execution
+useTerminalThemeColors	web-ui/src/terminal/theme-colors.ts	Reads CSS custom properties for terminal color config
+useRuntimeStateStream	web-ui/src/runtime/use-runtime-state-stream.ts:298-516	WebSocket connection, snapshot + delta reducer
+KanbanBoard	web-ui/src/components/kanban-board.tsx:30	Drag-and-drop board with columns and task cards
+CardDetailView	web-ui/src/components/card-detail-view.tsx:182	Full task detail overlay with chat, terminal, git actions
+TopBar	web-ui/src/components/top-bar.tsx:278	Navbar with git actions, terminal toggle, shortcuts, settings
+ProjectNavigationPanel	web-ui/src/components/project-navigation-panel.tsx:51	Sidebar with project list and agent panel
+AgentTerminalPanel	web-ui/src/components/detail-panels/agent-terminal-panel.tsx:341	Embedded terminal with xterm.js and session toolbar
+DiagramViewer	web-ui/src/components/diagram-viewer.tsx:19	ASCII diagram browser panel
+GitHistoryView	web-ui/src/components/git-history-view.tsx:80	Branch/commit history panel
+RuntimeSettingsDialog	web-ui/src/components/runtime-settings-dialog.tsx:283	Modal for agent, provider, and project settings
+TaskCreateDialog	web-ui/src/components/task-create-dialog.tsx:95	Modal for creating new tasks with prompt and options
+StartupOnboardingDialog	web-ui/src/components/startup-onboarding-dialog.tsx:17	First-launch agent selection and setup dialog
+[→ board-task-lifecycle]	docs/kanban/frontend/13-board-task-lifecycle.txt:1	Cross-link: board state schema, column semantics, task CRUD lifecycle
+[→ chat-and-terminal-stacks]	docs/kanban/frontend/14-chat-and-terminal-stacks.txt:1	Cross-link: ClineAgentChatPanel and AgentTerminalPanel hook composition
+[→ settings-and-onboarding]	docs/kanban/frontend/15-settings-and-onboarding.txt:1	Cross-link: RuntimeSettingsDialog and startup onboarding flow
+[→ workspace-sync-cycle]	docs/kanban/state-and-streaming/10-workspace-sync-cycle.txt:1	Cross-link: hydration, delta, persistence, and conflict-detection paths
+[→ trpc-router-and-api-map]	docs/kanban/trpc-contract/11-trpc-router-and-api-map.txt:1	Cross-link: TRPC procedures called by useTaskSessions and useGitActions
+[→ state-hub-and-registry]	docs/kanban/state-and-streaming/09-state-hub-and-registry.txt:1	Cross-link: server-side WebSocket fan-out and workspace state registry

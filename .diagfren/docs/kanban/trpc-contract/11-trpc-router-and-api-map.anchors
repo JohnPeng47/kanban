@@ -1,0 +1,24 @@
+# anchor-text	code-ref	label
+runtimeAppRouter	src/trpc/app-router.ts:417-703	Top-level tRPC router definition (6 namespaces)
+runtime	src/trpc/app-router.ts:418-560	runtime namespace (task sessions, config, providers, MCP)
+workspace	src/trpc/app-router.ts:561-651	workspace namespace (git, worktree, state, search)
+projects	src/trpc/app-router.ts:652-671	projects namespace (list, add, remove, pickDirectory)
+hooks	src/trpc/app-router.ts:672-679	hooks namespace (ingest)
+diagrams	src/trpc/app-router.ts:680-702	diagrams namespace (list, getContent, navigate, checkExtension)
+workspaceProcedure	src/trpc/app-router.ts:391-410	Middleware enforcing workspace scope header
+createRuntimeApi	src/trpc/runtime-api.ts:85-646	Factory building runtime API handlers (sessions, config, providers, MCP)
+createWorkspaceApi	src/trpc/workspace-api.ts:199-441	Factory building workspace API handlers (git, worktree, state, search)
+createProjectsApi	src/trpc/projects-api.ts:55-231	Factory building projects API (list, add, remove, pickDirectory)
+createHooksApi	src/trpc/hooks-api.ts:39-127	Factory building hooks API (ingest)
+createDiagramsApi	src/trpc/diagrams-api.ts:73-155	Factory building diagrams API (list, content, navigate, checkExtension)
+effectiveAgentId === "cline"	src/trpc/runtime-api.ts:175-191	Fork decision: Cline SDK path vs terminal PTY path
+clineProviderService.resolveLaunchConfig	src/trpc/runtime-api.ts:192	Cline path: resolve provider/model before session start
+resolveAgentCommand	src/trpc/runtime-api.ts:233	Terminal path: resolve CLI binary from agent registry
+terminalManager.startTaskSession	src/trpc/runtime-api.ts:241-255	Terminal path: spawn PTY session via TerminalSessionManager
+clineTaskSessionService.startTaskSession	src/trpc/runtime-api.ts:194-206	Cline path: start task via ClineTaskSessionService
+rebindPersistedTaskSession	src/trpc/runtime-api.ts:183-188	Resume probe: check if task was originally a Cline session
+[→ system-overview]	docs/kanban/01-system-overview.txt:1	Cross-link: system overview
+[→ cline-provider-and-auth]	docs/kanban/cline-integration/07-cline-provider-and-auth.txt:1	Cross-link: provider service and OAuth flow
+[→ state-hub-and-registry]	docs/kanban/state-and-streaming/09-state-hub-and-registry.txt:1	Cross-link: server-side WebSocket fan-out and workspace state registry
+[→ pty-launch-pipeline]	docs/kanban/task-execution/02-pty-launch-pipeline.txt:1	Cross-link: PTY launch pipeline
+[→ cline-architecture]	docs/kanban/cline-integration/05-cline-architecture.txt:1	Cross-link: backend Cline session stack

@@ -1,0 +1,15 @@
+# anchor-text	code-ref	label
+useClineChatRuntimeActions	web-ui/src/hooks/use-cline-chat-runtime-actions.ts:45	Shared TRPC action hook for send, cancel, load chat messages
+useClineChatSession	web-ui/src/hooks/use-cline-chat-session.ts:62	Message list manager with merge, dedup, and stale guards
+useClineChatPanelController	web-ui/src/hooks/use-cline-chat-panel-controller.ts:158	View-model hook: draft, flags, send/cancel handlers
+ClineAgentChatPanel	web-ui/src/components/detail-panels/cline-agent-chat-panel.tsx:111	forwardRef component rendering messages, composer, model picker
+PersistentTerminal	web-ui/src/terminal/persistent-terminal-manager.ts:141	xterm.js lifecycle class with IO+control WebSocket channels
+TerminalController	web-ui/src/terminal/terminal-controller-registry.ts:1	Interface: input, paste, waitForLikelyPrompt
+usePersistentTerminalSession	web-ui/src/terminal/use-persistent-terminal-session.ts:30	Lifecycle hook: mount/unmount xterm, subscribe to events
+AgentTerminalPanel	web-ui/src/components/detail-panels/agent-terminal-panel.tsx:341	Component: xterm container + toolbar + actions
+useHomeAgentSession	web-ui/src/hooks/use-home-agent-session.ts:110	Synthetic home session lifecycle: taskId creation, panel mode
+useHomeSidebarAgentPanel	web-ui/src/hooks/use-home-sidebar-agent-panel.tsx:46	Orchestrator: wires home session + runtime actions → ReactElement
+[→ cline-event-and-state]	docs/kanban/cline-integration/06-cline-event-and-state.txt:1	State-hub events that feed chat messages
+[→ pty-session-internals]	docs/kanban/task-execution/03-pty-session-internals.txt:1	Server-side PTY that feeds terminal WebSocket
+[→ app-and-hook-wiring]	docs/kanban/frontend/12-app-and-hook-wiring.txt:1	App.tsx wiring for detail and sidebar consumers
+[→ cline-architecture]	docs/kanban/cline-integration/05-cline-architecture.txt:1	Backend Cline session stack the chat TRPC calls hit

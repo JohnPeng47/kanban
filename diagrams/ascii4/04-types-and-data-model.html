@@ -778,5 +778,103 @@
   </g>
 
 </svg>
+<script type="text/plain" id="ascii-source">
+TYPES & DATA MODEL — Core shapes that flow through the system
+=============================================================
+
+  ** 02-rendering.txt                    (Transform, Rect in Scene/Viewport)
+  ** 03-interaction.txt                 (InteractiveData drives navigation)
+  ** 02-rendering-svgscene-detail.txt   (composeTransforms, rectsIntersect used in SvgScene)
+
+
+═══ Geometry Primitives ════════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────┐      ┌─────────────────┐      ┌──────────────────────────────┐
+  │  Rect      ERC  │      │  Point     EPT  │      │  Transform              ETF  │
+  │                 │      │                 │      │                             │
+  │  x: number     │      │  x: number      │      │  tx: number   (translateX)  │
+  │  y: number     │      │  y: number      │      │  ty: number   (translateY)  │
+  │  width: number │      └─────────────────┘      │  scale: number              │
+  │  height: number│                               │                             │
+  └─────────────────┘                               │  IDENTITY = {0, 0, 1}      │
+                                                    └──────────────────────────────┘
+
+  Transform operations:
+  ┌──────────────────────────────────────────────────────────────────────────────────┐
+  │  composeTransforms(parent, child)  →  combined transform                  ECT  │
+  │  transformRect(rect, transform)    →  rect in new coordinate space        CXR  │
+  │  rectsIntersect(a, b)              →  AABB overlap test                   CRI  │
+  │  rectContains(outer, inner)        →  full containment test               CRN  │
+  └──────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ Interactive Metadata ═══════════════════════════════════════════════════════════════════════════════
+
+  SVG data-* attributes                          Parsed structures
+  ─────────────────────                          ──────────────────
+
+  data-interactive="myFunc"     ─┐
+  data-ref="src/foo.ts:10-50"   ─┤    ┌────────────────────────────────────────────┐
+  data-category="function"      ─┤    │  InteractiveData                     EID  │
+  data-label="myFunc"           ─┤    │                                           │
+  data-tt="src/foo.ts — helper" ─┤───►│  ref: "src/foo.ts:10-50"                 │
+  data-nav="src/bar.ts:5"      ─┤    │  parsedRef: ParsedRef                     │
+  data-modal="detail.html"     ─┤    │  category: "function"                     │
+  data-modal-position="right"  ─┤    │  label: "myFunc"                          │
+  data-link="other.html#elem"  ─┘    │  tooltip: "src/foo.ts — helper"           │
+                                      │  navTarget: ParsedRef (nav or ref)        │
+                                      │  modal: DiagramModal | null               │
+                                      │  link: DiagramLink | null                 │
+                                      └────────────────────────────────────────────┘
+
+  ┌─────────────────────────────┐      ┌───────────────────────────────────────┐
+  │  ParsedRef            EPR  │      │  InteractiveCategory            EIC  │
+  │                            │      │                                      │
+  │  filePath: string          │      │  "module" | "function" | "type"      │
+  │  startLine: number         │      │  "data"   | "flow"     | "call"     │
+  │  endLine: number | null    │      │  "concept" | "annotation"           │
+  └─────────────────────────────┘      └───────────────────────────────────────┘
+
+
+═══ Navigation Targets ═════════════════════════════════════════════════════════════════════════════════
+
+  ┌───────────────────────────────────────────────┐     ┌───────────────────────────────────────────┐
+  │  DiagramModal                           EDM  │     │  DiagramLink                        EDK  │
+  │                                              │     │                                          │
+  │  source:                                     │     │  source:                                 │
+  │    elementId: string                         │     │    elementId: string                     │
+  │    ref: string | null                        │     │    ref: string | null                    │
+  │                                              │     │                                          │
+  │  target:                                     │     │  target:                                 │
+  │    path: string (relative to diagram dir)    │     │    path: string                          │
+  │    position: OverlayPosition                 │     │    elementId: string | null               │
+  │      "above-left" | "above-right"            │     │                                          │
+  │      "below-left" | "below-right"            │     │  Parsed from: "path.html#elementId"      │
+  │      "left" | "right" | "auto"               │     │  or just: "path.html"                    │
+  └───────────────────────────────────────────────┘     └───────────────────────────────────────────┘
+
+
+═══ Overlay Badges ═════════════════════════════════════════════════════════════════════════════════════
+
+  ┌───────────────────────────────────────────────────────────────────────────────────┐
+  │  OverlayBadge                                                              EOB  │
+  │                                                                                 │
+  │  id: string                                                                     │
+  │  anchor: BadgeAnchor                                                            │
+  │  text: string          (emoji or symbol, e.g. "⬡", "→", "📌")                 │
+  │  onClick: () => void                                                            │
+  │  style?: { color, background, borderColor }                                     │
+  └───────────────────────────────────────────────────────────────────────────────────┘
+
+  BadgeAnchor (discriminated union) [EBA]:
+  ┌──────────────────────┬──────────────────────────────────────────────────────────┐
+  │  { space: "screen" } │  Fixed screen position. x, y in pixels.                │
+  ├──────────────────────┼──────────────────────────────────────────────────────────┤
+  │  { space: "scene" }  │  Tracks with pan/zoom. x, y in scene coords.           │
+  ├──────────────────────┼──────────────────────────────────────────────────────────┤
+  │  { space: "element"} │  Attached to element corner.                            │
+  │                      │  elementId + corner (center, top-right, etc.)            │
+  └──────────────────────┴──────────────────────────────────────────────────────────┘
+</script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import type { SourceSpan } from "../diagram-data";
-import type { InteractiveData, Point, Rect, ReflowState, Transform } from "../types";
+import type { InteractiveData, Rect, ReflowState, Transform } from "../types";
 
 /**
  * The universal primitive of the Scene.
@@ -83,9 +83,10 @@ export interface Scene {
 
 	// ─── Hit Testing ───────────────────────────────────────────
 
-	/** Point hit test. Takes a screen-space point (Viewport converts to screen
-	 *  before calling). Uses elementFromPoint for accurate SVG shape testing. */
-	hitTest(screenPoint: Point): string | null;
+	/** Given a DOM element (from document.elementFromPoint), identify which
+	 *  SceneElement it belongs to. Returns the element ID or null if the
+	 *  element is not within this Scene's SVG. */
+	identifyElement(domEl: Element): string | null;
 	hitTestRect(sceneRect: Rect, mode: "intersect" | "contain"): string[];
 
 	// ─── Rendering ─────────────────────────────────────────────

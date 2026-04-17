@@ -1,0 +1,104 @@
+```diagram
+KANBAN AGENT ADAPTER CATALOG
+Covers: agent-session-adapters.ts, agent-registry.ts, agent-catalog.ts
+
+═══ SECTION 1 — ADAPTER MATRIX ═══════════════════════════════════════════════════════════════════
+
+  prepareAgentLaunch(input) dispatches to the correct adapter via the ADAPTERS record.
+  Each adapter.prepare() returns a PreparedAgentLaunch with binary, args, env, cleanup,
+  deferredStartupInput, and optional transition detectors.
+
+  ┌──────────┬──────────┬────────────────────────┬────────────────────────┬──────────────────┬──────────────┐
+  │ Agent    │ Binary   │ Autonomous Arg         │ Hook Strategy          │ Plan Mode        │ Deferred     │
+  │          │          │                        │                        │                  │ Input        │
+  ├──────────┼──────────┼────────────────────────┼────────────────────────┼──────────────────┼──────────────┤
+  │ Claude   │ claude   │ --dangerously-skip-    │ A: settings.json       │ --permission-    │ (none)       │
+  │          │          │  permissions           │ --settings <path>      │  mode plan       │              │
+  ├──────────┼──────────┼────────────────────────┼────────────────────────┼──────────────────┼──────────────┤
+  │ Codex    │ codex    │ --dangerously-bypass-  │ codex-wrapper: JSONL   │ deferred /plan   │ /plan <msg>  │
+  │          │          │  approvals-and-sandbox │ log monitoring         │ via bracketed    │ bracketed    │
+  │          │          │                        │                        │ paste            │ paste        │
+  ├──────────┼──────────┼────────────────────────┼────────────────────────┼──────────────────┼──────────────┤
+  │ Gemini   │ gemini   │ --yolo                 │ A: settings.json       │ --approval-      │ (none)       │
+  │          │          │                        │ via env var path       │  mode=plan       │              │
+  ├──────────┼──────────┼────────────────────────┼────────────────────────┼──────────────────┼──────────────┤
+  │ OpenCode │ opencode │ (none)                 │ C: JS plugin           │ OPENCODE_EXPERI- │ (none)       │
+  │          │          │                        │ kanban.js via file://  │  MENTAL_PLAN_    │              │
+  │          │          │                        │                        │  MODE=true       │              │
+  ├──────────┼──────────┼────────────────────────┼────────────────────────┼──────────────────┼──────────────┤
+  │ Droid    │ droid    │ autonomyMode: "auto-   │ A: settings.json       │ autonomyMode:    │ (none)       │
+  │          │          │  high" (via settings)  │ --settings <path>      │  "spec" (JSON)   │              │
+  ├──────────┼──────────┼────────────────────────┼────────────────────────┼──────────────────┼──────────────┤
+  │ Cline    │ cline    │ --auto-approve-all     │ B: executable scripts  │ --plan           │ (none)       │
+  │          │          │                        │ --hooks-dir <path>     │                  │              │
+  └──────────┴──────────┴────────────────────────┴────────────────────────┴──────────────────┴──────────────┘
+
+  RUNTIME_AGENT_CATALOG defines all six agents with id, label, binary, baseArgs, autonomousArgs, installUrl.
+  RUNTIME_LAUNCH_SUPPORTED_AGENT_IDS currently gates launch to: cline, claude, codex, droid.
+  OpenCode and Gemini adapters exist but are commented out of the launch-supported list.
+
+  [→ pty-launch-pipeline] prepareAgentLaunch is called from the PTY launch pipeline
+
+
+═══ SECTION 2 — HOOK SCRIPT GENERATION ═══════════════════════════════════════════════════════════
+
+  All adapters inject hooks when resolveHookContext(input) returns a valid context
+  (requires workspaceId). Hook env vars KANBAN_HOOK_TASK_ID and KANBAN_HOOK_WORKSPACE_ID
+  let hook scripts call back into the Kanban CLI via buildHookCommand().
+
+  Three hook delivery strategies:
+
+    Strategy A — JSON Settings File (Claude, Droid, Gemini):
+      Writes settings.json to ~/hooks/<agentId>/ with event→command mappings.
+      Agent loads it via --settings flag or env var.
+
+    Strategy B — Executable Scripts (Cline):
+      Writes Bash/PowerShell scripts to ~/hooks/cline/ that read JSON from stdin,
+      pipe to `kanban hooks notify`, and return {"cancel":false}. Loaded via --hooks-dir.
+
+    Strategy C — JS Plugin (OpenCode):
+      Writes kanban.js plugin to ~/hooks/opencode/ with event/tool/permission handlers.
+      Uses globalThis guard against double-registration. Loaded via OPENCODE_CONFIG env var.
+
+
+═══ SECTION 3 — CODEX DEEP DIVE ══════════════════════════════════════════════════════════════════
+
+  Codex lacks native hook support, so the adapter interposes a wrapper process that
+  monitors Codex's JSONL session log for state transitions.
+
+  codexAdapter.prepare() rewrites the launch:
+    codex <args>  →  kanban hooks codex-wrapper --real-binary codex -- <args>
+
+  The wrapper enables CODEX_TUI_RECORD_SESSION=1 and tails the JSONL log file,
+  mapping Codex session events to Kanban hooks (to_review, to_in_progress, activity).
+
+  Plan mode uses deferredStartupInput: the prompt is NOT passed as an arg but instead
+  sent as /plan <msg> via bracketed paste after the PTY starts.
+  [→ pty-session-internals] for how deferredStartupInput is written to the PTY
+
+  Transition detectors: codexPromptDetector fires when state=awaiting_review and
+  output matches the Codex prompt marker (/\s*›/), signaling prompt-ready.
+  [→ pty-session-internals] for how transition detectors are consumed
+
+
+═══ SECTION 4 — CLINE: SDK vs PTY ══════════════════════════════════════════════════════════════════
+
+  Cline primarily runs via the @clinebot/core SDK — no PTY, no shell, pure TS API calls.
+  The clineAdapter in agent-session-adapters.ts exists only as the PTY CLI fallback path.
+  [→ cline-architecture] for the full Cline SDK integration
+
+
+═══ DISPATCH & ENTRY POINTS ══════════════════════════════════════════════════════════════════════
+
+  ┌─ prepareAgentLaunch(input) ────────────────────────────────────────────────────────────┐
+  │  1. Calls prepareTaskPromptWithImages() to encode any attached images                  │
+  │  2. Looks up ADAPTERS[input.agentId]                                                   │
+  │  3. Calls adapter.prepare(input) → PreparedAgentLaunch                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Agent Discovery ──────────────────────────────────────────────────────────────────────┐
+  │  detectInstalledCommands(): checks each catalog binary via isBinaryAvailableOnPath()   │
+  │  resolveAgentCommand(): finds selected agent, verifies binary, returns launch command  │
+  │  [→ pty-launch-pipeline] these feed into the PTY launch sequence                       │
+  └────────────────────────────────────────────────────────────────────────────────────────┘
+```

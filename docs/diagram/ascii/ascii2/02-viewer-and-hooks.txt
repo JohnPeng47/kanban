@@ -1,34 +1,34 @@
 ```diagram
 DIAGRAM VIEWER — COMPONENT + HOOK WIRING
 
-═══ DiagramViewer 3-Panel Layout [DV] ═════════════════════════════════════════════════════════════════════════
+═══ DiagramViewer 3-Panel Layout [CDV] ═══════════════════════════════════════════════════════════════════════
 
 ┌─ DiagramViewer ──────────────────────────────────────────────────────────────────────────────────────────────┐
+│ EDV                                                                                                         │
+│  ┌─ TreePanel [CTP] ────┐   ┌─ ContentArea [CCA] ──────────────────────────┐   ┌─ AgentPanel (optional) ───┐  │
+│  │ ETP                   │   │ ECA                                         │   │ EAG                       │  │
+│  │  FileTreeNode[]       │   │  DiagramContentArea                         │   │  useDiagramAgentPanel     │  │
+│  │                       │   │    ** 05-scene-and-input.txt                  │   │    → ReactElement | null  │  │
+│  │  selectedPath ●       │ R │    ** 06-scene-svgscene-detail.txt           │ R │                           │  │
+│  │  expandedFolders      │ e │                                             │ e │  ClineAgent integration   │  │
+│  │  onSelectPath()       │ s │  Props from useDiagramViewer:               │ s │                           │  │
+│  │  onToggleFolder()     │ i │    content, isLoading, error                │ i │                           │  │
+│  │                       │ z │    selectedPath, workspaceId                │ z │                           │  │
+│  │  w: 250 (min 180)     │ e │    onRequestJump, pendingJumpElementId     │ e │  w: 420 (min 320)         │  │
+│  │                   ETP │   │    onJumpConsumed                       ECA │   │                       EAG │  │
+│  └─────────────────────────┘   └─────────────────────────────────────────────┘   └───────────────────────────┘  │
+│       [ET1] drag ──►              content fills remainder              ◄── drag [ET2]                        │
 │                                                                                                             │
-│  ┌─ TreePanel [TP] ────┐   ┌─ ContentArea [CA] ──────────────────────────┐   ┌─ AgentPanel (optional) ───┐  │
-│  │                     │   │                                             │   │                           │  │
-│  │  FileTreeNode[]     │   │  DiagramContentArea                         │   │  useDiagramAgentPanel     │  │
-│  │                     │   │    ** 05-scene-and-input.txt                  │   │    → ReactElement | null  │  │
-│  │  selectedPath ●     │ R │    ** 06-scene-svgscene-detail.txt           │ R │                           │  │
-│  │  expandedFolders    │ e │                                             │ e │  ClineAgent integration   │  │
-│  │  onSelectPath()     │ s │  Props from useDiagramViewer:               │ s │                           │  │
-│  │  onToggleFolder()   │ i │    content, isLoading, error                │ i │                           │  │
-│  │                     │ z │    selectedPath, workspaceId                │ z │                           │  │
-│  │  w: 250 (min 180)   │ e │    onRequestJump, pendingJumpElementId     │ e │  w: 420 (min 320)         │  │
-│  │                 TP  │   │    onJumpConsumed                       CA  │   │                           │  │
-│  └─────────────────────┘   └─────────────────────────────────────────────┘   └───────────────────────────┘  │
-│       [T1] drag ──►              content fills remainder              ◄── drag [T2]                        │
-│                                                                                                             │
-│  CodeVizStatusIndicator [CI] — overlay badge top-right of content area                                     │
+│  [ECI] CodeVizStatusIndicator [CCI] — overlay badge top-right of content area                               │
 │    state: connected | workspace-not-registered | disconnected                                               │
-│                                                                                                         DV  │
+│                                                                                                         EDV │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
-═══ useDiagramViewer Hook [UV] ════════════════════════════════════════════════════════════════════════════════
+═══ useDiagramViewer Hook [CUV] ══════════════════════════════════════════════════════════════════════════════
 
   ┌─ State ────────────────────────┐       ┌─ Effects ─────────────────────────────────────────────────────┐
-  │                                │       │                                                               │
+  │ EST                            │       │ EEF                                                           │
   │  tree: FileTreeNode[]         │       │  1. Tree fetch (on mount / workspaceId change)                │
   │  diagramsRootExists: boolean  │       │     trpc.diagrams.list.query({})                              │
   │  isTreeLoading: boolean       │       │     → setTree, setDiagramsRootExists                         │
@@ -38,28 +38,28 @@ DIAGRAM VIEWER — COMPONENT + HOOK WIRING
   │  isContentLoading: boolean    │       │  2. Content fetch (on selectedPath change)                    │
   │  contentError: string | null  │       │     trpc.diagrams.getContent.query({ path })                  │
   │  workspacePath: string | null │       │     → setContent or setContentError                          │
-  │  pendingJumpElementId [PJ]    │       │                                                               │
-  │                           ST  │       │  3. URL sync (on selectedPath change)                         │
+  │  pendingJumpElementId [CPJ]   │       │                                                               │
+  │                           EST │       │  3. URL sync (on selectedPath change)                         │
   └────────────────────────────────┘       │     history.replaceState → ?view=diagram&path=...            │
-                                           │                                                           EF  │
+                                           │                                                           EEF │
                                            └───────────────────────────────────────────────────────────────┘
 
   ┌─ Callbacks ────────────────────────────────────────────────────────────────────────────────────────────┐
-  │                                                                                                       │
+  │ ECB                                                                                                    │
   │  onSelectPath(path)                  — set selectedPath, triggers content fetch                       │
   │  onToggleFolder(path)                — toggle folder in expandedFolders set                           │
-  │  requestJump(path, elementId) [RJ]   — cross-diagram navigation:                                     │
+  │  requestJump(path, elementId) [CRJ]  — cross-diagram navigation:                                     │
   │                                          setPendingJumpElementId(elementId)                           │
   │                                          setSelectedPath(path) → triggers content fetch               │
   │                                          history.pushState (enables browser back)                     │
-  │  consumeJump() [CJ]                 — clear pendingJumpElementId after scene animates to target       │
-  │                                                                                                   CB  │
+  │  consumeJump() [CCJ]                — clear pendingJumpElementId after scene animates to target       │
+  │                                                                                                   ECB │
   └───────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
 ═══ Jump Protocol ═════════════════════════════════════════════════════════════════════════════════════════════
 
-  User clicks **-link          DiagramContentArea              useDiagramViewer              New Scene
+  [EJP] User clicks **-link          DiagramContentArea              useDiagramViewer              New Scene
   in current scene             (navigation handler)            (hook state)                  (after load)
        │                              │                              │                          │
        ├─ link target has ──────────► │                              │                          │
@@ -80,10 +80,10 @@ DIAGRAM VIEWER — COMPONENT + HOOK WIRING
        │                              │                              │   = null                 │
 
 
-═══ useCodeVizStatus Hook [CS] ════════════════════════════════════════════════════════════════════════════════
+═══ useCodeVizStatus Hook [CCS] ══════════════════════════════════════════════════════════════════════════════
 
   ┌────────────────────────────────────────────────────────────────────────┐
-  │                                                                        │
+  │ ECV                                                                    │
   │  Poll every 30s: trpc.diagrams.checkExtension.query()                  │
   │                                                                        │
   │  Server response:                    Hook state:                       │
@@ -91,24 +91,58 @@ DIAGRAM VIEWER — COMPONENT + HOOK WIRING
   │    available=true, registered=false ► "workspace-not-registered"       │
   │    available=true, registered=true ►  "connected"                     │
   │                                                                        │
-  │  Drives CodeVizStatusIndicator [CI] badge color                        │
-  │                                                                    CS  │
+  │  Drives CodeVizStatusIndicator [CCI] badge color                       │
+  │                                                                    ECV │
   └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ```code-refs
-DV  web-ui/src/components/diagram-viewer.tsx:19-156        DiagramViewer component (3-panel flex layout)
-TP  web-ui/src/components/diagram-panels/diagram-tree-panel.tsx  TreePanel (file tree sidebar)
-CA  web-ui/src/components/diagram-panels/diagram-content-area.tsx  DiagramContentArea (scene host)
-CI  web-ui/src/components/diagram-panels/code-viz-status-indicator.tsx  CodeViz badge overlay
-T1  web-ui/src/components/diagram-viewer.tsx:49-75         Tree resize separator handler
-T2  web-ui/src/components/diagram-viewer.tsx:77-104        Agent resize separator handler
-UV  web-ui/src/hooks/use-diagram-viewer.ts:49-224          useDiagramViewer hook
-ST  web-ui/src/hooks/use-diagram-viewer.ts:50-65           Hook state declarations
-EF  web-ui/src/hooks/use-diagram-viewer.ts:68-153          Effects: tree fetch, content fetch, URL sync
-RJ  web-ui/src/hooks/use-diagram-viewer.ts:159-172         requestJump — cross-diagram navigation
-CJ  web-ui/src/hooks/use-diagram-viewer.ts:174-176         consumeJump — clear pending jump
-PJ  web-ui/src/hooks/use-diagram-viewer.ts:65              pendingJumpElementId state
-CB  web-ui/src/hooks/use-diagram-viewer.ts:155-188         All callback definitions
-CS  web-ui/src/hooks/use-code-viz-status.ts:14-50          useCodeVizStatus (30s poll)
+CDV  web-ui/src/components/diagram-viewer.tsx:19-156        DiagramViewer component (3-panel flex layout)
+CTP  web-ui/src/components/diagram-panels/diagram-tree-panel.tsx  TreePanel (file tree sidebar)
+CCA  web-ui/src/components/diagram-panels/diagram-content-area.tsx  DiagramContentArea (scene host)
+CCI  web-ui/src/components/diagram-panels/code-viz-status-indicator.tsx  CodeViz badge overlay
+CT1  web-ui/src/components/diagram-viewer.tsx:49-75         Tree resize separator handler
+CT2  web-ui/src/components/diagram-viewer.tsx:77-104        Agent resize separator handler
+CUV  web-ui/src/hooks/use-diagram-viewer.ts:49-224          useDiagramViewer hook
+CST  web-ui/src/hooks/use-diagram-viewer.ts:50-65           Hook state declarations
+CEF  web-ui/src/hooks/use-diagram-viewer.ts:68-153          Effects: tree fetch, content fetch, URL sync
+CRJ  web-ui/src/hooks/use-diagram-viewer.ts:159-172         requestJump — cross-diagram navigation
+CCJ  web-ui/src/hooks/use-diagram-viewer.ts:174-176         consumeJump — clear pending jump
+CPJ  web-ui/src/hooks/use-diagram-viewer.ts:65              pendingJumpElementId state
+CCB  web-ui/src/hooks/use-diagram-viewer.ts:155-188         All callback definitions
+CCS  web-ui/src/hooks/use-code-viz-status.ts:14-50          useCodeVizStatus (30s poll)
+```
+
+```entities
+name                          id_type   id    parent  description
+DiagramViewer                 box       EDV   —       Top-level 3-panel flex layout component
+TreePanel                     box       ETP   EDV     File tree sidebar (250px, min 180)
+ContentArea                   box       ECA   EDV     Scene host for diagram HTML content
+AgentPanel                    box       EAG   EDV     Optional ClineAgent integration panel (420px, min 320)
+Tree resize drag              text      ET1   EDV     Drag handle between tree and content panels
+Agent resize drag             text      ET2   EDV     Drag handle between content and agent panels
+CodeVizStatusIndicator        text      ECI   EDV     Overlay badge showing extension connection state
+State box                     box       EST   —       useDiagramViewer state declarations
+Effects box                   box       EEF   —       useDiagramViewer effects (tree, content, URL sync)
+Callbacks box                 box       ECB   —       useDiagramViewer callback definitions
+Jump Protocol                 text      EJP   —       Sequence diagram: click → requestJump → fetch → animate → consumeJump
+useCodeVizStatus              box       ECV   —       30s polling hook driving CodeVizStatusIndicator badge
+```
+
+```arrows
+from   to    description
+EDV    ETP   Contains TreePanel as left child
+EDV    ECA   Contains ContentArea as center child
+EDV    EAG   Contains AgentPanel as right child
+EST    EEF   State drives effect triggers (selectedPath, workspaceId)
+EEF    EST   Effects update state (setTree, setContent, etc.)
+ECB    EST   Callbacks mutate state (setSelectedPath, setPendingJumpElementId)
+ECV    ECI   Hook state drives badge color/text
+```
+
+```notes
+Code-ref IDs use a "C" prefix (e.g. CDV, CTP) and entity IDs use an "E" prefix
+(e.g. EDV, ETP) to disambiguate the two namespaces. Every text paragraph in the
+diagram is labeled with its entity ID in [EXX] brackets. Box entities show their
+ID at the box corner. Cross-diagram jump targets: ** filename.txt#EXX.
 ```

@@ -1,0 +1,231 @@
+Settings Dialog and Startup Onboarding
+=======================================
+
+How Kanban's settings dialog is structured, how its Cline-specific
+sub-controllers drive provider and MCP configuration, how the
+onboarding flow detects first-run or unauthenticated state, and
+where each category of settings is persisted.
+
+
+```diagram
+=====================================================================
+  1. SETTINGS DIALOG SECTIONS
+=====================================================================
+
+  RuntimeSettingsDialog is a single scrollable dialog. It renders
+  global settings, then Cline-specific settings (conditional on
+  selectedAgentId === "cline"), then project-scoped settings.
+
+  ┌────────────────────────────────────────────────────────────────┐
+  │  RuntimeSettingsDialog                                         │
+  │                                                                │
+  │  ── Global ───────────────────────────────────────────────     │
+  │  Config path display        (~/.cline/kanban/config.json)      │
+  │                                                                │
+  │  ── Agent Selection ──────────────────────────────────────     │
+  │  AgentRow list              cline | claude | codex | droid     │
+  │  Autonomous mode checkbox   (bypass permissions flag)          │
+  │                                                                │
+  │  ── Cline Setup (conditional) ────────────────────────────     │
+  │  ClineSetupSection          (only when agent === "cline")      │
+  │    Provider picker + OAuth/API key + Base URL                  │
+  │    Model picker + Reasoning effort                             │
+  │    AWS/GCP fields (bedrock/vertex)                             │
+  │    Add/Edit custom provider                                    │
+  │    MCP Servers + Linear MCP preset                             │
+  │                                                                │
+  │  ── Git Button Prompts ───────────────────────────────────     │
+  │  Variant picker (Commit | Make PR) + template textarea         │
+  │                                                                │
+  │  ── Notifications ────────────────────────────────────────     │
+  │  Ready-for-review toggle + browser permission status           │
+  │                                                                │
+  │  ── Theme ────────────────────────────────────────────────     │
+  │  Color circle buttons, live preview                            │
+  │                                                                │
+  │  ── Layout ───────────────────────────────────────────────     │
+  │  Reset layout button                                           │
+  │                                                                │
+  │  ── Project ──────────────────────────────────────────────     │
+  │  Config path + Script shortcuts (icon + label + command)       │
+  │                                                                │
+  │  [→ cline-provider-and-auth]  (backend for provider save)      │
+  │  [→ cline-mcp-servers]        (backend for MCP save)           │
+  │  [→ app-and-hook-wiring]      (App.tsx opens this dialog)      │
+  └────────────────────────────────────────────────────────────────┘
+
+  Save flow:
+    1. Validate selected agent is installed
+    2. If cline: clineSettings.saveProviderSettings()
+    3. If cline: clineMcpSettings.saveMcpSettings()
+    4. save() via useRuntimeConfig (agent, shortcuts, prompts, etc.)
+    5. If theme changed: saveThemeId()
+```
+
+
+```diagram
+=====================================================================
+  2. CLINE SETTINGS CONTROLLERS
+=====================================================================
+
+  Two hooks own all Cline-specific state inside the settings dialog.
+  The dialog component stays presentation-focused.
+
+  useRuntimeSettingsClineController
+  ┌────────────────────────────────────────────────────────────────┐
+  │  Owns: providerId, modelId, apiKey, baseUrl, reasoningEffort, │
+  │        AWS/GCP fields, providerCatalog, providerModels         │
+  │                                                                │
+  │  On open: fetch catalog → auto-select defaults → fetch models  │
+  │  On provider change: re-fetch models, auto-fill baseUrl        │
+  │  On save: saveProviderSettings() → TRPC                        │
+  │  OAuth: runOauthLogin() for managed providers                  │
+  │  Custom: addCustomProvider(), updateCustomProvider()            │
+  │                                                                │
+  │  [→ cline-provider-and-auth]                                   │
+  │  [→ trpc-router-and-api-map]                                   │
+  └────────────────────────────────────────────────────────────────┘
+
+  useRuntimeSettingsClineMcpController
+  ┌────────────────────────────────────────────────────────────────┐
+  │  Owns: mcpServers[], mcpAuthStatusByServerName, dirty tracking │
+  │                                                                │
+  │  On open: fetch MCP settings + auth statuses                   │
+  │  Live updates from WebSocket-pushed auth status changes        │
+  │  On save: saveMcpSettings() → TRPC                             │
+  │  OAuth: runMcpServerOauth(name) per server                     │
+  │  Preset: linearMcpPreset.setup() → upsert + OAuth              │
+  │                                                                │
+  │  [→ cline-mcp-servers]                                         │
+  │  [→ trpc-router-and-api-map]                                   │
+  └────────────────────────────────────────────────────────────────┘
+
+  Data flow:
+
+    Dialog opens
+        │
+        ├─▶ fetchClineProviderCatalog ─▶ providerCatalog
+        │                                    │
+        │   (auto-select default provider)   │
+        │                                    ▼
+        └─▶ fetchClineProviderModels ──▶ providerModels
+                                             │
+    User picks provider ─────────────────────┘
+        │                                    │
+        │   (re-fetch models for new         │
+        │    providerId)                     │
+        ▼                                    ▼
+    User picks model ──▶ modelId        providerModels
+        │
+    User clicks Save
+        │
+        ▼
+    saveProviderSettings() ──▶ saveClineProviderSettings TRPC
+```
+
+
+```diagram
+=====================================================================
+  3. ONBOARDING FLOW
+=====================================================================
+
+  The startup onboarding dialog appears automatically on first run
+  or when the selected agent is not authenticated / not installed.
+
+  useStartupOnboarding
+  ┌────────────────────────────────────────────────────────────────┐
+  │  Show conditions:                                              │
+  │    1. !hasShownOnboardingDialog      → show (first run)        │
+  │    2. isTaskAgentReady === null      → don't show yet          │
+  │    3. !isSelectedAgentAuthenticated  → show (no auth)          │
+  │    4. isTaskAgentReady === false     → show (no agent)         │
+  │    5. else                           → don't show              │
+  │                                                                │
+  │  Persistence: hasShownOnboardingDialog in localStorage         │
+  │  Session flag: didDismissStartupOnboardingForSession           │
+  └────────────────────────────────────────────────────────────────┘
+
+  StartupOnboardingDialog
+  ┌────────────────────────────────────────────────────────────────┐
+  │  Slides: [0] "Create tasks" → [1] "Auto commit" →             │
+  │          [2] Agent selection + ClineSetupSection               │
+  │                                                                │
+  │  Done → saveRuntimeConfig({ selectedAgentId }) → dismiss       │
+  └────────────────────────────────────────────────────────────────┘
+
+  Flow:
+
+    App startup
+        │
+        ▼
+    useStartupOnboarding evaluates show conditions
+        │
+        ├─ first run / no auth / no agent ──▶ open dialog
+        └─ all good ────────────────────────▶ stay closed
+        │
+        ▼ (dialog open)
+    User navigates slides → picks agent → (optional Cline setup)
+        │
+        ▼
+    Done → saveRuntimeConfig + dismiss
+```
+
+
+```diagram
+=====================================================================
+  4. CONFIG PERSISTENCE SPLIT
+=====================================================================
+
+  Settings are split across three distinct persistence locations.
+  Kanban's own config never stores secrets.
+
+  ┌──────────────────────────────────────────────────────────────┐
+  │  KANBAN RUNTIME CONFIG                                       │
+  │  Files: ~/.cline/kanban/config.json (global)                 │
+  │         <project>/.cline/kanban/config.json (project)        │
+  │  TRPC: runtime.saveConfig                                    │
+  │                                                              │
+  │  ● selectedAgentId, agentAutonomousModeEnabled               │
+  │  ● readyForReviewNotificationsEnabled                        │
+  │  ● shortcuts[], commitPromptTemplate, openPrPromptTemplate   │
+  └──────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────┐
+  │  SDK PROVIDER STORE                                          │
+  │  (ProviderSettingsManager from @clinebot/core)               │
+  │  TRPC: runtime.saveClineProviderSettings                     │
+  │                                                              │
+  │  ● providerId, modelId, apiKey, baseUrl, reasoningEffort     │
+  │  ● OAuth tokens (accessToken, refreshToken, accountId)       │
+  │  ● AWS/GCP fields, custom provider definitions               │
+  │                                                              │
+  │  [→ cline-provider-and-auth]                                 │
+  └──────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────┐
+  │  MCP SERVER CONFIG                                           │
+  │  TRPC: runtime.saveClineMcpSettings                          │
+  │                                                              │
+  │  ● servers[] (name + type + command/url + auth)              │
+  │  ● per-server OAuth tokens (managed by SDK MCP layer)        │
+  │                                                              │
+  │  [→ cline-mcp-servers]                                       │
+  └──────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────┐
+  │  BROWSER-LOCAL STORAGE                                       │
+  │  ● theme, hasShownOnboardingDialog, layout customizations    │
+  └──────────────────────────────────────────────────────────────┘
+
+  Save orchestration in RuntimeSettingsDialog.handleSave():
+
+    handleSave()
+        │
+        ├─▶ clineSettings.saveProviderSettings() → SDK store
+        ├─▶ clineMcpSettings.saveMcpSettings()   → MCP config file
+        ├─▶ save({ selectedAgentId, ... })        → Kanban config files
+        └─▶ saveThemeId(draftThemeId)             → localStorage
+
+  [→ trpc-router-and-api-map]  (TRPC procedures for all save paths)
+  [→ app-and-hook-wiring]      (App.tsx wires dialog open state)
+```

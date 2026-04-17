@@ -1,46 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Architecture &amp; Data Flow</title>
-  <style>
-    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
-    svg { display: block; width: 100%; height: 100%; }
-  </style>
+  <meta charset="UTF-8"><title>Architecture &amp; Data Flow</title>
+  <style>body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; } svg { display: block; width: 100%; height: 100%; }</style>
 </head>
 <body>
-<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 1200 1520"
-  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
-  font-size="11">
-
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1520" font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace" font-size="11">
   <style>
-    text { fill: #8B949E; }
-    .white { fill: #E6EDF3; }
-    .blue { fill: #4C9AFF; }
-    .green { fill: #3FB950; }
-    .violet { fill: #A371F7; }
-    .orange { fill: #D29922; }
-    .red { fill: #F85149; }
-    .dim { fill: #6E7681; }
-    .title { font-size: 14px; font-weight: 600; }
-    .heading { font-size: 13px; font-weight: 600; }
-    .subhead { font-size: 10px; }
+    text { fill: #8B949E; } .white { fill: #E6EDF3; } .blue { fill: #4C9AFF; } .green { fill: #3FB950; } .violet { fill: #A371F7; } .orange { fill: #D29922; } .red { fill: #F85149; } .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; } .heading { font-size: 13px; font-weight: 600; } .subhead { font-size: 10px; }
     .flow-dash { stroke-dasharray: 6,4; animation: dash-flow 1.5s linear infinite; }
     @keyframes dash-flow { to { stroke-dashoffset: -20; } }
-    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
-    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; } @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   </style>
-
   <defs>
-    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
-    </marker>
-    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
-    </marker>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/></marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/></marker>
   </defs>
-
   <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
 
   <!-- Title -->
@@ -84,6 +60,7 @@
      data-ref="web-ui/src/components/diagram-viewer.tsx:19-156"
      data-category="module"
      data-label="DiagramViewer"
+     data-tt="diagram-viewer.tsx:19 — DiagramViewer 3-panel layout component"
      data-source-span="6:2-26:119"
      data-entity-name="diagram-viewer"
      data-entity-kind="box"
@@ -103,6 +80,7 @@
        data-ref="web-ui/src/components/diagram-panels/diagram-tree-panel.tsx"
        data-category="module"
        data-label="TreePanel"
+       data-tt="diagram-tree-panel.tsx — TreePanel sidebar (file browser)"
        data-source-span="8:4-14:27"
        data-entity-name="tree-panel"
        data-entity-kind="box"
@@ -150,6 +128,7 @@
        data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354"
        data-category="module"
        data-label="ContentArea"
+       data-tt="diagram-content-area.tsx:286 — ContentArea → useDiagram (Scene construction)"
        data-link="02-rendering.html#EUD"
        data-link-target-file="02-rendering.txt"
        data-link-target-id="EUD"
@@ -181,21 +160,29 @@
 
       <!-- Cross-diagram references -->
       <g data-interactive="EDA.1"
-         data-source-span="14:4-14:65"
+         data-source-span="14:4-14:24"
+         data-entity-name="content-area-ref-rendering"
+         data-entity-kind="text"
+         data-entity-desc="rendering detail cross-ref"
          data-entity-parent="EDA"
          data-link="02-rendering.html"
          data-link-target-file="02-rendering.txt"
          data-link-target-id=""
-         data-link-desc="rendering detail">
+         data-link-desc="rendering detail"
+         data-code-ref-id="">
         <text x="302" y="196" class="dim subhead">** 02-rendering.txt</text>
       </g>
       <g data-interactive="EDA.2"
          data-source-span="14:23-14:65"
+         data-entity-name="content-area-ref-interaction"
+         data-entity-kind="text"
+         data-entity-desc="interaction layer cross-ref"
          data-entity-parent="EDA"
          data-link="03-interaction.html#EDS"
          data-link-target-file="03-interaction.txt"
          data-link-target-id="EDS"
-         data-link-desc="ContentArea → DiagramScene (interaction layer)">
+         data-link-desc="ContentArea → DiagramScene (interaction layer)"
+         data-code-ref-id="">
         <text x="430" y="196" class="dim subhead">** 03-interaction.txt</text>
       </g>
     </g>
@@ -205,6 +192,7 @@
        data-ref="web-ui/src/hooks/use-diagram-agent-panel.ts"
        data-category="module"
        data-label="AgentPanel"
+       data-tt="use-diagram-agent-panel.ts — AgentPanel (optional Cline sidebar)"
        data-source-span="8:89-14:90"
        data-entity-name="agent-panel"
        data-entity-kind="box"
@@ -241,6 +229,7 @@
        data-ref="web-ui/src/hooks/use-diagram-viewer.ts:49-224"
        data-category="function"
        data-label="useDiagramViewer"
+       data-tt="use-diagram-viewer.ts:49 — useDiagramViewer (tree, content, jump state)"
        data-link="03-interaction.html#EEJ"
        data-link-target-file="03-interaction.txt"
        data-link-target-id="EEJ"
@@ -277,6 +266,7 @@
        data-ref="web-ui/src/hooks/use-code-viz-status.ts:14-50"
        data-category="function"
        data-label="useCodeVizStatus"
+       data-tt="use-code-viz-status.ts:14 — useCodeVizStatus (30s health poll)"
        data-source-span="18:34-25:67"
        data-entity-name="use-codeviz-status"
        data-entity-kind="text"
@@ -343,6 +333,7 @@
      data-ref="src/trpc/diagrams-api.ts:73-155"
      data-category="module"
      data-label="TRPC Router"
+     data-tt="diagrams-api.ts:73 — TRPC diagrams router (4 procedures)"
      data-source-span="32:2-49:123"
      data-entity-name="trpc-router"
      data-entity-kind="box"
@@ -368,6 +359,7 @@
          data-ref="src/trpc/diagrams-api.ts:75-103"
          data-category="function"
          data-label="diagrams.list"
+         data-tt="diagrams-api.ts:75 — listDiagrams: recursive readdir, .html filter"
          data-source-span="39:5-44:56"
          data-entity-name="diagrams-list"
          data-entity-kind="text"
@@ -396,6 +388,7 @@
          data-ref="src/trpc/diagrams-api.ts:105-130"
          data-category="function"
          data-label="diagrams.getContent"
+         data-tt="diagrams-api.ts:105 — getDiagramContent: readFile, 5MB cap, path safe"
          data-source-span="39:28-44:49"
          data-entity-name="diagrams-get-content"
          data-entity-kind="text"
@@ -425,6 +418,7 @@
        data-ref="src/trpc/diagrams-api.ts:132-137"
        data-category="function"
        data-label="diagrams.navigate"
+       data-tt="diagrams-api.ts:132 — navigateToDiagramSource → codeVizClient"
        data-link="03-interaction.html#EFJ"
        data-link-target-file="03-interaction.txt"
        data-link-target-id="EFJ"
@@ -450,6 +444,7 @@
        data-ref="src/trpc/diagrams-api.ts:139-153"
        data-category="function"
        data-label="diagrams.checkExt"
+       data-tt="diagrams-api.ts:139 — checkExtensionStatus: health + workspace"
        data-source-span="39:78-45:72"
        data-entity-name="diagrams-check-ext"
        data-entity-kind="text"
@@ -489,6 +484,7 @@
        data-ref="src/diagram/code-viz-client.ts:108-112"
        data-category="module"
        data-label="codeVizClient"
+       data-tt="code-viz-client.ts:108 — codeVizClient singleton"
        data-source-span="39:84-46:88"
        data-entity-name="codeviz-client"
        data-entity-kind="box"
@@ -514,10 +510,14 @@
         <!-- checkHealth -->
         <g data-interactive="ECM.1"
            data-source-span="42:84-42:120"
+           data-entity-name="client-check-health"
+           data-entity-kind="text"
+           data-entity-desc="checkHealth GET /api/health"
            data-entity-parent="ECC"
            data-ref="src/diagram/code-viz-client.ts:45-54"
            data-category="function"
-           data-label="checkHealth">
+           data-label="checkHealth"
+           data-code-ref-id="CCH">
           <text x="60" y="710" class="white"
                 data-tt="code-viz-client.ts:45 — checkHealth: GET /api/health">
             checkHealth()   GET  /api/health
@@ -526,11 +526,15 @@
 
         <!-- checkWorkspace -->
         <g data-interactive="ECM.2"
-           data-source-span="42:84-42:120"
+           data-source-span="43:84-43:120"
+           data-entity-name="client-check-workspace"
+           data-entity-kind="text"
+           data-entity-desc="checkWorkspace GET /api/workspaces"
            data-entity-parent="ECC"
            data-ref="src/diagram/code-viz-client.ts:66-82"
            data-category="function"
-           data-label="checkWorkspace">
+           data-label="checkWorkspace"
+           data-code-ref-id="CCW">
           <text x="60" y="730" class="white"
                 data-tt="code-viz-client.ts:66 — checkWorkspace: GET /api/workspaces">
             checkWorkspace() GET  /api/ws    [CCW]
@@ -539,11 +543,15 @@
 
         <!-- navigate -->
         <g data-interactive="ECM.3"
-           data-source-span="43:84-43:120"
+           data-source-span="44:84-44:120"
+           data-entity-name="client-navigate"
+           data-entity-kind="text"
+           data-entity-desc="navigate POST /api/navigate"
            data-entity-parent="ECC"
            data-ref="src/diagram/code-viz-client.ts:84-106"
            data-category="function"
-           data-label="navigate">
+           data-label="navigate"
+           data-code-ref-id="CCN">
           <text x="60" y="750" class="white"
                 data-tt="code-viz-client.ts:84 — navigate: POST /api/navigate">
             navigate()       POST /api/nav   [CCN]
@@ -579,6 +587,7 @@
      data-ref="(external)"
      data-category="module"
      data-label="Code Viz Extension"
+     data-tt="Code Viz VSCode Extension on :24680"
      data-source-span="53:2-57:121"
      data-entity-name="codeviz-extension"
      data-entity-kind="box"
@@ -609,9 +618,9 @@
   <g data-reflow-group="data-flow-separator"
      data-interactive="EDF"
      data-source-span="60:0-63:4"
-     data-entity-name="data-flow-description"
+     data-entity-name="data-flow-sequence"
      data-entity-kind="text"
-     data-entity-desc="Data-flow section intro paragraph"
+     data-entity-desc="Runtime sequence diagram (section header)"
      data-code-ref-id=""
      class="fade-section" style="animation-delay: 0.5s">
     <line x1="20" y1="960" x2="1180" y2="960" stroke="#444C56" stroke-width="1"/>
@@ -641,6 +650,7 @@
      data-ref="src/trpc/diagrams-api.ts:75-103"
      data-category="flow"
      data-label="Tree Loading"
+     data-tt="Step 1: diagrams.list → FileTreeNode[]"
      data-link="02-rendering.html#ESS"
      data-link-target-file="02-rendering.txt"
      data-link-target-id="ESS"
@@ -667,6 +677,7 @@
      data-ref="src/trpc/diagrams-api.ts:105-130"
      data-category="flow"
      data-label="Content Fetch"
+     data-tt="Step 2: onSelectPath → getContent → SvgScene"
      data-link="02-rendering.html#ESS"
      data-link-target-file="02-rendering.txt"
      data-link-target-id="ESS"
@@ -694,6 +705,7 @@
      data-ref="web-ui/src/hooks/use-diagram-viewer.ts:49-224"
      data-category="flow"
      data-label="Navigate"
+     data-tt="Step 3: click → handleNavigate dispatch"
      data-link="03-interaction.html#EHN"
      data-link-target-file="03-interaction.txt"
      data-link-target-id="EHN"
@@ -758,6 +770,7 @@
      data-ref="web-ui/src/hooks/use-diagram-viewer.ts:49-224"
      data-category="flow"
      data-label="Jump Protocol"
+     data-tt="Step 4: requestJump → fetch → centerOn"
      data-link="03-interaction.html#EEJ"
      data-link-target-file="03-interaction.txt"
      data-link-target-id="EEJ"
@@ -785,6 +798,7 @@
      data-ref="web-ui/src/hooks/use-code-viz-status.ts:14-50"
      data-category="flow"
      data-label="Health Poll"
+     data-tt="Step 5: checkExtension every 30s"
      data-source-span="100:3-103:70"
      data-entity-name="step-health-poll"
      data-entity-kind="marker"
@@ -837,5 +851,110 @@
   </g>
 
 </svg>
-</body>
-</html>
+<script type="text/plain" id="ascii-source">
+DIAGRAM FEATURE — END-TO-END ARCHITECTURE & DATA FLOW
+======================================================
+
+  URL: ?view=diagram&path=...&at=...
+       │
+       ▼
+  ┌─ DiagramViewer [EDV] ────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                                                                                                                      │
+  │  ┌─ TreePanel [ETP] ─────┐       ┌─ DiagramContentArea [EDA] ─────────────────────────────────┐     ┌─ AgentPanel (opt) [EAG] ──┐ │
+  │  │                       │       │                                                             │     │                          │ │
+  │  │  FileTreeNode[]       │       │  useDiagram(html) [CUD] → Scene                            │     │  Cline-powered sidebar   │ │
+  │  │  expandedFolders      │       │       │                                                     │     │                          │ │
+  │  │  onSelectPath ────────┼──┐    │       ▼                                                     │     │                          │ │
+  │  │                  ETP  │  │    │  DiagramScene → SceneInput → Viewport                       │     │                     EAG  │ │
+  │  └───────────────────────┘  │    │  ** 02-rendering.txt   ** 03-interaction.txt                 │     └──────────────────────────┘ │
+  │      ◄── Resize ──►        │    │                                                         EDA  │       ◄── Resize ──►             │
+  │                             │    └─────────────────────────────────────────────────────────────┘                                   │
+  │                             │                                                                                                        │
+  │  useDiagramViewer [EUV] ◄──┘    useCodeVizStatus [ECS]                                                                             │
+  │       │                              │ polls 30s                                                                                     │
+  │       │  state:                      │ → "connected" | "workspace-not-registered" | "disconnected"                                   │
+  │       │   tree, selectedPath,        │ → drives CodeVizStatusIndicator badge (top-right of content)                                  │
+  │       │   content, expandedFolders,  │                                                                                               │
+  │       │   pendingJumpElementId       │                                                                                               │
+  │       │                              │                                                                                               │
+  │       │  3 effects (on deps):        │                                                                                          EDV  │
+  └───────┼──────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┘
+          │                              │
+          │   TRPC calls                 │   TRPC call
+          │                              │
+═════════════════════════════════════════════════════════════════════════════════════════════════  HTTP boundary
+          │                              │
+  ┌───────┼──────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────┐
+  │       │         TRPC diagrams router [ETR]                                                                                          │
+  │       │                              │                                                                                               │
+  │       │  ┌─ File operations ─────────┼─────────────────────────┐   ┌─ Code Viz proxy ────────────────────────────────────────────┐   │
+  │       │  │                           │                         │   │                                                             │   │
+  │  ┌────┼──┼───────────────────────────┼────┐  ┌─────────────────┼───┼──────────────────┐  ┌───────────────────────────────────────┐│   │
+  │  │    ▼  │                           ▼    │  │                 ▼   │                  │  │                                       ││   │
+  │  │ diagrams.list [EDL]      diagrams.     │  │ diagrams.       │   │ diagrams.        │  │  code-viz-client.ts [ECC]             ││   │
+  │  │                          getContent[EDC]  │ navigate [EDN]  │   │ checkExt [EDE]   │  │                                       ││   │
+  │  │ readdir recursive        readFile      │  │ → codeVizClient.│   │ → codeVizClient. │  │  checkHealth()  GET  /api/health [CCH]││   │
+  │  │ .html filter             5MB cap       │  │   navigate() ───┼───┼──────────────────┼──│  checkWorkspace GET  /api/ws    [CCW] ││   │
+  │  │ path traversal           path safe     │  │            EDN  │   │   checkHealth() +│  │  navigate()     POST /api/nav   [CCN] ││   │
+  │  │ protection          EDC  │        EDL  │  └─────────────────┘   │   checkWorkspace()  │                                       ││   │
+  │  └────────────────────────────────────────┘                        │             EDE  │  │  port: $CODE_VIZ_PORT || 24680   ECC  ││   │
+  │                                                                    └──────────────────┘  └──────────────────────┬────────────────┘│   │
+  │                                                                                                                │                 │   │
+  │                                                                                                           ETR  │                     │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┘
+                                                                                                                   │
+═══════════════════════════════════════════════════════════════════════════════════════════════  HTTP :24680 boundary
+                                                                                                                   │
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼───────────────────────┐
+  │  Code Viz VSCode Extension (optional)                                                                        │                 ECZ  │
+  │                                                                                                                ▼                      │
+  │  /api/health     → { status, pid, port }       /api/workspaces → registered roots        /api/navigate → open file:line in editor    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ Data Flow: what calls what, when ═════════════════════════════════════════════════════════════════════════════════════════════════════
+
+  The arrows above show the static wiring. Below is the runtime sequence — read top-to-bottom.
+  Each numbered step traces through the tiers shown above.
+
+  Browser (useDiagramViewer)                    Node.js (TRPC)                            Code Viz
+  ──────────────────────────                    ──────────────                            ────────
+     │                                             │                                        │
+  1. │── diagrams.list.query ────────────────────►[EDL] readdir                             │  {#es1}
+     │◄── FileTreeNode[] ────────────────────────  │                                        │
+     │  → setTree, derive workspacePath            │                                        │
+     │  → auto-expand top-level dirs               │                                        │
+     │                                             │                                        │
+  2. │  user picks file (onSelectPath)             │                                        │  {#es2}
+     │── diagrams.getContent.query ──────────────►[EDC] readFile                            │
+     │◄── { content: "<svg>..." } ────────────────│                                        │
+     │  → useDiagram → SvgScene                   │                                        │
+     │    ** 02-rendering.txt                      │                                        │
+     │                                             │                                        │
+  3. │  user clicks interactive element            │                                        │  {#es3}
+     │  handleNavigate dispatches:                 │                                        │
+     │   ├─ modal → openPopup (fetches via #2)     │                                        │
+     │   ├─ link  → executeJump (#4 or centerOn)   │                                        │
+     │   └─ code  → fireCodeJump (#3a)             │                                        │
+     │    ** 03-interaction.txt                    │                                        │
+     │                                             │                                        │
+ 3a. │── diagrams.navigate.mutate ───────────────►[EDN]───── POST /api/navigate ───────────►[CCN]
+     │◄── { ok } ─────────────────────────────────│◄──────── { ok } ───────────────────────│
+     │                                             │                                        │
+  4. │  cross-diagram jump:                        │                                        │  {#es4}
+     │  requestJump(path, elementId) [EUV]         │                                        │
+     │  ├─ setPendingJumpElementId(elemId)          │                                        │
+     │  ├─ setSelectedPath(path) ─── triggers #2   │                                        │
+     │  └─ pushState (browser back)                │                                        │
+     │                                             │                                        │
+     │  after Scene loads:                         │                                        │
+     │  DiagramContentArea [EDA] sees pending +    │                                        │
+     │  scene ready → waits 50ms → consumeJump()   │                                        │
+     │  → viewport.centerOn(target, {animate})     │                                        │
+     │                                             │                                        │
+  5. │  useCodeVizStatus [ECS] (every 30s)         │                                        │  {#es5}
+     │── diagrams.checkExtension.query ──────────►[EDE]───── /api/health ──────────────────►[CCH]
+     │                                             │◄──────── + /api/workspaces ────────────►[CCW]
+     │◄── { extensionRunning, workspaceRegistered }│                                        │
+</script>
+</body></html>

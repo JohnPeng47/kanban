@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><title>Viewport &amp; Coordinate Transforms</title>
+  <style>body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; } svg { display: block; width: 100%; height: 100%; }</style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 2200" font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace" font-size="11">
+  <style>
+    text { fill: #8B949E; } .white { fill: #E6EDF3; } .blue { fill: #4C9AFF; } .green { fill: #3FB950; } .violet { fill: #A371F7; } .orange { fill: #D29922; } .red { fill: #F85149; } .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; } .heading { font-size: 13px; font-weight: 600; } .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; } @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/></marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/></marker>
+  </defs>
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- ============================================================ -->
+  <!-- Title                                                        -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="title"
+     data-interactive="ETI"
+     data-source-span="0:0-1:40"
+     data-entity-name="title"
+     data-entity-kind="text"
+     data-entity-desc="Diagram title"
+     class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">VIEWPORT &amp; COORDINATE TRANSFORMS</text>
+    <text x="20" y="48" class="dim subhead">pan/zoom container, coordinate math, interaction modes</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Viewport container (EVP)                                     -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="viewport"
+     data-interactive="EVP"
+     data-ref="web-ui/src/diagram/rendering/viewport.tsx:48-61"
+     data-category="module"
+     data-label="Viewport"
+     data-tt="viewport.tsx:48 &#x2014; Viewport component"
+     data-source-span="4:4-20:99"
+     data-entity-name="viewport"
+     data-entity-kind="box"
+     data-entity-desc="Viewport container div (pointer events, overflow-hidden)"
+     data-code-ref-id="CVP"
+     class="fade-section" style="animation-delay: 0.05s">
+
+    <rect x="20" y="68" width="1060" height="310" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="32" y="90" class="blue heading"
+          data-tt="viewport.tsx:48 &#x2014; Viewport component signature and props">Viewport (container div)</text>
+    <text x="1008" y="90" class="dim subhead">EVP</text>
+    <text x="32" y="108" class="dim">className=&quot;relative w-full h-full overflow-hidden select-none touch-none&quot;</text>
+    <text x="32" y="124" class="dim">Pointer events: onPointerDown, onPointerMove, onPointerCancel, onContextMenu</text>
+
+    <!-- transformDiv (ETD) -->
+    <g data-interactive="ETD"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:78-88"
+       data-category="module"
+       data-label="transformDiv"
+       data-source-span="8:4-15:48"
+       data-entity-parent="EVP"
+       data-entity-name="transform-div"
+       data-entity-kind="box"
+       data-entity-desc="transformDiv: CSS transform for pan/zoom"
+       data-code-ref-id="CMN">
+      <rect x="40" y="140" width="310" height="130" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="160" class="blue">transformDiv</text>
+      <text x="300" y="160" class="dim subhead">ETD</text>
+      <text x="52" y="178" class="white">style: transform-origin: 0 0</text>
+      <text x="52" y="194" class="white">will-change: transform</text>
+      <text x="52" y="210" class="white">translate(tx,ty) scale(s)</text>
+      <text x="52" y="232" class="dim">Children:</text>
+      <text x="52" y="248" class="dim">scene.getSvgElement()</text>
+      <text x="52" y="264" class="dim">(mounted via useEffect)</text>
+    </g>
+
+    <!-- OverLayer (EOL) -->
+    <g data-interactive="EOL"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:64-127"
+       data-category="module"
+       data-label="OverLayer"
+       data-source-span="8:45-12:80"
+       data-entity-parent="EVP"
+       data-entity-name="over-layer"
+       data-entity-kind="box"
+       data-entity-desc="OverLayer sibling (z:10, badge rendering)"
+       data-code-ref-id="COL"
+       data-link="04-over-layer.html#EOC"
+       data-link-target-file="04-over-layer.txt"
+       data-link-target-id="EOC"
+       data-link-desc="OverLayer detail diagram">
+      <rect x="370" y="140" width="390" height="100" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="382" y="160" class="blue">OverLayer** 04-over-layer.html</text>
+      <text x="702" y="160" class="dim subhead">EOL</text>
+      <text x="382" y="178" class="dim">(sibling, z:10)</text>
+      <text x="382" y="194" class="white">absolute inset-0</text>
+      <text x="382" y="210" class="white">Renders &lt;button&gt; badges at</text>
+      <text x="382" y="226" class="white">screen-space positions</text>
+      <text x="382" y="234" class="dim">rAF loop syncs with pan/zoom</text>
+    </g>
+
+    <!-- selectionRect overlay (ESR) -->
+    <g data-interactive="ESR"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:431-441"
+       data-category="module"
+       data-label="selectionRect"
+       data-source-span="8:83-11:55"
+       data-entity-parent="EVP"
+       data-entity-name="selection-rect"
+       data-entity-kind="box"
+       data-entity-desc="selectionRect overlay (Ctrl+drag visual)"
+       data-code-ref-id="CSR">
+      <rect x="780" y="140" width="280" height="80" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="792" y="160" class="blue">selectionRect overlay</text>
+      <text x="1012" y="160" class="dim subhead">ESR</text>
+      <text x="792" y="178" class="white">absolute, pointer-events-none</text>
+      <text x="792" y="194" class="white">border-accent bg-accent/8</text>
+      <text x="792" y="210" class="dim">Only shown during Ctrl+drag</text>
+    </g>
+
+    <!-- selectionOverlayPaths (ESP) -->
+    <g data-interactive="ESP"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:442-460"
+       data-category="module"
+       data-label="selectionOverlayPaths"
+       data-source-span="14:55-15:65"
+       data-entity-parent="EVP"
+       data-entity-name="selection-paths"
+       data-entity-kind="box"
+       data-entity-desc="selectionOverlayPaths (mono labels beside lasso)"
+       data-code-ref-id="CSP">
+      <rect x="640" y="260" width="300" height="40" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="652" y="280" class="blue">selectionOverlayPaths</text>
+      <text x="888" y="280" class="dim subhead">ESP</text>
+      <text x="652" y="294" class="dim">Mono labels left of lasso</text>
+    </g>
+
+    <!-- {children} pass-through (ECH) -->
+    <g data-interactive="ECH"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:430"
+       data-category="module"
+       data-label="{children}"
+       data-source-span="16:49-18:49"
+       data-entity-parent="EVP"
+       data-entity-name="children"
+       data-entity-kind="box"
+       data-entity-desc="{children} pass-through (toolbar, etc.)"
+       data-code-ref-id="CCH">
+      <rect x="370" y="310" width="250" height="48" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="382" y="330" class="blue">{children}</text>
+      <text x="570" y="330" class="dim subhead">ECH</text>
+      <text x="382" y="348" class="dim">passed through (toolbar, etc.)</text>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- TYPES section (ETY)                                          -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="types"
+     data-interactive="ETY"
+     data-ref="web-ui/src/diagram/types.ts:1-24"
+     data-category="module"
+     data-label="TYPES"
+     data-source-span="23:4-43:44"
+     data-entity-name="types"
+     data-entity-kind="text"
+     data-entity-desc="TYPES heading (Transform, Point, Rect, IDENTITY)"
+     data-code-ref-id="CTY"
+     class="fade-section" style="animation-delay: 0.1s">
+
+    <text x="20" y="420" class="white heading">TYPES</text>
+    <text x="20" y="440" class="dim subhead">ETY</text>
+    <text x="20" y="456" class="white">Transform { tx, ty, scale }</text>
+    <text x="20" y="472" class="white">Point { x, y }</text>
+    <text x="20" y="488" class="white">Rect { x, y, width, height }</text>
+    <text x="20" y="504" class="white">IDENTITY = { 0, 0, 1 }</text>
+
+    <!-- composeTransforms (ECT) -->
+    <g data-interactive="ECT"
+       data-ref="web-ui/src/diagram/types.ts:204-210"
+       data-category="function"
+       data-label="composeTransforms"
+       data-source-span="30:4-35:44"
+       data-entity-name="compose-transforms"
+       data-entity-kind="box"
+       data-entity-desc="composeTransforms(parent, child) formula"
+       data-code-ref-id="CCT">
+      <text x="20" y="530" class="white">composeTransforms(parent, child)</text>
+      <rect x="20" y="538" width="300" height="70" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="32" y="558" class="dim subhead">ECT</text>
+      <text x="32" y="574" class="white">tx: p.tx + c.tx * p.scale</text>
+      <text x="32" y="590" class="white">ty: p.ty + c.ty * p.scale</text>
+      <text x="32" y="606" class="white">scale: p.scale * c.scale</text>
+    </g>
+
+    <!-- transformRect (ETR) -->
+    <g data-interactive="ETR"
+       data-ref="web-ui/src/diagram/types.ts:213-220"
+       data-category="function"
+       data-label="transformRect"
+       data-source-span="37:4-43:44"
+       data-entity-name="transform-rect"
+       data-entity-kind="box"
+       data-entity-desc="transformRect(rect, t) formula"
+       data-code-ref-id="CTR">
+      <text x="20" y="634" class="white">transformRect(rect, t)</text>
+      <rect x="20" y="642" width="300" height="80" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="32" y="662" class="dim subhead">ETR</text>
+      <text x="32" y="678" class="white">x: r.x * t.scale + t.tx</text>
+      <text x="32" y="694" class="white">y: r.y * t.scale + t.ty</text>
+      <text x="32" y="710" class="white">w: r.width * t.scale</text>
+      <text x="32" y="726" class="white">h: r.height * t.scale</text>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- COORDINATE MATH section (ECM)                                -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="coordinate-math"
+     data-interactive="ECM"
+     data-source-span="23:38-47:48"
+     data-entity-name="coordinate-math"
+     data-entity-kind="text"
+     data-entity-desc="COORDINATE MATH heading"
+     class="fade-section" style="animation-delay: 0.15s">
+
+    <text x="380" y="420" class="white heading">COORDINATE MATH</text>
+    <text x="380" y="440" class="dim subhead">ECM</text>
+
+    <!-- screenToScene (ESS) -->
+    <g data-interactive="ESS"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:98-107"
+       data-category="function"
+       data-label="screenToScene"
+       data-source-span="25:38-34:48"
+       data-entity-name="screen-to-scene"
+       data-entity-kind="box"
+       data-entity-desc="screenToScene(screenPt) conversion"
+       data-code-ref-id="CSS">
+      <text x="380" y="456" class="white">screenToScene(screenPt)</text>
+      <rect x="380" y="464" width="310" height="100" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="392" y="484" class="dim subhead">ESS</text>
+      <text x="392" y="500" class="white">container = getBoundingRect()</text>
+      <text x="392" y="516" class="white">{ tx, ty, scale } = transform</text>
+      <text x="392" y="540" class="white">sceneX = (scrX - left - tx) / scale</text>
+      <text x="392" y="556" class="white">sceneY = (scrY - top  - ty) / scale</text>
+    </g>
+
+    <!-- applyTransform (EAF) -->
+    <g data-interactive="EAF"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:90-96"
+       data-category="function"
+       data-label="applyTransform"
+       data-source-span="36:38-41:48"
+       data-entity-name="apply-transform"
+       data-entity-kind="box"
+       data-entity-desc="applyTransform(t): write CSS transform"
+       data-code-ref-id="CAF">
+      <text x="380" y="588" class="white">applyTransform(t)</text>
+      <rect x="380" y="596" width="310" height="60" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="392" y="616" class="dim subhead">EAF</text>
+      <text x="392" y="632" class="white">transformRef.current = t</text>
+      <text x="392" y="648" class="white">el.style.transform = translate(tx,ty) scale(s)</text>
+    </g>
+
+    <!-- syncRootTransform (ESY) -->
+    <g data-interactive="ESY"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:110-115"
+       data-category="function"
+       data-label="syncRootTransform"
+       data-source-span="43:38-47:48"
+       data-entity-name="sync-root-transform"
+       data-entity-kind="box"
+       data-entity-desc="syncRootTransform(t): keep Scene in sync"
+       data-code-ref-id="CSY">
+      <text x="380" y="680" class="white">syncRootTransform(t)</text>
+      <rect x="380" y="688" width="310" height="50" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="392" y="708" class="dim subhead">ESY</text>
+      <text x="392" y="724" class="white">scene.setTransform(&quot;root&quot;, t)</text>
+      <text x="392" y="736" class="dim">Keeps Scene bounds in sync</text>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- IMPERATIVE HANDLE section (EIH)                              -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="imperative-handle"
+     data-interactive="EIH"
+     data-ref="web-ui/src/diagram/rendering/viewport.tsx:118-148"
+     data-category="module"
+     data-label="Imperative Handle"
+     data-source-span="23:70-35:70"
+     data-entity-name="imperative-handle"
+     data-entity-kind="text"
+     data-entity-desc="IMPERATIVE HANDLE heading"
+     data-code-ref-id="CIH"
+     class="fade-section" style="animation-delay: 0.2s">
+
+    <text x="750" y="420" class="white heading">IMPERATIVE HANDLE</text>
+    <text x="750" y="440" class="dim subhead">EIH</text>
+
+    <!-- centerOn (ECO) -->
+    <g data-interactive="ECO"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:118-148"
+       data-category="function"
+       data-label="centerOn"
+       data-source-span="25:70-35:70"
+       data-entity-name="center-on"
+       data-entity-kind="box"
+       data-entity-desc="centerOn(scenePoint, opts?) with animation"
+       data-code-ref-id="CIH">
+      <text x="750" y="456" class="white">centerOn(scenePoint, opts?)</text>
+      <rect x="750" y="464" width="310" height="120" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="762" y="484" class="dim subhead">ECO</text>
+      <text x="762" y="500" class="white">scale = opts.scale ?? cur</text>
+      <text x="762" y="516" class="white">tx = W/2 - pt.x * scale</text>
+      <text x="762" y="532" class="white">ty = H/2 - pt.y * scale</text>
+      <text x="762" y="556" class="white">if animate:</text>
+      <text x="770" y="572" class="dim">transition 220ms ease</text>
+      <text x="770" y="584" class="dim">rAF &#x2192; applyTransform</text>
+      <text x="770" y="596" class="dim">setTimeout 240ms clear</text>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- INTERACTION MODES heading (EIM)                              -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="interaction-modes"
+     data-interactive="EIM"
+     data-source-span="50:4-97:99"
+     data-entity-name="interaction-modes"
+     data-entity-kind="text"
+     data-entity-desc="INTERACTION MODES heading"
+     class="fade-section" style="animation-delay: 0.25s">
+    <text x="20" y="780" class="white heading">INTERACTION MODES</text>
+    <text x="20" y="800" class="dim subhead">EIM</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Wheel Zoom (EWZ)                                             -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="wheel-zoom"
+     data-interactive="EWZ"
+     data-ref="web-ui/src/diagram/rendering/viewport.tsx:151-176"
+     data-category="module"
+     data-label="Wheel Zoom"
+     data-tt="viewport.tsx:151 &#x2014; Wheel zoom with cursor pivot"
+     data-source-span="53:4-72:80"
+     data-entity-name="wheel-zoom"
+     data-entity-kind="box"
+     data-entity-desc="Wheel zoom with cursor pivot"
+     data-code-ref-id="CWZ"
+     class="fade-section" style="animation-delay: 0.3s">
+
+    <rect x="20" y="815" width="520" height="300" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="32" y="837" class="orange heading"
+          data-tt="viewport.tsx:151 &#x2014; Wheel zoom handler">Wheel Zoom (pivot around cursor)</text>
+    <text x="476" y="837" class="dim subhead">EWZ</text>
+
+    <text x="40" y="860" class="white">delta = -deltaY * ZOOM_SENSITIVITY (0.002)</text>
+    <text x="40" y="876" class="dim">(deltaMode===1 line-scroll &#x2192; * 0.05 instead)</text>
+    <text x="40" y="900" class="white">newScale = clamp(scale * (1 + delta), 0.1, 5)</text>
+
+    <!-- Pivot formula (EWF) nested -->
+    <g data-interactive="EWF"
+       data-source-span="61:4-69:52"
+       data-entity-parent="EWZ"
+       data-entity-name="wheel-pivot-formula"
+       data-entity-kind="box"
+       data-entity-desc="Pivot formula (cursor stays fixed)">
+      <text x="40" y="924" class="orange">Pivot formula (cursor stays fixed):</text>
+      <rect x="40" y="932" width="380" height="110" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="952" class="dim subhead">EWF</text>
+      <text x="52" y="968" class="white">cursorX = clientX - rect.left</text>
+      <text x="52" y="984" class="white">cursorY = clientY - rect.top</text>
+      <text x="52" y="1008" class="white">newTx = cursorX - (cursorX - tx)</text>
+      <text x="52" y="1024" class="white">        * (newScale / scale)</text>
+      <text x="52" y="1040" class="white">newTy = cursorY - (cursorY - ty)</text>
+      <text x="52" y="1054" class="white">        * (newScale / scale)</text>
+    </g>
+
+    <text x="40" y="1088" class="dim">&#x2192; applyTransform + syncRootTransform</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Pinch-to-Zoom (EPZ)                                         -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="pinch-zoom"
+     data-interactive="EPZ"
+     data-ref="web-ui/src/diagram/rendering/viewport.tsx:198-280"
+     data-category="module"
+     data-label="Pinch-to-Zoom"
+     data-tt="viewport.tsx:198 &#x2014; Pinch-to-zoom pointer handling"
+     data-source-span="53:60-72:80"
+     data-entity-name="pinch-zoom"
+     data-entity-kind="box"
+     data-entity-desc="Pinch-to-zoom (multi-touch)"
+     data-code-ref-id="CPZ"
+     class="fade-section" style="animation-delay: 0.35s">
+
+    <rect x="560" y="815" width="520" height="300" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="572" y="837" class="orange heading"
+          data-tt="viewport.tsx:198 &#x2014; Pinch-to-zoom multi-touch">Pinch-to-Zoom (multi-touch)</text>
+    <text x="1016" y="837" class="dim subhead">EPZ</text>
+
+    <text x="580" y="860" class="white">activePointersRef: Map&lt;pointerId, {x,y}&gt;</text>
+    <text x="580" y="876" class="white">pinchStartRef: { distance, midpoint, transform }</text>
+
+    <text x="580" y="900" class="orange">2nd finger down:</text>
+    <text x="596" y="916" class="white">distance = sqrt((b.x-a.x)^2 + (b.y-a.y)^2)</text>
+    <text x="596" y="932" class="white">midpoint = avg of two pointers</text>
+    <text x="596" y="948" class="white">save current transform</text>
+
+    <text x="580" y="972" class="orange">On move (2 pointers):</text>
+    <text x="596" y="988" class="white">scaleFactor = currentDist / startDist</text>
+    <text x="596" y="1004" class="white">newScale = clamp(start.scale * scaleFactor, 0.1, 5)</text>
+    <text x="596" y="1020" class="dim">Zoom around midpoint + pan by midpoint delta</text>
+
+    <text x="580" y="1044" class="orange">Finger up:</text>
+    <text x="596" y="1060" class="white">clear pinchStartRef, suppress click</text>
+
+    <!-- Zoom constants (EZC) -->
+    <g data-interactive="EZC"
+       data-ref="web-ui/src/diagram/rendering/viewport.tsx:15-18"
+       data-source-span="70:60-70:80"
+       data-entity-parent="EPZ"
+       data-entity-name="zoom-constants"
+       data-entity-kind="text"
+       data-entity-desc="MIN_SCALE=0.1, MAX_SCALE=5, SENSITIVITY, DRAG_THRESHOLD"
+       data-code-ref-id="CZC">
+      <text x="580" y="1088" class="dim">Constants: MIN_SCALE=0.1  MAX_SCALE=5</text>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Pan (normal drag) (EPD)                                      -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="pan-drag"
+     data-interactive="EPD"
+     data-ref="web-ui/src/diagram/rendering/viewport.tsx:282-331"
+     data-category="module"
+     data-label="Pan (normal drag)"
+     data-tt="viewport.tsx:282 &#x2014; Pan via normal drag"
+     data-source-span="75:4-93:55"
+     data-entity-name="pan-drag"
+     data-entity-kind="box"
+     data-entity-desc="Pan via normal drag"
+     data-code-ref-id="CPD"
+     class="fade-section" style="animation-delay: 0.4s">
+
+    <rect x="20" y="1140" width="430" height="310" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="32" y="1162" class="orange heading"
+          data-tt="viewport.tsx:282 &#x2014; Pan via normal drag handler">Pan (normal drag)</text>
+    <text x="388" y="1162" class="dim subhead">EPD</text>
+
+    <text x="40" y="1186" class="white">pointerDown: save { x, y, transform, ctrl }</text>
+    <text x="40" y="1206" class="orange">pointerMove:</text>
+    <text x="56" y="1222" class="white">dx = clientX - start.x</text>
+    <text x="56" y="1238" class="white">dy = clientY - start.y</text>
+    <text x="56" y="1254" class="white">if distance &gt; DRAG_THRESHOLD (4px):</text>
+    <text x="72" y="1270" class="dim">didDrag = true</text>
+    <text x="72" y="1286" class="dim">capture pointer</text>
+
+    <text x="40" y="1310" class="white">newTx = start.tx + dx</text>
+    <text x="40" y="1326" class="white">newTy = start.ty + dy</text>
+    <text x="40" y="1342" class="dim">scale unchanged</text>
+
+    <text x="40" y="1366" class="dim">&#x2192; applyTransform + syncRootTransform</text>
+
+    <text x="40" y="1394" class="orange">pointerUp (no drag):</text>
+    <text x="56" y="1410" class="white">fire onSceneClick</text>
+    <text x="56" y="1426" class="dim">screenPoint + scenePoint + domEvent</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Selection Lasso (ESL)                                        -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="selection-lasso"
+     data-interactive="ESL"
+     data-ref="web-ui/src/diagram/rendering/viewport.tsx:295-320"
+     data-category="module"
+     data-label="Selection Lasso"
+     data-tt="viewport.tsx:295 &#x2014; Selection lasso (Ctrl+drag)"
+     data-source-span="75:55-93:80"
+     data-entity-name="selection-lasso"
+     data-entity-kind="box"
+     data-entity-desc="Selection lasso (Ctrl+drag)"
+     data-code-ref-id="CSL"
+     class="fade-section" style="animation-delay: 0.45s">
+
+    <rect x="470" y="1140" width="610" height="310" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1"/>
+    <text x="482" y="1162" class="orange heading"
+          data-tt="viewport.tsx:295 &#x2014; Ctrl+drag selection lasso">Selection Lasso (Ctrl+drag)</text>
+    <text x="1016" y="1162" class="dim subhead">ESL</text>
+
+    <text x="490" y="1186" class="white">Trigger: ctrl/meta key OR (selectMode + touch)</text>
+
+    <text x="490" y="1210" class="orange">Screen rect (for visual overlay):</text>
+    <text x="506" y="1226" class="white">x = min(startX, curX) relative to container</text>
+    <text x="506" y="1242" class="white">y = min(startY, curY) relative to container</text>
+    <text x="506" y="1258" class="white">w = |curX - startX|</text>
+    <text x="506" y="1274" class="white">h = |curY - startY|</text>
+
+    <text x="490" y="1298" class="orange">Scene rect (for hit testing):</text>
+    <text x="506" y="1314" class="white">Convert start &amp; current via screenToScene</text>
+    <text x="506" y="1330" class="white">Build Rect from min/max of both points</text>
+
+    <text x="490" y="1358" class="white">onSelectionDrag(sceneRect)</text>
+    <text x="730" y="1358" class="dim">&#x2014; live updates during drag</text>
+    <text x="490" y="1374" class="white">onSelectionDragEnd(sceneRect)</text>
+    <text x="750" y="1374" class="dim">&#x2014; final on pointerup</text>
+
+    <text x="490" y="1398" class="orange">pointerUp:</text>
+    <text x="506" y="1414" class="white">clear selectionRect state</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Window pointerup listener (EWP)                              -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="window-pointerup"
+     data-interactive="EWP"
+     data-ref="web-ui/src/diagram/rendering/viewport.tsx:338-399"
+     data-category="module"
+     data-label="Window pointerup"
+     data-source-span="95:4-97:99"
+     data-entity-name="window-pointerup"
+     data-entity-kind="text"
+     data-entity-desc="Window pointerup listener (cleanup)"
+     data-code-ref-id="CWP"
+     class="fade-section" style="animation-delay: 0.5s">
+    <text x="20" y="1490" class="white">Window pointerup listener</text>
+    <text x="220" y="1490" class="dim subhead">EWP</text>
+    <text x="20" y="1510" class="dim">Cleans up state even if event target is inside dynamically-appended content (nested SVGs from expand).</text>
+    <text x="20" y="1526" class="dim">Releases pointer capture, fires onSelectionDragEnd or onSceneClick as appropriate.</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Arrows                                                       -->
+  <!-- ============================================================ -->
+
+  <!-- Wheel Zoom → applyTransform -->
+  <line x1="430" y1="1088" x2="430" y2="1115" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3"
+        data-arrow="EWZ.apply" data-arrow-src="EWZ" data-arrow-target="EAF" data-arrow-desc="wheel zoom &#x2192; applyTransform"/>
+  <line x1="430" y1="1115" x2="535" y2="620" stroke="#8B949E" stroke-width="0.8" marker-end="url(#a)"
+        data-arrow="EWZ.apply" data-arrow-src="EWZ" data-arrow-target="EAF" data-arrow-desc="wheel zoom &#x2192; applyTransform"/>
+
+  <!-- Wheel Zoom → syncRootTransform -->
+  <line x1="460" y1="1088" x2="460" y2="1120" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3"
+        data-arrow="EWZ.sync" data-arrow-src="EWZ" data-arrow-target="ESY" data-arrow-desc="wheel zoom &#x2192; syncRootTransform"/>
+  <line x1="460" y1="1120" x2="535" y2="710" stroke="#8B949E" stroke-width="0.8" marker-end="url(#a)"
+        data-arrow="EWZ.sync" data-arrow-src="EWZ" data-arrow-target="ESY" data-arrow-desc="wheel zoom &#x2192; syncRootTransform"/>
+
+  <!-- Pan drag → applyTransform -->
+  <line x1="350" y1="1140" x2="350" y2="660" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3" marker-end="url(#a)"
+        data-arrow="EPD.apply" data-arrow-src="EPD" data-arrow-target="EAF" data-arrow-desc="pan drag &#x2192; applyTransform"/>
+
+  <!-- Pan drag → syncRootTransform -->
+  <line x1="370" y1="1140" x2="370" y2="730" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3" marker-end="url(#a)"
+        data-arrow="EPD.sync" data-arrow-src="EPD" data-arrow-target="ESY" data-arrow-desc="pan drag &#x2192; syncRootTransform"/>
+
+  <!-- Selection Lasso → screenToScene (via ESS) -->
+  <line x1="620" y1="1140" x2="620" y2="565" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3" marker-end="url(#a)"
+        data-arrow="ESS.ref" data-arrow-src="ESS" data-arrow-target="EAF" data-arrow-desc="screenToScene uses same transform state"/>
+
+</svg>

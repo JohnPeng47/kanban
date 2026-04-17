@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DiagramViewer — Component + Hook Wiring</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 1520"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g class="fade-section" style="animation-delay: 0s"
+     data-reflow-group="title"
+     data-entity-name="Title" data-entity-kind="text" data-entity-desc="Diagram title"
+     data-source-span="0:0-0:42">
+    <text x="30" y="35" class="title white">DIAGRAM VIEWER — COMPONENT + HOOK WIRING</text>
+  </g>
+
+  <!-- ═══ DiagramViewer 3-Panel Layout Section Header ═══ -->
+  <g class="fade-section" style="animation-delay: 0.05s"
+     data-reflow-group="section-layout"
+     data-source-span="2:0-2:97">
+    <line x1="30" y1="55" x2="1070" y2="55" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="30" y="75" class="heading blue">DiagramViewer 3-Panel Layout [CDV]</text>
+  </g>
+
+  <!-- ═══ DiagramViewer outer box ═══ -->
+  <g class="fade-section" style="animation-delay: 0.1s"
+     data-reflow-group="EDV" data-interactive="EDV"
+     data-ref="CDV" data-category="component" data-label="DiagramViewer" data-tt="Top-level 3-panel flex layout component"
+     data-entity-name="DiagramViewer" data-entity-kind="box" data-entity-desc="Top-level 3-panel flex layout component"
+     data-code-ref-id="CDV"
+     data-source-span="4:0-23:97">
+    <rect x="30" y="88" width="1040" height="325" rx="6" ry="6" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="45" y="108" class="dim subhead">EDV</text>
+
+    <!-- TreePanel inner box -->
+    <g data-reflow-group="ETP" data-interactive="ETP"
+       data-ref="CTP" data-category="component" data-label="TreePanel" data-tt="File tree sidebar (250px, min 180)"
+       data-entity-name="TreePanel" data-entity-kind="box" data-entity-desc="File tree sidebar (250px, min 180)" data-entity-parent="EDV"
+       data-code-ref-id="CTP"
+       data-source-span="6:3-17:29">
+      <rect x="50" y="118" width="220" height="235" rx="4" ry="4" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="65" y="138" class="heading blue">TreePanel [CTP]</text>
+      <text x="252" y="138" class="dim subhead">ETP</text>
+      <text x="65" y="158">FileTreeNode[]</text>
+      <text x="65" y="180">selectedPath ●</text>
+      <text x="65" y="196">expandedFolders</text>
+      <text x="65" y="212">onSelectPath()</text>
+      <text x="65" y="228">onToggleFolder()</text>
+      <text x="65" y="252">w: 250 (min 180)</text>
+      <text x="245" y="346" class="dim subhead">ETP</text>
+    </g>
+
+    <!-- ContentArea inner box -->
+    <g data-reflow-group="ECA" data-interactive="ECA"
+       data-ref="CCA" data-category="component" data-label="ContentArea" data-tt="Scene host for diagram HTML content"
+       data-entity-name="ContentArea" data-entity-kind="box" data-entity-desc="Scene host for diagram HTML content" data-entity-parent="EDV"
+       data-code-ref-id="CCA"
+       data-source-span="6:27-17:69">
+      <rect x="290" y="118" width="420" height="235" rx="4" ry="4" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="305" y="138" class="heading blue">ContentArea [CCA]</text>
+      <text x="690" y="138" class="dim subhead">ECA</text>
+      <text x="305" y="158">DiagramContentArea</text>
+      <text x="315" y="175" class="dim" data-link="05-scene-and-input.html">** 05-scene-and-input.txt</text>
+      <text x="315" y="191" class="dim" data-link="06-scene-svgscene-detail.html">** 06-scene-svgscene-detail.txt</text>
+      <text x="305" y="215">Props from useDiagramViewer:</text>
+      <text x="315" y="231">content, isLoading, error</text>
+      <text x="315" y="247">selectedPath, workspaceId</text>
+      <text x="315" y="263">onRequestJump, pendingJumpElementId</text>
+      <text x="315" y="279">onJumpConsumed</text>
+      <text x="685" y="346" class="dim subhead">ECA</text>
+    </g>
+
+    <!-- Resize labels between panels -->
+    <text x="278" y="140" class="dim subhead"
+          data-entity-name="Tree resize drag" data-entity-kind="text" data-entity-desc="Drag handle between tree and content panels" data-entity-parent="EDV"
+          data-source-span="18:7-18:24">R e s i z e</text>
+
+    <!-- AgentPanel inner box -->
+    <g data-reflow-group="EAG" data-interactive="EAG"
+       data-ref="" data-category="component" data-label="AgentPanel" data-tt="Optional ClineAgent integration panel (420px, min 320)"
+       data-entity-name="AgentPanel" data-entity-kind="box" data-entity-desc="Optional ClineAgent integration panel (420px, min 320)" data-entity-parent="EDV"
+       data-code-ref-id=""
+       data-source-span="6:72-17:97">
+      <rect x="730" y="118" width="320" height="235" rx="4" ry="4" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="745" y="138" class="heading blue">AgentPanel (optional)</text>
+      <text x="1030" y="138" class="dim subhead">EAG</text>
+      <text x="745" y="158">useDiagramAgentPanel</text>
+      <text x="755" y="175">→ ReactElement | null</text>
+      <text x="745" y="200">ClineAgent integration</text>
+      <text x="745" y="252">w: 420 (min 320)</text>
+      <text x="1025" y="346" class="dim subhead">EAG</text>
+    </g>
+
+    <text x="718" y="140" class="dim subhead"
+          data-entity-name="Agent resize drag" data-entity-kind="text" data-entity-desc="Drag handle between content and agent panels" data-entity-parent="EDV"
+          data-source-span="18:85-18:97">R e s i z e</text>
+
+    <!-- Drag labels below panels -->
+    <text x="140" y="372" class="dim"
+          data-reflow-group="ET1"
+          data-entity-name="Tree resize drag" data-entity-kind="text" data-entity-desc="Drag handle between tree and content panels" data-entity-parent="EDV"
+          data-source-span="18:7-18:24">[ET1] drag →</text>
+    <text x="490" y="372" class="dim">content fills remainder</text>
+    <text x="830" y="372" class="dim"
+          data-reflow-group="ET2"
+          data-entity-name="Agent resize drag" data-entity-kind="text" data-entity-desc="Drag handle between content and agent panels" data-entity-parent="EDV"
+          data-source-span="18:85-18:97">← drag [ET2]</text>
+
+    <!-- CodeVizStatusIndicator -->
+    <text x="50" y="392" class="dim"
+          data-reflow-group="ECI"
+          data-entity-name="CodeVizStatusIndicator" data-entity-kind="text" data-entity-desc="Overlay badge showing extension connection state" data-entity-parent="EDV"
+          data-ref="CCI" data-code-ref-id="CCI"
+          data-source-span="20:3-21:73">[ECI] CodeVizStatusIndicator [CCI] — overlay badge top-right of content area</text>
+    <text x="65" y="407" class="dim">state: connected | workspace-not-registered | disconnected</text>
+
+    <text x="1040" y="407" class="dim subhead">EDV</text>
+  </g>
+
+  <!-- Arrows: EDV → children (containment, shown as implicit by nesting) -->
+
+  <!-- ═══ useDiagramViewer Hook Section ═══ -->
+  <g class="fade-section" style="animation-delay: 0.15s"
+     data-reflow-group="section-hook"
+     data-source-span="26:0-26:97">
+    <line x1="30" y1="440" x2="1070" y2="440" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="30" y="460" class="heading blue">useDiagramViewer Hook [CUV]</text>
+  </g>
+
+  <!-- State box -->
+  <g class="fade-section" style="animation-delay: 0.2s"
+     data-reflow-group="EST" data-interactive="EST"
+     data-ref="CST" data-category="hook-state" data-label="State" data-tt="useDiagramViewer state declarations"
+     data-entity-name="State box" data-entity-kind="box" data-entity-desc="useDiagramViewer state declarations"
+     data-code-ref-id="CST"
+     data-source-span="28:2-41:36">
+    <rect x="30" y="475" width="310" height="235" rx="6" ry="6" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="45" y="495" class="heading blue">State</text>
+    <text x="320" y="495" class="dim subhead">EST</text>
+    <text x="45" y="517">tree: FileTreeNode[]</text>
+    <text x="45" y="533">diagramsRootExists: boolean</text>
+    <text x="45" y="549">isTreeLoading: boolean</text>
+    <text x="45" y="565">selectedPath: string | null</text>
+    <text x="45" y="581">expandedFolders: Set&lt;string&gt;</text>
+    <text x="45" y="597">content: string | null</text>
+    <text x="45" y="613">isContentLoading: boolean</text>
+    <text x="45" y="629">contentError: string | null</text>
+    <text x="45" y="645">workspacePath: string | null</text>
+    <text x="45" y="661" data-ref="CPJ" data-code-ref-id="CPJ">pendingJumpElementId [CPJ]</text>
+    <text x="315" y="700" class="dim subhead">EST</text>
+  </g>
+
+  <!-- Effects box -->
+  <g class="fade-section" style="animation-delay: 0.25s"
+     data-reflow-group="EEF" data-interactive="EEF"
+     data-ref="CEF" data-category="hook-effects" data-label="Effects" data-tt="useDiagramViewer effects (tree, content, URL sync)"
+     data-entity-name="Effects box" data-entity-kind="box" data-entity-desc="useDiagramViewer effects (tree, content, URL sync)"
+     data-code-ref-id="CEF"
+     data-source-span="28:38-43:69">
+    <rect x="380" y="475" width="690" height="235" rx="6" ry="6" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="395" y="495" class="heading blue">Effects</text>
+    <text x="1050" y="495" class="dim subhead">EEF</text>
+
+    <text x="395" y="520" class="white">1. Tree fetch (on mount / workspaceId change)</text>
+    <text x="410" y="536">trpc.diagrams.list.query({})</text>
+    <text x="410" y="552">→ setTree, setDiagramsRootExists</text>
+    <text x="410" y="568">→ auto-expand top-level dirs</text>
+    <text x="410" y="584">→ derive workspacePath from diagramsRoot</text>
+
+    <text x="395" y="610" class="white">2. Content fetch (on selectedPath change)</text>
+    <text x="410" y="626">trpc.diagrams.getContent.query({ path })</text>
+    <text x="410" y="642">→ setContent or setContentError</text>
+
+    <text x="395" y="668" class="white">3. URL sync (on selectedPath change)</text>
+    <text x="410" y="684">history.replaceState → ?view=diagram&amp;path=...</text>
+    <text x="1045" y="700" class="dim subhead">EEF</text>
+  </g>
+
+  <!-- Arrow: EST → EEF -->
+  <line x1="340" y1="560" x2="380" y2="560"
+        stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"
+        class="fade-section" style="animation-delay: 0.3s"
+        data-arrow="EST-EEF" data-arrow-src="EST" data-arrow-target="EEF" data-arrow-desc="State drives effect triggers (selectedPath, workspaceId)"/>
+
+  <!-- Arrow: EEF → EST -->
+  <line x1="380" y1="590" x2="340" y2="590"
+        stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"
+        class="fade-section" style="animation-delay: 0.35s"
+        data-arrow="EEF-EST" data-arrow-src="EEF" data-arrow-target="EST" data-arrow-desc="Effects update state (setTree, setContent, etc.)"/>
+
+  <!-- Callbacks box -->
+  <g class="fade-section" style="animation-delay: 0.4s"
+     data-reflow-group="ECB" data-interactive="ECB"
+     data-ref="CCB" data-category="hook-callbacks" data-label="Callbacks" data-tt="useDiagramViewer callback definitions"
+     data-entity-name="Callbacks box" data-entity-kind="box" data-entity-desc="useDiagramViewer callback definitions"
+     data-code-ref-id="CCB"
+     data-source-span="45:2-55:73">
+    <rect x="30" y="730" width="1040" height="150" rx="6" ry="6" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="45" y="750" class="heading blue">Callbacks</text>
+    <text x="1045" y="750" class="dim subhead">ECB</text>
+
+    <text x="45" y="775">onSelectPath(path)</text>
+    <text x="400" y="775" class="dim">— set selectedPath, triggers content fetch</text>
+
+    <text x="45" y="795">onToggleFolder(path)</text>
+    <text x="400" y="795" class="dim">— toggle folder in expandedFolders set</text>
+
+    <text x="45" y="815" data-ref="CRJ" data-code-ref-id="CRJ">requestJump(path, elementId) [CRJ]</text>
+    <text x="400" y="815" class="dim">— cross-diagram navigation:</text>
+    <text x="415" y="831" class="dim">setPendingJumpElementId(elementId)</text>
+    <text x="415" y="847" class="dim">setSelectedPath(path) → triggers content fetch</text>
+    <text x="415" y="863" class="dim">history.pushState (enables browser back)</text>
+
+    <text x="45" y="868" data-ref="CCJ" data-code-ref-id="CCJ">consumeJump() [CCJ]</text>
+    <text x="400" y="868" class="dim">— clear pendingJumpElementId after scene animates</text>
+  </g>
+
+  <!-- Arrow: ECB → EST -->
+  <line x1="190" y1="730" x2="190" y2="710"
+        stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"
+        class="fade-section" style="animation-delay: 0.45s"
+        data-arrow="ECB-EST" data-arrow-src="ECB" data-arrow-target="EST" data-arrow-desc="Callbacks mutate state (setSelectedPath, setPendingJumpElementId)"/>
+
+  <!-- ═══ Jump Protocol Section ═══ -->
+  <g class="fade-section" style="animation-delay: 0.5s"
+     data-reflow-group="section-jump"
+     data-source-span="58:0-58:97">
+    <line x1="30" y1="910" x2="1070" y2="910" stroke="#D29922" stroke-width="1.2"/>
+    <text x="30" y="930" class="heading orange">Jump Protocol</text>
+  </g>
+
+  <!-- Jump Protocol sequence diagram -->
+  <g class="fade-section" style="animation-delay: 0.55s"
+     data-reflow-group="EJP" data-interactive="EJP"
+     data-entity-name="Jump Protocol" data-entity-kind="text" data-entity-desc="Sequence diagram: click → requestJump → fetch → animate → consumeJump"
+     data-source-span="60:2-79:38">
+    <rect x="30" y="940" width="1040" height="330" rx="6" ry="6" fill="#24292E" stroke="#D29922" stroke-width="1.2"/>
+
+    <!-- Column headers -->
+    <text x="55" y="965" class="white">[EJP] User clicks **-link</text>
+    <text x="310" y="965" class="white">DiagramContentArea</text>
+    <text x="560" y="965" class="white">useDiagramViewer</text>
+    <text x="830" y="965" class="white">New Scene</text>
+    <text x="55" y="980" class="dim">in current scene</text>
+    <text x="310" y="980" class="dim">(navigation handler)</text>
+    <text x="560" y="980" class="dim">(hook state)</text>
+    <text x="830" y="980" class="dim">(after load)</text>
+
+    <!-- Vertical lifelines -->
+    <line x1="120" y1="990" x2="120" y2="1250" stroke="#30363D" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="380" y1="990" x2="380" y2="1250" stroke="#30363D" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="630" y1="990" x2="630" y2="1250" stroke="#30363D" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="880" y1="990" x2="880" y2="1250" stroke="#30363D" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- Step: link target has path + elementId -->
+    <text x="55" y="1010" class="dim">link target has</text>
+    <text x="55" y="1024" class="dim">path + elementId</text>
+    <line x1="140" y1="1010" x2="370" y2="1010" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+
+    <!-- Step: onRequestJump -->
+    <line x1="390" y1="1040" x2="620" y2="1040" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="400" y="1036" class="dim subhead">onRequestJump(p, eid)</text>
+
+    <!-- Step: hook state updates -->
+    <text x="640" y="1062">pendingJumpElementId</text>
+    <text x="640" y="1078">selectedPath = p</text>
+    <text x="640" y="1094">pushState(url)</text>
+
+    <!-- Step: content fetch -->
+    <line x1="640" y1="1110" x2="870" y2="1110" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="680" y="1106" class="dim subhead">content fetch</text>
+
+    <!-- Step: scene mounts -->
+    <text x="890" y="1140">scene mounts</text>
+    <text x="890" y="1156">reads elementId</text>
+    <text x="890" y="1172">animates to box</text>
+
+    <!-- Step: consumeJump -->
+    <line x1="870" y1="1195" x2="640" y2="1195" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="700" y="1191" class="dim subhead">onJumpConsumed()</text>
+    <line x1="620" y1="1195" x2="390" y2="1195" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="430" y="1191" class="dim subhead">consumeJump()</text>
+
+    <text x="640" y="1220">pendingJumpElementId</text>
+    <text x="640" y="1236">= null</text>
+  </g>
+
+  <!-- ═══ useCodeVizStatus Hook Section ═══ -->
+  <g class="fade-section" style="animation-delay: 0.6s"
+     data-reflow-group="section-codeviz"
+     data-source-span="81:0-81:97">
+    <line x1="30" y1="1300" x2="1070" y2="1300" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="30" y="1320" class="heading blue">useCodeVizStatus Hook [CCS]</text>
+  </g>
+
+  <!-- useCodeVizStatus box -->
+  <g class="fade-section" style="animation-delay: 0.65s"
+     data-reflow-group="ECV" data-interactive="ECV"
+     data-ref="CCS" data-category="hook" data-label="useCodeVizStatus" data-tt="30s polling hook driving CodeVizStatusIndicator badge"
+     data-entity-name="useCodeVizStatus" data-entity-kind="box" data-entity-desc="30s polling hook driving CodeVizStatusIndicator badge"
+     data-code-ref-id="CCS"
+     data-source-span="83:2-94:72">
+    <rect x="30" y="1335" width="730" height="160" rx="6" ry="6" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="45" y="1355" class="dim subhead">ECV</text>
+
+    <text x="45" y="1375">Poll every 30s: trpc.diagrams.checkExtension.query()</text>
+
+    <text x="45" y="1405" class="white">Server response:</text>
+    <text x="400" y="1405" class="white">Hook state:</text>
+
+    <text x="55" y="1425">available=false</text>
+    <text x="310" y="1425">→</text>
+    <text x="400" y="1425" class="red">"disconnected"</text>
+
+    <text x="55" y="1445">available=true, registered=false</text>
+    <text x="310" y="1445">→</text>
+    <text x="400" y="1445" class="orange">"workspace-not-registered"</text>
+
+    <text x="55" y="1465">available=true, registered=true</text>
+    <text x="310" y="1465">→</text>
+    <text x="400" y="1465" class="green">"connected"</text>
+
+    <text x="45" y="1488" class="dim" data-ref="CCI" data-code-ref-id="CCI">Drives CodeVizStatusIndicator [CCI] badge color</text>
+    <text x="735" y="1488" class="dim subhead">ECV</text>
+  </g>
+
+  <!-- Arrow: ECV → ECI -->
+  <line x1="550" y1="1335" x2="550" y2="407" stroke="#8B949E" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"
+        class="fade-section" style="animation-delay: 0.7s"
+        data-arrow="ECV-ECI" data-arrow-src="ECV" data-arrow-target="ECI" data-arrow-desc="Hook state drives badge color/text"/>
+
+</svg>
+<script type="text/plain" id="ascii-source">
+DIAGRAM VIEWER — COMPONENT + HOOK WIRING
+
+═══ DiagramViewer 3-Panel Layout [CDV] ═══════════════════════════════════════════════════════════════════════
+
+┌─ DiagramViewer ──────────────────────────────────────────────────────────────────────────────────────────────┐
+│ EDV                                                                                                         │
+│  ┌─ TreePanel [CTP] ────┐   ┌─ ContentArea [CCA] ──────────────────────────┐   ┌─ AgentPanel (optional) ───┐  │
+│  │ ETP                   │   │ ECA                                         │   │ EAG                       │  │
+│  │  FileTreeNode[]       │   │  DiagramContentArea                         │   │  useDiagramAgentPanel     │  │
+│  │                       │   │    ** 05-scene-and-input.txt                  │   │    → ReactElement | null  │  │
+│  │  selectedPath ●       │ R │    ** 06-scene-svgscene-detail.txt           │ R │                           │  │
+│  │  expandedFolders      │ e │                                             │ e │  ClineAgent integration   │  │
+│  │  onSelectPath()       │ s │  Props from useDiagramViewer:               │ s │                           │  │
+│  │  onToggleFolder()     │ i │    content, isLoading, error                │ i │                           │  │
+│  │                       │ z │    selectedPath, workspaceId                │ z │                           │  │
+│  │  w: 250 (min 180)     │ e │    onRequestJump, pendingJumpElementId     │ e │  w: 420 (min 320)         │  │
+│  │                   ETP │   │    onJumpConsumed                       ECA │   │                       EAG │  │
+│  └─────────────────────────┘   └─────────────────────────────────────────────┘   └───────────────────────────┘  │
+│       [ET1] drag ──►              content fills remainder              ◄── drag [ET2]                        │
+│                                                                                                             │
+│  [ECI] CodeVizStatusIndicator [CCI] — overlay badge top-right of content area                               │
+│    state: connected | workspace-not-registered | disconnected                                               │
+│                                                                                                         EDV │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ useDiagramViewer Hook [CUV] ══════════════════════════════════════════════════════════════════════════════
+
+  ┌─ State ────────────────────────┐       ┌─ Effects ─────────────────────────────────────────────────────┐
+  │ EST                            │       │ EEF                                                           │
+  │  tree: FileTreeNode[]         │       │  1. Tree fetch (on mount / workspaceId change)                │
+  │  diagramsRootExists: boolean  │       │     trpc.diagrams.list.query({})                              │
+  │  isTreeLoading: boolean       │       │     → setTree, setDiagramsRootExists                         │
+  │  selectedPath: string | null  │       │     → auto-expand top-level dirs                             │
+  │  expandedFolders: Set<string> │       │     → derive workspacePath from diagramsRoot                 │
+  │  content: string | null       │       │                                                               │
+  │  isContentLoading: boolean    │       │  2. Content fetch (on selectedPath change)                    │
+  │  contentError: string | null  │       │     trpc.diagrams.getContent.query({ path })                  │
+  │  workspacePath: string | null │       │     → setContent or setContentError                          │
+  │  pendingJumpElementId [CPJ]   │       │                                                               │
+  │                           EST │       │  3. URL sync (on selectedPath change)                         │
+  └────────────────────────────────┘       │     history.replaceState → ?view=diagram&path=...            │
+                                           │                                                           EEF │
+                                           └───────────────────────────────────────────────────────────────┘
+
+  ┌─ Callbacks ────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ECB                                                                                                    │
+  │  onSelectPath(path)                  — set selectedPath, triggers content fetch                       │
+  │  onToggleFolder(path)                — toggle folder in expandedFolders set                           │
+  │  requestJump(path, elementId) [CRJ]  — cross-diagram navigation:                                     │
+  │                                          setPendingJumpElementId(elementId)                           │
+  │                                          setSelectedPath(path) → triggers content fetch               │
+  │                                          history.pushState (enables browser back)                     │
+  │  consumeJump() [CCJ]                — clear pendingJumpElementId after scene animates to target       │
+  │                                                                                                   ECB │
+  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ Jump Protocol ═════════════════════════════════════════════════════════════════════════════════════════════
+
+  [EJP] User clicks **-link          DiagramContentArea              useDiagramViewer              New Scene
+  in current scene             (navigation handler)            (hook state)                  (after load)
+       │                              │                              │                          │
+       ├─ link target has ──────────► │                              │                          │
+       │  path + elementId            │                              │                          │
+       │                              ├─ onRequestJump(p, eid) ────► │                          │
+       │                              │                              ├─ pendingJumpElementId    │
+       │                              │                              ├─ selectedPath = p        │
+       │                              │                              ├─ pushState(url)          │
+       │                              │                              │                          │
+       │                              │                              ├─ content fetch ─────────►│
+       │                              │                              │                          │
+       │                              │                              │         scene mounts ───►│
+       │                              │                              │         reads elementId  │
+       │                              │                              │         animates to box  │
+       │                              │                              │                          │
+       │                              │  onJumpConsumed() ◄──────────┤◄──── consumeJump()       │
+       │                              │                              ├─ pendingJumpElementId    │
+       │                              │                              │   = null                 │
+
+
+═══ useCodeVizStatus Hook [CCS] ══════════════════════════════════════════════════════════════════════════════
+
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ ECV                                                                    │
+  │  Poll every 30s: trpc.diagrams.checkExtension.query()                  │
+  │                                                                        │
+  │  Server response:                    Hook state:                       │
+  │    available=false              ───►  "disconnected"                   │
+  │    available=true, registered=false ► "workspace-not-registered"       │
+  │    available=true, registered=true ►  "connected"                     │
+  │                                                                        │
+  │  Drives CodeVizStatusIndicator [CCI] badge color                       │
+  │                                                                    ECV │
+  └────────────────────────────────────────────────────────────────────────┘
+</script>
+</body>
+</html>

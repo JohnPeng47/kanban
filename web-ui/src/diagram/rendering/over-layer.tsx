@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useRef } from "react";
+import { forwardRef, type ReactElement, useEffect, useImperativeHandle, useRef } from "react";
 import type { BadgeAnchor, OverlayBadge, Transform } from "../types";
 import type { Scene } from "./scene";
 
@@ -51,6 +51,12 @@ function resolveAnchor(anchor: BadgeAnchor, transform: Transform, scene: Scene):
 	}
 }
 
+/** Imperative handle for identifying badge clicks from outside. */
+export interface OverLayerHandle {
+	/** Given a DOM element (from elementFromPoint), return the badge it belongs to, or null. */
+	identify(domEl: Element): OverlayBadge | null;
+}
+
 export interface OverLayerProps {
 	badges: OverlayBadge[];
 	scene: Scene;
@@ -61,8 +67,27 @@ export interface OverLayerProps {
 /** Renders overlay badges on top of the diagram, positioned in screen space
  *  but anchored to scene coordinates. Uses rAF to sync with pan/zoom without
  *  React re-renders. */
-export function OverLayer({ badges, scene, transformRef }: OverLayerProps): ReactElement {
+export const OverLayer = forwardRef<OverLayerHandle, OverLayerProps>(function OverLayer(
+	{ badges, scene, transformRef },
+	ref,
+): ReactElement {
 	const badgeRefsMap = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+	useImperativeHandle(
+		ref,
+		() => ({
+			identify(domEl: Element): OverlayBadge | null {
+				const btn = domEl instanceof HTMLButtonElement ? domEl : domEl.closest?.("button");
+				if (!btn) return null;
+				for (const badge of badges) {
+					const el = badgeRefsMap.current.get(badge.id);
+					if (el === btn) return badge;
+				}
+				return null;
+			},
+		}),
+		[badges],
+	);
 
 	// rAF loop: sync badge screen positions with viewport transform
 	useEffect(() => {
@@ -114,14 +139,10 @@ export function OverLayer({ badges, scene, transformRef }: OverLayerProps): Reac
 						border: `1.5px solid ${badge.style?.borderColor ?? "transparent"}`,
 						pointerEvents: "auto",
 					}}
-					onClick={(e) => {
-						e.stopPropagation();
-						badge.onClick();
-					}}
 				>
 					{badge.text}
 				</button>
 			))}
 		</div>
 	);
-}
+});

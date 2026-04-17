@@ -61,6 +61,14 @@ Generate a single HTML file containing an `<svg>` element. The SVG uses a dark t
   <!-- DIAGRAM CONTENT GOES HERE -->
 
 </svg>
+
+<!-- Embed the original ASCII diagram source for coordinate mapping.
+     Include only the diagram block content (between the ```diagram fences),
+     not the metadata blocks (code-refs, entities, arrows, links, notes). -->
+<script type="text/plain" id="ascii-source">
+{ASCII_DIAGRAM_BLOCK}
+</script>
+
 </body>
 </html>
 ```
@@ -304,7 +312,11 @@ The generated element becomes:
 
 ## Source Span Mapping
 
-Every element that corresponds to a region in the ASCII source diagram must carry a `data-source-span` attribute so the viewer can map SVG selections back to source text positions.
+The raw ASCII diagram source is embedded in the HTML output as a `<script type="text/plain" id="ascii-source">` tag (see the template above). This is the content between the ` ```diagram ` fences in the input `.txt` file — **not** the metadata blocks (`code-refs`, `entities`, `arrows`, `links`, `notes`).
+
+**Leave the `<script id="ascii-source">` tag empty in the generated file.** The ASCII source is injected separately by running `scripts/embed-ascii-source.sh` after generation.
+
+Every element that corresponds to a region in the ASCII source diagram must carry a `data-source-span` attribute so the viewer can map SVG selections back to source text positions. The `data-source-span` coordinates reference positions within this embedded ASCII source.
 
 ### Format
 

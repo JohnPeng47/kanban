@@ -1,0 +1,214 @@
+```diagram
+STATE HUB AND WORKSPACE REGISTRY
+
+═══ 1. WORKSPACE REGISTRY ═════════════════════════════════════════════════════════════════════════════
+
+  createWorkspaceRegistry initializes from the current working directory. If launched from a git repo
+  it loads workspace context from disk; otherwise it falls back to the first indexed workspace entry.
+
+  Workspace → Terminal Manager → Session Entries mapping:
+
+    WorkspaceRegistry
+      │
+      ├── workspace "abc-123" ──→ TerminalSessionManager ──→ { taskId: "t1", state: "running", ... }
+      │   repoPath: /home/user/my-project       │           { taskId: "t2", state: "idle", ... }
+      │                                          │
+      │                                          └──→ hydrateFromRecord(persisted sessions on disk)
+      │
+      ├── workspace "def-456" ──→ TerminalSessionManager ──→ { taskId: "t3", state: "awaiting_review" }
+      │   repoPath: /home/user/other-project
+      │
+      └── (lazy-loaded: manager created on first ensureTerminalManagerForWorkspace call)
+
+  Key decisions:
+    resolveWorkspaceForStream(requestedId)
+      prunes stale projects (missing on disk, not a git repo) → removes index + state files
+      resolves to requested workspace or falls back to active or first available
+      [→ workspace-sync-cycle] browser connects via this resolution
+
+    buildWorkspaceStateSnapshot(id, path)
+      loads persisted board + sessions from disk, overlays live terminal summaries
+
+    buildProjectsPayload(preferredCurrentProjectId)
+      lists all indexed workspaces, counts tasks per column, returns project summaries
+
+
+═══ 2. STATE HUB EVENT FLOW ════════════════════════════════════════════════════════════════════════════
+
+  createRuntimeStateHub wires up listeners for six event sources. Each source feeds into
+  workspace-scoped or global broadcast paths.
+
+  ┌──────────────────────────────────┐
+  │  RuntimeStateHub                 │
+  │  src/server/runtime-state-hub.ts │
+  └──────────┬───────────────────────┘
+             │
+             │  trackTerminalManager(workspaceId, manager)
+             │  ├── manager.onSummary(summary) ─────────────────────────────┐
+             │  │   terminal session state changes (running/idle/done)      │
+             │  │   [→ pty-launch-pipeline] source of terminal summaries    │
+             │  │                                                           ▼
+             │  │                                              queueTaskSessionSummaryBroadcast
+             │  │
+             │  trackClineTaskSessionService(workspaceId, path, service)
+             │  ├── service.onSummary(summary) ─────────────────────────────┐
+             │  │   Cline task state changes (running/awaiting_review/etc)  │
+             │  │   [→ cline-event-and-state] source of Cline summaries    │
+             │  │   also triggers:                                          │
+             │  │     • broadcastRuntimeWorkspaceStateUpdated on checkpoint │
+             │  │     • broadcastTaskReadyForReview on review transitions   ▼
+             │  │                                              queueTaskSessionSummaryBroadcast
+             │  │
+             │  ├── service.onMessage(taskId, message) ─────────────────────┐
+             │  │   Cline chat messages (user/assistant turns)              │
+             │  │                                                           ▼
+             │  │                                              broadcastTaskChatMessage (immediate)
+             │  │
+             │  workspaceMetadataMonitor
+             │  ├── onMetadataUpdated(workspaceId, metadata) ───────────────┐
+             │  │   polls git state every 1s for active task worktrees      │
+             │  │                                                           ▼
+             │  │                                    sends workspace_metadata_updated to workspace clients
+             │  │
+             │  broadcastRuntimeProjectsUpdated(preferredCurrentProjectId)
+             │  ├── called after task session flushes and project changes ──┐
+             │  │                                                           ▼
+             │  │                                    sends projects_updated to ALL connected clients
+             │  │
+             │  broadcastClineMcpAuthStatusesUpdated(statuses)
+             │  └── MCP server auth state changes ──────────────────────────┐
+             │                                                              ▼
+             │                                       sends mcp_auth_updated to ALL connected clients
+
+
+═══ 3. BATCHING ═══════════════════════════════════════════════════════════════════════════════════════
+
+  Task session summaries (from both terminal manager and Cline service) are batched per workspace
+  in a 150ms window before broadcast. This collapses rapid-fire state transitions into a single
+  payload.
+
+  TASK_SESSION_STREAM_BATCH_MS = 150
+
+  Timeline:
+  ─────────────────────────────────────────────────────────────────────────────────────────────────
+  t=0ms    summary arrives for task "t1"
+           │  pendingTaskSessionSummaries.set("t1", summary)
+           │  start 150ms timer
+           │
+  t=50ms   summary arrives for task "t2"
+           │  pendingTaskSessionSummaries.set("t2", summary)
+           │  timer already running → skip
+           │
+  t=80ms   updated summary arrives for task "t1"
+           │  pendingTaskSessionSummaries.set("t1", updated) ← overwrites previous
+           │  timer already running → skip
+           │
+  t=150ms  timer fires → flushTaskSessionSummaries
+           │  1. collect all pending summaries: [t1(updated), t2]
+           │  2. send task_sessions_updated to workspace clients
+           │  3. trigger broadcastRuntimeProjectsUpdated
+           │  4. clear pending map and timer
+  ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+═══ 4. WEBSOCKET PROTOCOL ════════════════════════════════════════════════════════════════════════════
+
+  Two-phase connection: initial snapshot (full state) then deltas. The connection setup is
+  intentionally ordered to avoid a race condition with workspace metadata.
+
+  Browser                              RuntimeStateHub                        WorkspaceRegistry
+  ───────                              ───────────────                        ─────────────────
+  ws://host/runtime-state
+    ?workspaceId=abc-123
+         │
+         │  handleUpgrade
+         ├────────────────────────────►│
+         │                             │  Phase 1: Resolve + build snapshot
+         │                             │
+         │                             │  1. Add client to global runtimeStateClients
+         │                             │     (NOT yet to workspace-scoped set)
+         │                             │
+         │                             │  2. resolveWorkspaceForStream ─────►│ prune stale projects
+         │                             │                              ◄──────│ return workspace target
+         │                             │
+         │                             │  3. buildProjectsPayload    ─────►│
+         │                             │     buildWorkspaceStateSnapshot ──►│
+         │                             │                              ◄──────│ projects + workspace state
+         │                             │
+         │                             │  4. workspaceMetadataMonitor.connectWorkspace
+         │                             │     (immediate refresh → gets initial metadata)
+         │                             │     NOT yet broadcasting to this client
+         │                             │     because client is not in workspace set
+         │                             │
+         │  { type: "snapshot",        │  5. Send combined snapshot
+         │    currentProjectId,        │◄─────────────────────────────
+         │    projects,                │
+         │    workspaceState,          │  Phase 2: Register for deltas
+         │    workspaceMetadata,       │
+         │    clineSessionContextVer } │  6. Add client to runtimeStateClientsByWorkspaceId
+         │                             │     Add client to runtimeStateWorkspaceIdByClient
+         │                             │
+         │                             │  7. Send any cached clinePreviousSummary entries
+         │                             │     (catches up on live Cline session state)
+         │                             │
+         │  { type: "task_sessions..   │
+         │    summaries: [...] }       │◄─────────────────────────────
+         │                             │
+         │  Phase 2 complete: now      │
+         │  receiving incremental      │
+         │  deltas normally            │
+
+  Race-condition avoidance:
+
+    The client is added to the global set (step 1) BEFORE the snapshot is sent, so global
+    broadcasts (projects_updated, mcp_auth_updated) still reach it during assembly.
+
+    The client is added to the workspace-scoped set (step 6) AFTER the snapshot is sent.
+    This prevents a workspace_metadata_updated delta from arriving before the snapshot,
+    which would give the UI data in the wrong order.
+
+
+═══ 5. CLIENT LIFECYCLE ═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────┐     ┌──────────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
+  │   Connect   │────►│   Receive Snapshot   │────►│   Receive Deltas      │────►│   Disconnect    │
+  │             │     │                      │     │                       │     │                 │
+  │ resolve via │     │ full state:          │     │ incremental:          │     │ cleanup:        │
+  │ resolveWork │     │  projects            │     │  task_sessions_updated│     │ 1. metadata     │
+  │ spaceFor-   │     │  workspaceState      │     │  task_chat_message    │     │    monitor      │
+  │ Stream      │     │  workspaceMetadata   │     │  workspace_state_upd  │     │    disconnect   │
+  │             │     │  clineSessionContext │     │  workspace_metadata_  │     │ 2. remove from  │
+  │ [→ app-and- │     │   Version            │     │   updated             │     │    workspace    │
+  │ hook-wiring]│     │                      │     │  projects_updated     │     │    client set   │
+  │             │     │ catch-up:            │     │  mcp_auth_updated     │     │ 3. remove from  │
+  │             │     │  clinePreviousSummary│     │  cline_session_context│     │    global set   │
+  │             │     │  entries             │     │   _updated            │     │ 4. delete ws→id │
+  │             │     │                      │     │  task_ready_for_review│     │    mapping      │
+  └─────────────┘     └──────────────────────┘     └───────────────────────┘     └─────────────────┘
+
+
+═══ 6. BROADCAST TYPES ═══════════════════════════════════════════════════════════════════════════════
+
+  Message Type                       Scope        Trigger
+  ──────────────────────────────────────────────────────────────────────────────────────────────
+  snapshot                           workspace    initial connection (full state + metadata)
+  task_sessions_updated              workspace    terminal or Cline summary change (batched 150ms)
+  task_chat_message                  workspace    Cline assistant/user message (immediate)
+  task_chat_cleared                  workspace    task chat history cleared (immediate)
+  workspace_state_updated            workspace    board/session state change, checkpoint change
+  workspace_metadata_updated         workspace    git metadata poll detects change (1s interval)
+  projects_updated                   global       project list or task counts changed
+  mcp_auth_updated                   global       MCP server auth status changed
+  cline_session_context_updated      global       Cline session context version bumped
+  task_ready_for_review              workspace    task transitions to awaiting_review
+  error                              per-client   connection failure or workspace removal
+
+
+═══ CROSS-REFERENCES ══════════════════════════════════════════════════════════════════════════════════
+
+  [→ workspace-sync-cycle]  browser-side consumption of the runtime state stream
+  [→ pty-launch-pipeline]   terminal manager is the source of terminal session summaries
+  [→ cline-event-and-state] Cline task session service is the source of Cline summaries/messages
+  [→ app-and-hook-wiring]   browser hooks (useRuntimeState, etc.) that consume the websocket stream
+
+```

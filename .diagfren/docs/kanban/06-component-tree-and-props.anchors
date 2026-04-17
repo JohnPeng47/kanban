@@ -1,0 +1,45 @@
+# anchor-text                       code-ref                                                              label
+DiagramViewer                        web-ui/src/components/diagram-viewer.tsx:19-156                       DiagramViewer component (root of the diagram feature)
+DiagramViewerFallback                web-ui/src/components/diagram-panels/diagram-viewer-fallback.tsx:6    Fallback shown when no diagrams/ dir exists
+DiagramTreePanel                     web-ui/src/components/diagram-panels/diagram-tree-panel.tsx:95-140    Left panel rendering the diagram file tree
+DiagramContentArea                   web-ui/src/components/diagram-panels/diagram-content-area.tsx:289-359 Middle panel: parses html → scene, renders DiagramScene
+DiagramScene (internal)              web-ui/src/components/diagram-panels/diagram-content-area.tsx:29-272  Internal scene-level component (badges, popups, navigate)
+CodeVizStatusIndicator               web-ui/src/components/diagram-panels/code-viz-status-indicator.tsx:26 Connection status badge (top-right of content area)
+PopupDiagramOverlay                  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-155 Stacked diagram-in-diagram modal overlay
+SceneInput                           web-ui/src/diagram/input/scene-input.tsx:79-429                       Pointer hit-testing, selection, tooltips
+Viewport                             web-ui/src/diagram/rendering/viewport.tsx:50-471                      Pan/zoom container that mounts the SVG
+OverLayer                            web-ui/src/diagram/rendering/over-layer.tsx:70-148                    rAF-synced overlay badges
+ViewportHandle                       web-ui/src/diagram/rendering/viewport.tsx:42-46                       Imperative handle exposed by Viewport
+OverLayerHandle                      web-ui/src/diagram/rendering/over-layer.tsx:55-58                     Imperative handle exposed by OverLayer
+ViewportSceneEvent                   web-ui/src/diagram/rendering/viewport.tsx:20-24                       Event shape emitted by Viewport for scene interaction
+ResizeHand                           web-ui/src/resize/resize-handle.tsx:4                                 ResizeHandle component (ew/ns separator)
+useDiagramViewer(workspaceId, initialPath)   web-ui/src/hooks/use-diagram-viewer.ts:49                      Central hook: tree, content, selectedPath, jump protocol
+useCodeVizStatus(workspaceId)        web-ui/src/hooks/use-code-viz-status.ts:14                           30s poll for Code Viz extension status
+useDiagramAgentPanel(agentPanelInput)   web-ui/src/hooks/use-diagram-agent-panel.tsx:45                    Optional right-side agent panel renderer
+useDiagramViewerLayout({ containerWidth })   web-ui/src/resize/use-diagram-viewer-layout.ts:49              Tree/agent panel width persistence + clamping
+useDiagram(content)                  web-ui/src/diagram/use-diagram.ts:9                                   Parses html into a Scene instance
+extractAsciiSource(content)          web-ui/src/diagram/diagram-data.ts:1                                  Extracts embedded ASCII source from diagram html
+handleNavigate                       web-ui/src/components/diagram-panels/diagram-content-area.tsx:140-164 Routes interactive clicks (alt/modal/link/fallthrough)
+fireCodeJump                         web-ui/src/components/diagram-panels/diagram-content-area.tsx:57-76   TRPC navigate → open file in editor
+openPopup                            web-ui/src/components/diagram-panels/diagram-content-area.tsx:78-110  Fetch modal target and push onto popupStack
+executeJump                          web-ui/src/components/diagram-panels/diagram-content-area.tsx:112-138 Same-diagram centerOn or cross-diagram onRequestJump
+identifyClickTarget                  web-ui/src/diagram/input/scene-input.tsx:35-57                        Hit-test helper: overlay → svg → miss
+handleSceneClick                     web-ui/src/diagram/input/scene-input.tsx:323-384                      Top-level click dispatcher inside SceneInput
+handleSelectionDrag                  web-ui/src/diagram/input/scene-input.tsx:185-209                      Lasso drag preview update
+handleSelectionDragEnd               web-ui/src/diagram/input/scene-input.tsx:222-309                      Commit lasso selection + clipboard side-effects
+requestJump                          web-ui/src/hooks/use-diagram-viewer.ts:49                             requestJump from useDiagramViewer (path + elementId)
+consumeJump                          web-ui/src/hooks/use-diagram-viewer.ts:49                             consumeJump (clears pendingJumpElementId)
+centerOn                             web-ui/src/diagram/rendering/viewport.tsx:42                          Viewport.centerOn imperative method
+identifyOverlay                      web-ui/src/diagram/rendering/viewport.tsx:45                          Viewport.identifyOverlay imperative method
+OverlayBadge                         web-ui/src/diagram/types.ts:1                                         OverlayBadge type (anchor + style + interactive)
+InteractiveData                      web-ui/src/diagram/types.ts:1                                         InteractiveData shape (ref, modal, link, navTarget)
+Scene                                web-ui/src/diagram/rendering/scene.ts:1                               Scene interface (getElement, getWorldBounds, hitTest…)
+Transform                            web-ui/src/diagram/types.ts:1                                         Transform type { tx, ty, scale }
+transformRef                         web-ui/src/diagram/rendering/viewport.tsx:66                          Mutable ref to current pan/zoom transform
+transformDivRef                      web-ui/src/diagram/rendering/viewport.tsx:65                          Ref to the div that wraps the mounted SVG
+[→ system-and-data-flow]             docs/kanban/01-system-and-data-flow.txt:1              Big-picture 3-tier architecture + request sequences
+[→ viewer-layout]                    docs/kanban/02-viewer-layout.txt:1                     DiagramViewer layout, useDiagramViewer state, jump protocol
+[→ overlayer-and-scene]              docs/kanban/04-overlayer-and-scene.txt:1               OverLayer + Scene/SvgScene/SceneElement overview
+[→ overlayer-and-scene-redraw]       docs/kanban/04-overlayer-and-scene-redraw.txt:1        OverLayer + Scene wired as a connected flow
+[→ svgscene-detail]                  docs/kanban/04-svgscene-detail.txt:1                   SvgScene implementation deep dive
+[→ click-flow]                       docs/kanban/diagram_start.txt:1                        Click flow — unified handler routing

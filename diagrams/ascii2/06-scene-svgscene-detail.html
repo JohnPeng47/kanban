@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><title>SvgScene Implementation Detail</title>
+  <style>body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; } svg { display: block; width: 100%; height: 100%; }</style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1680" font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace" font-size="11">
+  <style>
+    text { fill: #8B949E; } .white { fill: #E6EDF3; } .blue { fill: #4C9AFF; } .green { fill: #3FB950; } .violet { fill: #A371F7; } .orange { fill: #D29922; } .red { fill: #F85149; } .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; } .heading { font-size: 13px; font-weight: 600; } .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; } @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/></marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/></marker>
+  </defs>
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title"
+     data-interactive="ETI"
+     data-source-span="0:0-0:50"
+     data-entity-name="title"
+     data-entity-kind="text"
+     data-entity-desc="Diagram title"
+     data-code-ref-id=""
+     class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">SVGSCENE IMPLEMENTATION DETAIL</text>
+  </g>
+
+  <!-- ═══ SvgScene Implementation Detail (top-level container) ═══ -->
+  <g data-reflow-group="svgscene-impl"
+     data-interactive="ESS"
+     data-ref="web-ui/src/diagram/rendering/svg-scene.ts:52-521"
+     data-category="module"
+     data-label="SvgScene Implementation"
+     data-source-span="1:0-109:134"
+     data-entity-name="SvgScene Implementation"
+     data-entity-kind="box"
+     data-entity-desc="Top-level SvgScene implementation detail container"
+     data-code-ref-id="CSV"
+     class="fade-section" style="animation-delay: 0.05s">
+
+    <rect x="20" y="50" width="1060" height="1600" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
+    <text x="32" y="72" class="blue heading"
+          data-tt="svg-scene.ts:52 — Top-level SvgScene implementation detail container">
+      SvgScene Implementation Detail [ESS]
+    </text>
+
+    <!-- Internal Maps -->
+    <g data-reflow-group="internal-maps"
+       data-interactive="EIM"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:53-58"
+       data-category="module"
+       data-label="Internal Maps"
+       data-source-span="4:4-13:50"
+       data-entity-name="Internal Maps"
+       data-entity-kind="box"
+       data-entity-desc="Four internal Map stores"
+       data-entity-parent="ESS"
+       data-code-ref-id="CIM"
+       class="fade-section" style="animation-delay: 0.1s">
+
+      <rect x="40" y="90" width="400" height="130" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="110" class="blue"
+            data-tt="svg-scene.ts:53 — Four internal Map stores">
+        Internal Maps [EIM]
+      </text>
+
+      <g data-interactive="EIM1"
+         data-source-span="7:4-11:46"
+         data-entity-name="map fields"
+         data-entity-kind="text"
+         data-entity-desc="elements, domElements, visualRects, worldBoundsCache"
+         data-entity-parent="EIM"
+         data-code-ref-id="CIM">
+        <text x="52" y="134" class="white">[EIM1]</text>
+        <text x="52" y="152" class="dim subhead">elements: Map&lt;id, SceneElement&gt;</text>
+        <text x="52" y="168" class="dim subhead">domElements: Map&lt;id, SVGGElement&gt;</text>
+        <text x="52" y="184" class="dim subhead">visualRects: Map&lt;id, SVGRectElement&gt;</text>
+        <text x="52" y="200" class="dim subhead">worldBoundsCache: Map&lt;id, Rect&gt;</text>
+      </g>
+    </g>
+
+    <!-- Constructor Flow -->
+    <g data-reflow-group="constructor-flow"
+       data-interactive="ECF"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:60-80"
+       data-category="module"
+       data-label="Constructor Flow"
+       data-source-span="4:52-13:104"
+       data-entity-name="Constructor Flow"
+       data-entity-kind="box"
+       data-entity-desc="4-step constructor: viewBox, overflow, styles, tree"
+       data-entity-parent="ESS"
+       data-code-ref-id="CCF"
+       class="fade-section" style="animation-delay: 0.15s">
+
+      <rect x="500" y="90" width="560" height="130" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="512" y="110" class="blue"
+            data-tt="svg-scene.ts:60 — 4-step constructor: viewBox, overflow, styles, tree">
+        Constructor Flow [ECF]
+      </text>
+
+      <g data-interactive="ECF1"
+         data-source-span="7:52-11:100"
+         data-entity-name="steps"
+         data-entity-kind="text"
+         data-entity-desc="Remove viewBox, set overflow, inject styles, build tree"
+         data-entity-parent="ECF"
+         data-code-ref-id="CCF">
+        <text x="512" y="134" class="white">[ECF1]</text>
+        <text x="512" y="152" class="dim subhead">1. Remove viewBox, set width/height for 1:1 rendering</text>
+        <text x="512" y="168" class="dim subhead">2. Set overflow:visible, display:block</text>
+        <text x="512" y="184" class="dim subhead">3. injectInteractionStyles(svg) [CIS]</text>
+        <text x="512" y="200" class="dim subhead">4. buildElementTree() [CBT]</text>
+      </g>
+    </g>
+
+    <!-- Arrow: ECF → EIM (Constructor populates internal maps) -->
+    <g data-arrow
+       data-arrow-src="ECF"
+       data-arrow-target="EIM"
+       data-arrow-desc="Constructor populates internal maps"
+       data-source-span="13:50-13:52"
+       class="fade-section" style="animation-delay: 0.18s">
+      <line x1="500" y1="155" x2="440" y2="155" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Arrow: ECF → EBT (Step 4: buildElementTree()) -->
+    <g data-arrow
+       data-arrow-src="ECF"
+       data-arrow-target="EBT"
+       data-arrow-desc="Step 4: buildElementTree()"
+       data-source-span="13:80-15:80"
+       class="fade-section" style="animation-delay: 0.2s">
+      <line x1="700" y1="220" x2="700" y2="244" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Arrow: ECF → EIS (Step 3: injectInteractionStyles) -->
+    <g data-arrow
+       data-arrow-src="ECF"
+       data-arrow-target="EIS"
+       data-arrow-desc="Step 3: injectInteractionStyles"
+       data-source-span="11:80-73:80"
+       class="fade-section" style="animation-delay: 0.22s">
+      <path d="M1050,200 L1050,860" fill="none" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- ═══ buildElementTree() ═══ -->
+    <g data-reflow-group="build-element-tree"
+       data-interactive="EBT"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:126-206"
+       data-category="module"
+       data-label="buildElementTree()"
+       data-source-span="15:4-45:100"
+       data-entity-name="buildElementTree()"
+       data-entity-kind="box"
+       data-entity-desc="Tree construction from SVG DOM"
+       data-entity-parent="ESS"
+       data-code-ref-id="CBT"
+       class="fade-section" style="animation-delay: 0.25s">
+
+      <rect x="40" y="250" width="1020" height="380" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="270" class="orange heading"
+            data-tt="svg-scene.ts:126 — Tree construction from SVG DOM">
+        buildElementTree() [EBT]
+      </text>
+
+      <g data-interactive="EBT1"
+         data-source-span="18:4-22:84"
+         data-entity-name="selector + root"
+         data-entity-kind="text"
+         data-entity-desc="Selector query and root element creation"
+         data-entity-parent="EBT"
+         data-code-ref-id="CBT">
+        <text x="52" y="294" class="white">[EBT1]</text>
+        <text x="200" y="294" class="dim subhead">selector: "[data-reflow-group], [data-interactive], [data-arrow]"</text>
+        <text x="52" y="318" class="dim subhead">1. Create root element (id="root", parentId=null)</text>
+        <text x="52" y="340" class="dim subhead">2. querySelectorAll → tagged &lt;g&gt; elements</text>
+      </g>
+
+      <g data-interactive="EBT2"
+         data-source-span="25:4-42:84"
+         data-entity-name="resolve + per-element"
+         data-entity-kind="text"
+         data-entity-desc="resolveElementId, readMetadata, findVisualRect, parent, bounds, interactive, reflow"
+         data-entity-parent="EBT"
+         data-code-ref-id="CBT">
+        <text x="52" y="370" class="white">[EBT2]</text>
+        <text x="52" y="390" class="dim subhead">3. resolveElementId(g) [CRI]          4. For each (g, id):</text>
+        <text x="70" y="412" class="dim subhead">├── data-reflow-group → its value        ├── readMetadata(g) → all data-* attrs</text>
+        <text x="70" y="430" class="dim subhead">├── data-interactive  → its value        ├── findVisualRect(g) → direct &lt;rect&gt; child</text>
+        <text x="70" y="448" class="dim subhead">├── data-arrow        → "arrow-{n}"</text>
+        <text x="70" y="466" class="dim subhead">└── none              → skip             ├── Walk DOM ancestry → parentId [CPA]</text>
+        <text x="70" y="484" class="dim subhead">                                         │   no ancestor → parentId = "root"</text>
+        <text x="70" y="504" class="dim subhead">                                         ├── g.getBBox() → localBounds [CLB]</text>
+        <text x="70" y="524" class="dim subhead">                                         ├── parseInteractiveData(id, metadata) → interactive [CPI]</text>
+        <text x="70" y="542" class="dim subhead">                                         │   parses: ref, category, label, tooltip, navTarget, modal, link</text>
+        <text x="70" y="562" class="dim subhead">                                         └── reflow: { originalBounds } if data-reflow-group or data-arrow</text>
+      </g>
+
+      <g data-interactive="EBT3"
+         data-source-span="43:4-44:52"
+         data-entity-name="root bounds"
+         data-entity-kind="text"
+         data-entity-desc="Root localBounds = svg.width x svg.height"
+         data-entity-parent="EBT"
+         data-code-ref-id="CBT">
+        <text x="52" y="590" class="white">[EBT3]</text>
+        <text x="52" y="608" class="dim subhead">5. Root localBounds = svg.width x svg.height</text>
+      </g>
+    </g>
+
+    <!-- Arrow: EBT → EBS (Tree elements feed bounds system) -->
+    <g data-arrow
+       data-arrow-src="EBT"
+       data-arrow-target="EBS"
+       data-arrow-desc="Tree elements feed bounds system"
+       data-source-span="45:4-47:4"
+       class="fade-section" style="animation-delay: 0.3s">
+      <line x1="260" y1="630" x2="260" y2="660" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- ═══ Bounds System ═══ -->
+    <g data-reflow-group="bounds-system"
+       data-interactive="EBS"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:230-267"
+       data-category="module"
+       data-label="Bounds System"
+       data-source-span="47:4-72:56"
+       data-entity-name="Bounds System"
+       data-entity-kind="box"
+       data-entity-desc="Local bounds, world bounds (cached), cache invalidation"
+       data-entity-parent="ESS"
+       data-code-ref-id="CBS"
+       class="fade-section" style="animation-delay: 0.35s">
+
+      <rect x="40" y="666" width="470" height="310" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="686" class="blue"
+            data-tt="svg-scene.ts:230 — Local bounds, world bounds (cached), cache invalidation">
+        Bounds System [EBS]
+      </text>
+
+      <g data-interactive="EBS1"
+         data-source-span="50:4-52:52"
+         data-entity-name="getLocalBounds"
+         data-entity-kind="text"
+         data-entity-desc="Return element.localBounds directly"
+         data-entity-parent="EBS"
+         data-code-ref-id="CBS">
+        <text x="52" y="710" class="white">[EBS1]</text>
+        <text x="52" y="728" class="dim subhead">getLocalBounds(id):</text>
+        <text x="60" y="744" class="dim subhead">└─ return element.localBounds directly</text>
+      </g>
+
+      <g data-interactive="EBS2"
+         data-source-span="54:4-61:52"
+         data-entity-name="getWorldBounds"
+         data-entity-kind="text"
+         data-entity-desc="Cache check, ancestor transform compose, transformRect, store"
+         data-entity-parent="EBS"
+         data-code-ref-id="CWB">
+        <text x="52" y="768" class="white">[EBS2]</text>
+        <text x="52" y="786" class="dim subhead">getWorldBounds(id): [CWB]</text>
+        <text x="60" y="804" class="dim subhead">├── check worldBoundsCache → return if cached</text>
+        <text x="60" y="822" class="dim subhead">├── getAncestorTransform(id) [CAT]</text>
+        <text x="60" y="840" class="dim subhead">│     walk parent chain to root</text>
+        <text x="60" y="858" class="dim subhead">│     compose transforms in order</text>
+        <text x="60" y="876" class="dim subhead">├── transformRect(localBounds, ancestorTransform)</text>
+        <text x="60" y="894" class="dim subhead">└── store in cache</text>
+      </g>
+
+      <g data-interactive="EBS3"
+         data-source-span="63:4-71:52"
+         data-entity-name="cache invalidation"
+         data-entity-kind="text"
+         data-entity-desc="setTransform/growVisualBounds/addElement → invalidate recursively"
+         data-entity-parent="EBS"
+         data-code-ref-id="CCI">
+        <text x="52" y="918" class="white">[EBS3]</text>
+        <text x="52" y="936" class="dim subhead">Cache invalidation: [CCI]</text>
+        <text x="60" y="952" class="dim subhead">setTransform(id, t) → invalidateWorldBoundsCache</text>
+        <text x="60" y="968" class="dim subhead">growVisualBounds(id) → invalidateWorldBoundsCache</text>
+      </g>
+    </g>
+
+    <!-- ═══ Hit Testing ═══ -->
+    <g data-reflow-group="hit-testing"
+       data-interactive="EHZ"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:345-375"
+       data-category="module"
+       data-label="Hit Testing"
+       data-source-span="47:56-69:100"
+       data-entity-name="Hit Testing"
+       data-entity-kind="box"
+       data-entity-desc="Point query and area query hit testing"
+       data-entity-parent="ESS"
+       data-code-ref-id="CHZ"
+       class="fade-section" style="animation-delay: 0.4s">
+
+      <rect x="530" y="666" width="530" height="270" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="542" y="686" class="blue"
+            data-tt="svg-scene.ts:345 — Point query and area query hit testing">
+        Hit Testing [EHZ]
+      </text>
+
+      <g data-interactive="EHZ1"
+         data-source-span="50:56-63:96"
+         data-entity-name="hitTest"
+         data-entity-kind="text"
+         data-entity-desc="elementFromPoint → svg.contains → closest selector → id"
+         data-entity-parent="EHZ"
+         data-code-ref-id="CHP">
+        <text x="542" y="710" class="white">[EHZ1]</text>
+        <text x="542" y="728" class="dim subhead">hitTest(screenPoint) — point query [CHP]</text>
+        <text x="554" y="748" class="dim subhead">├── document.elementFromPoint(x, y)</text>
+        <text x="554" y="766" class="dim subhead">├── check svg.contains(domElement)</text>
+        <text x="554" y="784" class="dim subhead">├── closest("[data-reflow-group],</text>
+        <text x="554" y="802" class="dim subhead">│           [data-interactive],</text>
+        <text x="554" y="820" class="dim subhead">│           [data-arrow]")</text>
+        <text x="554" y="838" class="dim subhead">└── lookup in domElements map → id</text>
+      </g>
+
+      <g data-interactive="EHZ2"
+         data-source-span="65:56-68:96"
+         data-entity-name="hitTestRect"
+         data-entity-kind="text"
+         data-entity-desc="Iterate interactive elements, contain or intersect mode"
+         data-entity-parent="EHZ"
+         data-code-ref-id="CHR">
+        <text x="542" y="862" class="white">[EHZ2]</text>
+        <text x="542" y="880" class="dim subhead">hitTestRect(sceneRect, mode) — area query [CHR]</text>
+        <text x="554" y="898" class="dim subhead">├── for each element with interactive != null:</text>
+        <text x="554" y="916" class="dim subhead">│     getWorldBounds(id)</text>
+      </g>
+    </g>
+
+    <!-- Arrow: EBS → EHZ (getWorldBounds used by hitTestRect) -->
+    <g data-arrow
+       data-arrow-src="EBS"
+       data-arrow-target="EHZ"
+       data-arrow-desc="getWorldBounds used by hitTestRect"
+       data-source-span="61:52-61:56"
+       class="fade-section" style="animation-delay: 0.42s">
+      <line x1="510" y1="880" x2="530" y2="880" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- ═══ Injected CSS Styles ═══ -->
+    <g data-reflow-group="injected-css"
+       data-interactive="EIS"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:82-124"
+       data-category="module"
+       data-label="Injected CSS Styles"
+       data-source-span="72:56-90:100"
+       data-entity-name="Injected CSS Styles"
+       data-entity-kind="box"
+       data-entity-desc="Interaction and selection CSS injected into SVG"
+       data-entity-parent="ESS"
+       data-code-ref-id="CIS"
+       class="fade-section" style="animation-delay: 0.45s">
+
+      <rect x="530" y="956" width="530" height="230" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="542" y="976" class="blue"
+            data-tt="svg-scene.ts:82 — Interaction and selection CSS injected into SVG">
+        Injected CSS Styles [EIS]
+      </text>
+
+      <g data-interactive="EIS1"
+         data-source-span="74:56-77:96"
+         data-entity-name="interactive styles"
+         data-entity-kind="text"
+         data-entity-desc="cursor:pointer, hover/selected brightness + drop-shadow"
+         data-entity-parent="EIS"
+         data-code-ref-id="CIS">
+        <text x="542" y="1000" class="dim subhead">[EIS1]</text>
+        <text x="542" y="1016" class="dim subhead">[data-interactive]:</text>
+        <text x="554" y="1032" class="dim subhead">cursor:pointer, transition filter</text>
+        <text x="554" y="1048" class="dim subhead">:hover / .selected → brightness(1.5) + drop-shadow</text>
+      </g>
+
+      <g data-interactive="EIS2"
+         data-source-span="79:56-82:96"
+         data-entity-name="selected rect"
+         data-entity-kind="text"
+         data-entity-desc=".selected > rect: stroke #4C9AFF, stroke-width 2"
+         data-entity-parent="EIS"
+         data-code-ref-id="CIS">
+        <text x="542" y="1072" class="dim subhead">[EIS2]</text>
+        <text x="542" y="1088" class="dim subhead">.selected > rect:first-of-type:</text>
+        <text x="554" y="1104" class="dim subhead">stroke: #4C9AFF, stroke-width: 2, drop-shadow</text>
+      </g>
+
+      <g data-interactive="EIS3"
+         data-source-span="84:56-85:96"
+         data-entity-name="modal/link dashed"
+         data-entity-kind="text"
+         data-entity-desc="data-modal purple dashed, data-link gold dashed"
+         data-entity-parent="EIS"
+         data-code-ref-id="CIS">
+        <text x="542" y="1128" class="dim subhead">[EIS3]</text>
+        <text x="542" y="1144" class="dim subhead">[data-modal] > rect: purple dashed, animated dash-modal</text>
+        <text x="542" y="1160" class="dim subhead">[data-link]  > rect: gold dashed, animated dash-link</text>
+      </g>
+
+      <g data-interactive="EIS4"
+         data-source-span="87:56-88:96"
+         data-entity-name="injection point"
+         data-entity-kind="text"
+         data-entity-desc="<style> inside SVG before first child"
+         data-entity-parent="EIS"
+         data-code-ref-id="CIS">
+        <text x="542" y="1180" class="dim subhead">[EIS4] Injected as &lt;style&gt; inside SVG, before first child</text>
+      </g>
+    </g>
+
+    <!-- ═══ Transform Application ═══ -->
+    <g data-reflow-group="transform-app"
+       data-interactive="ETA"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:269-310"
+       data-category="module"
+       data-label="Transform Application"
+       data-source-span="74:4-90:52"
+       data-entity-name="Transform Application"
+       data-entity-kind="box"
+       data-entity-desc="setTransform and getWorldTransform"
+       data-entity-parent="ESS"
+       data-code-ref-id="CTA"
+       class="fade-section" style="animation-delay: 0.5s">
+
+      <rect x="40" y="1000" width="470" height="190" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="1020" class="blue"
+            data-tt="svg-scene.ts:269 — setTransform and getWorldTransform">
+        Transform Application [ETA]
+      </text>
+
+      <g data-interactive="ETA1"
+         data-source-span="77:4-83:52"
+         data-entity-name="setTransform"
+         data-entity-kind="text"
+         data-entity-desc="Update, invalidate cache, apply CSS translate (non-root)"
+         data-entity-parent="ETA"
+         data-code-ref-id="CST">
+        <text x="52" y="1044" class="white">[ETA1]</text>
+        <text x="52" y="1062" class="dim subhead">setTransform(id, transform): [CST]</text>
+        <text x="60" y="1080" class="dim subhead">├── update element.transform</text>
+        <text x="60" y="1098" class="dim subhead">├── invalidateWorldBoundsCache(id)</text>
+        <text x="60" y="1116" class="dim subhead">└── if id != "root":</text>
+        <text x="60" y="1134" class="dim subhead">    g.style.transform = translate({tx}px, {ty}px)</text>
+      </g>
+
+      <g data-interactive="ETA2"
+         data-source-span="85:4-89:48"
+         data-entity-name="getWorldTransform"
+         data-entity-kind="text"
+         data-entity-desc="Walk element → root, compose all transforms"
+         data-entity-parent="ETA"
+         data-code-ref-id="CWT">
+        <text x="52" y="1158" class="white">[ETA2]</text>
+        <text x="52" y="1176" class="dim subhead">getWorldTransform(id): [CWT]</text>
+        <text x="60" y="1192" class="dim subhead">walk element → root, compose all transforms (element's own included)</text>
+      </g>
+    </g>
+
+    <!-- Arrow: ETA → EBS (setTransform → invalidateWorldBoundsCache) -->
+    <g data-arrow
+       data-arrow-src="ETA"
+       data-arrow-target="EBS"
+       data-arrow-desc="setTransform → invalidateWorldBoundsCache"
+       data-source-span="83:4-83:52"
+       class="fade-section" style="animation-delay: 0.52s">
+      <line x1="260" y1="1000" x2="260" y2="976" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- ═══ Dynamic Mutations ═══ -->
+    <g data-reflow-group="dynamic-mutations"
+       data-interactive="EDM"
+       data-ref="web-ui/src/diagram/rendering/svg-scene.ts:322-505"
+       data-category="module"
+       data-label="Dynamic Mutations"
+       data-source-span="92:4-107:100"
+       data-entity-name="Dynamic Mutations"
+       data-entity-kind="box"
+       data-entity-desc="growVisualBounds, addElement, removeElement, addSubtree"
+       data-entity-parent="ESS"
+       data-code-ref-id="CDM"
+       class="fade-section" style="animation-delay: 0.55s">
+
+      <rect x="40" y="1220" width="1020" height="280" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="1240" class="orange heading"
+            data-tt="svg-scene.ts:322 — growVisualBounds, addElement, removeElement, addSubtree">
+        Dynamic Mutations [EDM]
+      </text>
+
+      <g data-interactive="EDM1"
+         data-source-span="95:4-99:64"
+         data-entity-name="grow/add/remove"
+         data-entity-kind="text"
+         data-entity-desc="growVisualBounds, addElement, removeElement signatures + steps"
+         data-entity-parent="EDM"
+         data-code-ref-id="CDM">
+        <text x="52" y="1264" class="white">[EDM1]</text>
+        <text x="52" y="1284" class="dim subhead">growVisualBounds(id, dW, dH) [CGV]         addElement(id, dom, parentId) [CAE]         removeElement(id) [CRE]</text>
+        <text x="60" y="1304" class="dim subhead">├── update SVGRectElement attrs           ├── readMetadata, findVisualRect            ├── recurse: remove all children</text>
+        <text x="60" y="1324" class="dim subhead">├── update element.localBounds            ├── getBBox → localBounds                   ├── splice from parent.childIds</text>
+        <text x="60" y="1344" class="dim subhead">└── invalidate cache                      ├── parse interactive + reflow              └── delete from all maps</text>
+        <text x="60" y="1364" class="dim subhead">                                          ├── add to elements + domElements</text>
+        <text x="60" y="1384" class="dim subhead">                                          ├── push to parent.childIds</text>
+        <text x="60" y="1404" class="dim subhead">                                          └── invalidate parent cache</text>
+      </g>
+
+      <g data-interactive="EDM2"
+         data-source-span="101:4-106:64"
+         data-entity-name="addSubtree"
+         data-entity-kind="text"
+         data-entity-desc="querySelectorAll, build domToId map, resolve parents, addElement each"
+         data-entity-parent="EDM"
+         data-code-ref-id="CAS">
+        <text x="52" y="1428" class="white">[EDM2]</text>
+        <text x="52" y="1448" class="dim subhead">addSubtree(rootDom, parentId) [CAS]</text>
+        <text x="60" y="1468" class="dim subhead">├── querySelectorAll tagged &lt;g&gt;</text>
+        <text x="60" y="1488" class="dim subhead">├── build local domToId map</text>
+      </g>
+    </g>
+
+    <!-- Arrow: EDM → EBS (growVisualBounds/addElement → invalidate cache) -->
+    <g data-arrow
+       data-arrow-src="EDM"
+       data-arrow-target="EBS"
+       data-arrow-desc="growVisualBounds/addElement → invalidate cache"
+       data-source-span="99:4-99:52"
+       class="fade-section" style="animation-delay: 0.58s">
+      <path d="M40,1350 L30,1350 L30,900 L40,900" fill="none" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Arrow: EDM → EIM (Mutations update internal maps) -->
+    <g data-arrow
+       data-arrow-src="EDM"
+       data-arrow-target="EIM"
+       data-arrow-desc="Mutations update internal maps"
+       data-source-span="100:4-100:52"
+       class="fade-section" style="animation-delay: 0.6s">
+      <path d="M40,1280 L25,1280 L25,170 L40,170" fill="none" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+  </g><!-- end SvgScene Implementation -->
+
+</svg>

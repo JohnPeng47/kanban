@@ -1,0 +1,176 @@
+```diagram
+KANBAN PTY LAUNCH PIPELINE
+Covers: runtime-api.ts, session-manager.ts, agent-session-adapters.ts,
+        pty-session.ts, session-state-machine.ts, terminal-protocol-filter.ts,
+        terminal-state-mirror.ts, ws-server.ts
+
+═══ SECTION 1 — ENTRY POINT ═════════════════════════════════════════════════════════════════════
+
+  Browser calls startTaskSession via TRPC. The runtime resolves the agent
+  and forks between Cline SDK and PTY paths.
+
+  startTaskSession (TRPC)
+    │
+    ├─ agent === "cline"? ──YES──→ Cline SDK path
+    │                              [→ cline-architecture]
+    │
+    └─ NO (PTY path):
+         resolveAgentCommand() → { binary, args }
+           [→ trpc-router-and-api-map]
+              │
+              ▼
+         terminalManager.startTaskSession()
+              │
+              ▼
+         captureTaskTurnCheckpoint() → return { ok: true }
+
+  For trash restores, the runtime checks for a preserved agentId first.
+  If it finds a non-Cline agent, the Cline SDK probe is skipped entirely
+  to avoid multi-second cold-start latency.
+
+
+═══ SECTION 2 — AGENT ADAPTER ═══════════════════════════════════════════════════════════════════
+
+  Before spawning the PTY, prepareAgentLaunch() dispatches to the per-agent
+  adapter, which customizes binary, args, env, hooks, and cleanup.
+
+  prepareAgentLaunch(input)
+    │
+    ├─ Encode attached images into prompt text
+    │
+    └─ ADAPTERS[agentId].prepare(input)
+         → Returns { binary, args, env, cleanup, deferredStartupInput,
+                     detectOutputTransition }
+         [→ agent-adapter-catalog]
+
+  Each adapter tailors the launch: Claude adds hook commands and settings JSON,
+  Codex wraps the binary and monitors JSONL logs, Gemini sets --yolo mode, etc.
+
+
+═══ SECTION 3 — SESSION MANAGER ═════════════════════════════════════════════════════════════════
+
+  TerminalSessionManager.startTaskSession() orchestrates everything from
+  adapter preparation through PTY spawn, filter attachment, and broadcast.
+
+  startTaskSession() flow:
+
+    ensureEntry(taskId)                    Get or create session bookkeeping
+         │
+         ▼
+    Guard: already running? ──→ return existing summary (no-op)
+    Guard: stale session?   ──→ stop it, dispose old mirror
+         │
+         ▼
+    Create TerminalStateMirror             Headless xterm that mirrors all output
+         │                                 so browser can restore on reconnect
+         ▼
+    prepareAgentLaunch()                   Per-agent adapter customization
+         │                                 [→ agent-adapter-catalog]
+         ▼
+    buildTerminalEnvironment()             Merge process.env + adapter env + TERM vars
+         │
+         ▼
+    PtySession.spawn()                     Fork the agent process via node-pty
+         │                                 [→ pty-session-internals]
+         ▼
+    Wire onData + onExit callbacks         (See Sections 4 and 5)
+         │
+         ▼
+    updateSummary → state: "running"       Broadcast to all summary listeners
+         │                                 [→ state-hub-and-registry]
+         ▼
+    Auto-restart on unexpected exit        Rate-limited: max 3 per 5s window
+
+
+═══ SECTION 4 — OUTPUT PIPELINE ═════════════════════════════════════════════════════════════════
+
+  Data flows from the PTY through several stages before reaching the browser.
+
+  ┌─────────────┐     ┌────────────────────┐     ┌──────────────────────┐
+  │  PTY stdout  │────→│  Protocol Filter    │────→│  Terminal State       │
+  │  (node-pty)  │     │                    │     │  Mirror              │
+  └─────────────┘     │  Intercepts OSC 10/ │     │  (headless xterm)    │
+                      │  11 color queries,  │     │  Serialized on       │
+                      │  suppresses DA      │     │  reconnect via       │
+                      │  queries, handles   │     │  getSnapshot()       │
+                      │  split escapes      │     └──────────┬───────────┘
+                      └───────────┬────────┘                │
+                                  │                          │
+                      ┌───────────▼────────┐                │
+                      │  Transition Detect  │                │
+                      │  (adapter-specific) │                │
+                      │  e.g. Codex matches │                │
+                      │  /\s*›/ in stripped  │                │
+                      │  output             │                │
+                      └───────────┬────────┘                │
+                                  │                          │
+                      ┌───────────▼────────┐                │
+                      │  Session Listeners  │◄───────────────┘
+                      │  onOutput / onState │
+                      └───────────┬────────┘
+                                  │
+                      ┌───────────▼────────┐
+                      │  WebSocket Bridge   │
+                      │  io: binary data    │
+                      │  control: JSON msgs │
+                      │                    │
+                      │  Backpressure:      │
+                      │  buffered ≥ 16KB    │
+                      │  → pause PTY        │
+                      │  buffered < 4KB     │
+                      │  → resume PTY       │
+                      │                    │
+                      │  Multi-viewer: PTY  │
+                      │  pauses when ANY is │
+                      │  slow, resumes when │
+                      │  ALL catch up       │
+                      └───────────┬────────┘
+                                  │
+                      ┌───────────▼────────┐
+                      │  Browser Terminal   │
+                      │  (xterm.js WebGL)   │
+                      └────────────────────┘
+
+
+═══ SECTION 5 — STATE TRANSITIONS ═══════════════════════════════════════════════════════════════
+
+  Agent output triggers state transitions via two paths: adapter-specific
+  output detectors and hook commands (kanban hooks ingest).
+
+  PTY output (decoded)
+    │
+    ▼
+  detectOutputTransition()  ←── adapter-specific regex
+    │
+    ▼
+  SessionTransitionEvent
+    │  { agent.prompt-ready | hook.to_review | hook.to_in_progress | process.exit }
+    │
+    ▼
+  reduceSessionTransition()  ←── pure state machine
+    │
+    ▼
+  updateSummary → emitSummary()
+    [→ state-hub-and-registry]
+
+  State machine:
+
+              hook.to_review
+     ┌───────────────────────────┐
+     │                           ▼
+  running ◄──────────── awaiting_review
+     │   hook.to_in_progress     ▲
+     │   agent.prompt-ready      │ (only when reason
+     │                           │  is attention/hook/error)
+     │         process.exit      │
+     ├───────────────────────────┤
+     │                           │
+     ▼                           ▼
+   idle               awaiting_review (reason: exit/error)
+   (start)            interrupted (if signal)
+
+  Hook-driven path: agent hooks call kanban hooks ingest --event <event>,
+  routing to_review, to_in_progress, and activity events through
+  applySessionEvent() to broadcast the updated summary.
+  [→ state-hub-and-registry]
+```

@@ -1,64 +1,65 @@
 ```diagram
 OVERLAYER & SCENE — BADGE RENDERING AND SCENE GRAPH (connected flow)
 
-  useDiagram hook parses HTML → creates SvgScene
+  [EHK] useDiagram hook parses HTML → creates SvgScene
        │
        │ returns Scene
        ▼
-  ┌─ SvgScene (implements Scene) [SS]  detail: 04-svgscene-detail.txt ───────────────────────────────┐
-  │                                                                                                   │
-  │  Construction: remove viewBox → inject CSS → buildElementTree()                                   │
-  │    SCENE_ELEMENT_SELECTOR = "[data-reflow-group], [data-interactive], [data-arrow]"               │
-  │                                                                                                   │
-  │  ┌─ Private state ──────────────────────────────────────────────────────────────────────────────┐  │
-  │  │  svg: SVGSVGElement                (the actual <svg> DOM node)                               │  │
-  │  │  elements: Map<string, SceneElement>                                                         │  │
-  │  │  domElements: Map<string, SVGGElement>                                                       │  │
-  │  │  visualRects: Map<string, SVGRectElement>                                                    │  │
-  │  │  worldBoundsCache: Map<string, Rect>                                                         │  │
-  │  └──────────────────────────────────────────────────────────────────────────────────────────────┘  │
-  │                                                                                                   │
-  │  ┌─ SceneElement [EL] ─────────────────────────────────────────────────────────────────────────┐  │
-  │  │  id ─────────── "root" | data-reflow-group | data-interactive | "arrow-{n}"                 │  │
-  │  │  parentId / childIds ── tree structure (document order)                                      │  │
-  │  │  localBounds ── Rect (from getBBox)      transform ── { tx, ty, scale }                     │  │
-  │  │  metadata ───── Record<string, string>   hasVisualRect ── boolean                           │  │
-  │  │                                                                                              │  │
-  │  │  interactive ── InteractiveData | null                                                       │  │
-  │  │    ref, parsedRef, category, label, tooltip, navTarget                                       │  │
-  │  │    modal: DiagramModal | null    link: DiagramLink | null                                    │  │
-  │  │                                                                                              │  │
-  │  │  reflow ─────── ReflowState | null  { originalBounds }                                      │  │
-  │  └──────────────────────────────────────────────────────────────────────────────────────────────┘  │
-  │                                                                                                   │
-  │  ┌─ Element Tree ────┐  ┌─ Bounds ───────────┐  ┌─ Transforms ──────┐  ┌─ Hit Testing ────────┐  │
-  │  │ getRoot()          │  │ getLocalBounds(id)  │  │ setTransform(id,t)│  │ hitTest(screenPt)    │  │
-  │  │ getElement(id)     │  │ getWorldBounds(id)  │  │ getTransform(id)  │  │ hitTestRect(rect,    │  │
-  │  │ getAllElements()   │  │   ▲  ▲  ▲           │  │   ▲               │  │   "intersect"|       │  │
-  │  │ getChildren(id)    │  │   │  │  │           │  │   │               │  │   "contain")         │  │
-  │  │   ▲  ▲             │  └───┼──┼──┼───────────┘  └───┼───────────────┘  │   ▲  ▲              │  │
-  │  │   │  │             │      │  │  │                   │                  └───┼──┼──────────────┘  │
-  │  └───┼──┼─────────────┘      │  │  │                   │                      │  │                 │
-  │      │  │                    │  │  │                   │                      │  │                 │
-  │  ┌─ Mutations ────────────┐  │  │  │                   │                      │  │                 │
-  │  │ growVisualBounds(id,…) │  │  │  │                   │                      │  │                 │
-  │  │ addElement(id,dom,par) │  │  │  │                   │                      │  │                 │
-  │  │ removeElement(id)      │  │  │  │                   │                      │  │                 │
-  │  │ addSubtree(dom,par)    │  │  │  │                   │                      │  │                 │
-  │  └────────────────────────┘  │  │  │                   │                      │  │                 │
-  │      │  │                    │  │  │                   │                      │  │                 │
-  └──────┼──┼────────────────────┼──┼──┼───────────────────┼──────────────────────┼──┼─────────────────┘
-         │  │                    │  │  │                   │                      │  │
-  ───────┼──┼────────────────────┼──┼──┼───────────────────┼──────────────────────┼──┼─── Callers ───
-         │  │                    │  │  │                   │                      │  │
-         │  │                    │  │  │     setTransform  │        hitTest       │  │
-         │  │                    │  │  │     ("root", t)   │        (screenPt)    │  │ hitTestRect
-         │  │                    │  │  │         ┌─────────┘           ┌──────────┘  │ (sceneRect)
+  ┌─ SvgScene (implements Scene)  detail: 04-svgscene-detail.txt ───────────────────────────────┐
+  │                                                                                              │
+  │  [ESC] Construction: remove viewBox → inject CSS → buildElementTree()                        │
+  │    SCENE_ELEMENT_SELECTOR = "[data-reflow-group], [data-interactive], [data-arrow]"          │
+  │                                                                                              │
+  │  ┌─ Private state ──────────────────────────────────────────────────────────────────────────┐ │
+  │  │  [EPS] svg: SVGSVGElement                (the actual <svg> DOM node)                     │ │
+  │  │  elements: Map<string, SceneElement>                                                     │ │
+  │  │  domElements: Map<string, SVGGElement>                                                   │ │
+  │  │  visualRects: Map<string, SVGRectElement>                                                │ │
+  │  │  worldBoundsCache: Map<string, Rect>                                                EPS  │ │
+  │  └──────────────────────────────────────────────────────────────────────────────────────────┘ │
+  │                                                                                              │
+  │  ┌─ SceneElement ─────────────────────────────────────────────────────────────────────────┐  │
+  │  │  [EEL] id ── "root" | data-reflow-group | data-interactive | "arrow-{n}"              │  │
+  │  │  parentId / childIds ── tree structure (document order)                                │  │
+  │  │  localBounds ── Rect (from getBBox)      transform ── { tx, ty, scale }               │  │
+  │  │  metadata ───── Record<string, string>   hasVisualRect ── boolean                     │  │
+  │  │                                                                                        │  │
+  │  │  interactive ── InteractiveData | null                                                 │  │
+  │  │    ref, parsedRef, category, label, tooltip, navTarget                                 │  │
+  │  │    modal: DiagramModal | null    link: DiagramLink | null                              │  │
+  │  │                                                                                        │  │
+  │  │  reflow ─────── ReflowState | null  { originalBounds }                           EEL  │  │
+  │  └────────────────────────────────────────────────────────────────────────────────────────┘  │
+  │                                                                                              │
+  │  ┌─ Element Tree ────┐  ┌─ Bounds ───────────┐  ┌─ Transforms ──────┐  ┌─ Hit Testing ──┐  │
+  │  │ [EET] getRoot()   │  │ [EBD] getLocal…(id)│  │ [EXF] setXform…   │  │ [EHT] hitTest  │  │
+  │  │ getElement(id)     │  │ getWorldBounds(id) │  │ getTransform(id)  │  │ hitTestRect(…, │  │
+  │  │ getAllElements()   │  │   ▲  ▲  ▲          │  │   ▲               │  │  "intersect"|  │  │
+  │  │ getChildren(id)    │  │   │  │  │          │  │   │               │  │  "contain")    │  │
+  │  │   ▲  ▲        EET  │  └───┼──┼──┼──────────┘  └───┼──────────────┘  │   ▲  ▲    EHT  │  │
+  │  │   │  │             │      │  │  │                   │                 └───┼──┼─────────┘  │
+  │  └───┼──┼─────────────┘      │  │  │                   │                     │  │            │
+  │      │  │                    │  │  │                   │                     │  │            │
+  │  ┌─ Mutations ────────────┐  │  │  │                   │                     │  │            │
+  │  │ [EMU] growVisual…(id,…)│  │  │  │                   │                     │  │            │
+  │  │ addElement(id,dom,par) │  │  │  │                   │                     │  │            │
+  │  │ removeElement(id)      │  │  │  │                   │                     │  │            │
+  │  │ addSubtree(dom,par)    │  │  │  │                   │                     │  │            │
+  │  │                   EMU  │  │  │  │                   │                     │  │            │
+  │  └────────────────────────┘  │  │  │                   │                     │  │       ESS  │
+  │      │  │                    │  │  │                   │                     │  │            │
+  └──────┼──┼────────────────────┼──┼──┼───────────────────┼─────────────────────┼──┼────────────┘
+         │  │                    │  │  │                   │                     │  │
+  ───────┼──┼────────────────────┼──┼──┼───────────────────┼─────────────────────┼──┼─── Callers ───
+         │  │                    │  │  │                   │                     │  │
+         │  │                    │  │  │     setTransform  │        hitTest      │  │
+         │  │                    │  │  │     ("root", t)   │        (screenPt)   │  │ hitTestRect
+         │  │                    │  │  │         ┌─────────┘           ┌─────────┘  │ (sceneRect)
          │  │                    │  │  │         │                     │             │
          │  │                    │  │  │         │                     │             │
   ┌──────┼──┼────────────────────┼──┼──┼─────────┼─────────────────────┼─────────────┼────────────────┐
   │      │  │                    │  │  │         │                     │             │                │
-  │  Viewport [VP]               │  │  │         │  SceneInput [SI]    │             │                │
+  │  [EVP] Viewport              │  │  │         │  [ESI] SceneInput   │             │                │
   │  ── 03-viewport-and-coords   │  │  │         │  ── 05-content-and  │             │                │
   │     .txt                     │  │  │         │     -navigation.txt │             │                │
   │      │  │                    │  │  │         │         │           │             │                │
@@ -75,15 +76,15 @@ OVERLAYER & SCENE — BADGE RENDERING AND SCENE GRAPH (connected flow)
   │      │  │                   │  │  │  │        getElement(id) ◄────── getSelectedInteractiveData   │
   │      │  │                   │  │  │  │                  ▲                                          │
   │      │  │                   │  │  │  │                  └──────── dragPreviewPaths useMemo         │
-  │      │  │                   │  │  │  │                                                            │
+  │      │  │                   │  │  │  │                                                       ECA  │
   │  ┌───┼──┼───────────────────┼──┼──┼──┼───────────────────────────────────────────────────────────┐│
   │  │   │  │                   │  │  │  │                                                           ││
-  │  │ OverLayer [OL]           │  │  │  │                                                           ││
+  │  │ [EOL] OverLayer          │  │  │  │                                                           ││
   │  │ div.absolute.inset-0     │  │  │  │                                                           ││
   │  │ (z-10, overflow:hidden)  │  │  │  │                                                           ││
   │  │                          │  │  │  │                                                           ││
   │  │  ┌─ rAF sync loop ──────┼──┼──┼──┼──────────────────────────────────────────────────────┐    ││
-  │  │  │  Every frame:         │  │  │  │                                                      │    ││
+  │  │  │  [ERF] Every frame:   │  │  │  │                                                      │    ││
   │  │  │    for each badge:    │  │  │  │                                                      │    ││
   │  │  │      resolveAnchor────┼──┼──┼──┘ reads transformRef.current                       RF  │    ││
   │  │  │        │              │  │  │                                                         │    ││
@@ -94,14 +95,14 @@ OVERLAYER & SCENE — BADGE RENDERING AND SCENE GRAPH (connected flow)
   │  │  │      dom.style.left/top = pos (bypasses React for 60fps)                             │    ││
   │  │  └──────────────────────────────────────────────────────────────────────────────────────┘    ││
   │  │                                                                                             ││
-  │  │  Each badge: <button> 18x18px rounded-full, centered via margin -9px                        ││
+  │  │  [EBG] Each badge: <button> 18x18px rounded-full, centered via margin -9px                  ││
   │  │    onClick → badge.onClick() (stopPropagation to avoid viewport click)                      ││
-  │  │    hover:scale-125 transition                                                               ││
+  │  │    hover:scale-125 transition                                                          EOL  ││
   │  └─────────────────────────────────────────────────────────────────────────────────────────────┘│
   │                                                                                                │
   └────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-  DiagramScene [DS]  ── 05-content-and-navigation.txt
+  [EDS] DiagramScene  ── 05-content-and-navigation.txt
          │
          ├── getAllElements() ──────► badges useMemo (build badge array from all elements)
          │                                │
@@ -117,7 +118,7 @@ OVERLAYER & SCENE — BADGE RENDERING AND SCENE GRAPH (connected flow)
 
   ─── Cache invalidation side-effect ────────────────────────────────────────
 
-  Viewport.syncRootTransform
+  [ECI] Viewport.syncRootTransform
        │
        │ scene.setTransform("root", t)
        ▼
@@ -135,11 +136,62 @@ OVERLAYER & SCENE — BADGE RENDERING AND SCENE GRAPH (connected flow)
 ```
 
 ```code-refs
-SS  web-ui/src/diagram/rendering/svg-scene.ts:52-521      SvgScene class
-EL  web-ui/src/diagram/rendering/scene.ts:10-44           SceneElement interface
-OL  web-ui/src/diagram/rendering/over-layer.tsx:64-127    OverLayer component
-RF  web-ui/src/diagram/rendering/over-layer.tsx:68-89     rAF sync loop
-VP  web-ui/src/diagram/rendering/viewport.tsx             Viewport component
-SI  web-ui/src/diagram/content/scene-input.tsx             SceneInput component
-DS  web-ui/src/diagram/content/diagram-content-area.tsx    DiagramScene component
+CSS  web-ui/src/diagram/rendering/svg-scene.ts:52-521      SvgScene class
+CEL  web-ui/src/diagram/rendering/scene.ts:10-44           SceneElement interface
+COL  web-ui/src/diagram/rendering/over-layer.tsx:64-127    OverLayer component
+CRF  web-ui/src/diagram/rendering/over-layer.tsx:68-89     rAF sync loop
+CVP  web-ui/src/diagram/rendering/viewport.tsx             Viewport component
+CSI  web-ui/src/diagram/content/scene-input.tsx             SceneInput component
+CDS  web-ui/src/diagram/content/diagram-content-area.tsx    DiagramScene component
+```
+
+```entities
+# name                  id_type  id     parent  description
+
+# SvgScene
+hook-entry              text     EHK            useDiagram hook parses HTML → SvgScene
+svg-scene               box      ESS            SvgScene class (implements Scene)
+  construction          text     ESC    ESS     Construction steps
+  private-state         box      EPS    ESS     Private state maps
+  scene-element         box      EEL    ESS     SceneElement interface
+  element-tree          box      EET    ESS     Element tree methods
+  bounds                box      EBD    ESS     Bounds methods (getLocal/WorldBounds)
+  transforms            box      EXF    ESS     Transform methods (set/getTransform)
+  hit-testing           box      EHT    ESS     Hit testing methods
+  mutations             box      EMU    ESS     Mutation methods (grow/add/remove)
+
+# Callers box
+callers                 box      ECA            Viewport + SceneInput caller region
+  viewport              text     EVP    ECA     Viewport component
+  scene-input           text     ESI    ECA     SceneInput component
+  over-layer            box      EOL    ECA     OverLayer component
+    raf-loop            box      ERF    EOL     rAF sync loop (resolveAnchor)
+    badge-dom           text     EBG    EOL     Badge button DOM rendering
+
+# DiagramScene
+diagram-scene           text     EDS            DiagramScene badge/popup/jump callers
+
+# Cache invalidation
+cache-invalidation      text     ECI            Cache invalidation side-effect flow
+```
+
+```arrows
+# src       target   description
+EHK          ESS     useDiagram returns Scene (SvgScene)
+EVP          EXF     syncRootTransform → scene.setTransform("root", t)
+ERF          EVP     rAF loop reads transformRef.current from Viewport
+ERF          EBD     resolveAnchor "element" → getWorldBounds(id)
+ESI          EHT     handleSceneClick → hitTest(screenPt)
+ESI          EHT     handleSelectionDrag/End → hitTestRect(sceneRect)
+ESI          EET     getElement(id) for getSelectedInteractiveData
+EDS          EET     getAllElements → badge array, getElement → popup/jump
+EDS          EBD     getWorldBounds → popup positioning, jump centering
+ECI          EBD     setTransform invalidates worldBoundsCache → recompute
+```
+
+```notes
+Code-ref IDs use a "C" prefix (e.g. CSS, CVP) and entity IDs use an "E" prefix
+(e.g. ESS, EVP) to disambiguate the two namespaces. Every text paragraph in the
+diagram is labeled with its entity ID in [EXX] brackets. Box entities show their
+ID at the box corner. Cross-diagram jump targets: ** filename.txt#EXX.
 ```

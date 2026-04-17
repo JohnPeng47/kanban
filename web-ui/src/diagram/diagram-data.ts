@@ -109,6 +109,21 @@ export interface OpenDiagram {
 	svgBounds: ReadonlyMap<string, Rect>;
 }
 
+// ─── ASCII source extraction ───────────────────────────────
+
+/**
+ * Extract the embedded ASCII diagram source from an HTML string.
+ * The source is embedded in a `<script type="text/plain" id="ascii-source">` tag.
+ */
+export function extractAsciiSource(html: string): string | null {
+	const parser = new DOMParser();
+	const doc = parser.parseFromString(html, "text/html");
+	const script = doc.getElementById("ascii-source");
+	if (!script) return null;
+	// Trim leading/trailing newlines from the embedded text
+	return script.textContent?.trim() ?? null;
+}
+
 // ─── Assembly from Scene ───────────────────────────────────
 
 const VALID_ENTITY_KINDS = new Set<EntityKind>(["box", "text"]);
@@ -217,4 +232,133 @@ export function buildSvgBoundsMap(scene: Scene, metadata: DiagramMetadata): Read
 		}
 	}
 	return bounds;
+}
+
+// ─── SVG → ASCII coordinate mapping (WLS) ─────────────────
+
+interface AnchorPoint {
+	svgX: number;
+	svgY: number;
+	asciiCol: number;
+	asciiLine: number;
+}
+
+/** Collect anchor points from all elements that have both sourceSpan and SVG bounds. */
+function collectAnchors(scene: Scene): AnchorPoint[] {
+	const anchors: AnchorPoint[] = [];
+	for (const [id, el] of scene.getAllElements()) {
+		if (!el.sourceSpan) continue;
+		const bounds = scene.getWorldBounds(id);
+		// Use top-left corner as the correspondence point
+		anchors.push({
+			svgX: bounds.x,
+			svgY: bounds.y,
+			asciiCol: el.sourceSpan.startCol,
+			asciiLine: el.sourceSpan.startLine,
+		});
+		// Use bottom-right corner too for better coverage
+		anchors.push({
+			svgX: bounds.x + bounds.width,
+			svgY: bounds.y + bounds.height,
+			asciiCol: el.sourceSpan.endCol,
+			asciiLine: el.sourceSpan.endLine,
+		});
+	}
+	return anchors;
+}
+
+/**
+ * Solve weighted least squares for y = a*x + b.
+ * Returns [a, b] (slope, intercept).
+ */
+function solveWLS(xs: number[], ys: number[], weights: number[]): [number, number] {
+	let sumW = 0;
+	let sumWx = 0;
+	let sumWy = 0;
+	let sumWxx = 0;
+	let sumWxy = 0;
+	for (let i = 0; i < xs.length; i++) {
+		const w = weights[i] ?? 0;
+		const x = xs[i] ?? 0;
+		const y = ys[i] ?? 0;
+		sumW += w;
+		sumWx += w * x;
+		sumWy += w * y;
+		sumWxx += w * x * x;
+		sumWxy += w * x * y;
+	}
+	const denom = sumW * sumWxx - sumWx * sumWx;
+	if (Math.abs(denom) < 1e-10) {
+		// Degenerate — fall back to unweighted mean
+		const meanX = sumWx / sumW;
+		const meanY = sumWy / sumW;
+		return meanX !== 0 ? [meanY / meanX, 0] : [1, meanY];
+	}
+	const a = (sumW * sumWxy - sumWx * sumWy) / denom;
+	const b = (sumWy * sumWxx - sumWx * sumWxy) / denom;
+	return [a, b];
+}
+
+/**
+ * Map an SVG scene rect to an ASCII source rect using weighted least squares.
+ *
+ * Uses entity anchor points (elements with both sourceSpan and SVG bounds)
+ * as calibration data. Entities closer to the selection center are weighted
+ * more heavily via Gaussian decay.
+ *
+ * Returns the sliced ASCII text within the mapped rect, or null if mapping fails.
+ */
+export function mapSvgRectToAsciiText(sceneRect: Rect, scene: Scene, asciiSource: string): string | null {
+	const anchors = collectAnchors(scene);
+	if (anchors.length < 2) return null;
+
+	// Selection center for Gaussian weighting
+	const cx = sceneRect.x + sceneRect.width / 2;
+	const cy = sceneRect.y + sceneRect.height / 2;
+
+	// σ = half the diagonal of the selection rect, with a minimum floor
+	const diagonal = Math.sqrt(sceneRect.width ** 2 + sceneRect.height ** 2);
+	const sigma = Math.max(diagonal / 2, 50);
+	const twoSigmaSq = 2 * sigma * sigma;
+
+	// Compute Gaussian weights based on distance to selection center
+	const weights = anchors.map((a) => {
+		const dx = a.svgX - cx;
+		const dy = a.svgY - cy;
+		return Math.exp(-(dx * dx + dy * dy) / twoSigmaSq);
+	});
+
+	// Solve for X axis: asciiCol = a * svgX + b
+	const svgXs = anchors.map((a) => a.svgX);
+	const asciiCols = anchors.map((a) => a.asciiCol);
+	const [scaleX, offsetX] = solveWLS(svgXs, asciiCols, weights);
+
+	// Solve for Y axis: asciiLine = a * svgY + b
+	const svgYs = anchors.map((a) => a.svgY);
+	const asciiLines = anchors.map((a) => a.asciiLine);
+	const [scaleY, offsetY] = solveWLS(svgYs, asciiLines, weights);
+
+	// Map the selection rect corners to ASCII space
+	const startCol = Math.round(scaleX * sceneRect.x + offsetX);
+	const endCol = Math.round(scaleX * (sceneRect.x + sceneRect.width) + offsetX);
+	const startLine = Math.round(scaleY * sceneRect.y + offsetY);
+	const endLine = Math.round(scaleY * (sceneRect.y + sceneRect.height) + offsetY);
+
+	// Clamp to valid ranges
+	const lines = asciiSource.split("\n");
+	const clampedStartLine = Math.max(0, Math.min(startLine, lines.length - 1));
+	const clampedEndLine = Math.max(0, Math.min(endLine, lines.length - 1));
+	const clampedStartCol = Math.max(0, startCol);
+	const clampedEndCol = Math.max(0, endCol);
+
+	if (clampedStartLine > clampedEndLine) return null;
+
+	// Slice the ASCII text
+	const selectedLines = lines.slice(clampedStartLine, clampedEndLine + 1).map((line) => {
+		if (clampedStartCol === 0 && clampedEndCol >= line.length) return line;
+		return line.slice(clampedStartCol, clampedEndCol + 1);
+	});
+
+	const result = selectedLines.join("\n").trimEnd();
+	return result.length > 0 ? result : null;
 }

@@ -1,0 +1,239 @@
+---
+title: Overlay Elements Layer (OverLayer) — Full Architecture
+---
+flowchart TB
+    %% ════════════════════════════════════════════════════════════
+    %% DOM HIERARCHY
+    %% ════════════════════════════════════════════════════════════
+
+    subgraph DOM["DOM Hierarchy (Viewport Container)"]
+        direction TB
+
+        VC["Viewport Container\n(position: relative, overflow: hidden)"]
+
+        VC --> TD["Transform Div\nCSS transform: scale(s) translate(tx, ty)\nContains: &lt;svg&gt; diagram"]
+        VC --> OLD["OverLayer &lt;div&gt;\nclassName='absolute inset-0 overflow-hidden'\nstyle={ zIndex: 10 }\npointer-events: none (container level)"]
+        VC --> SO["Selection Overlay"]
+
+        subgraph BadgeButtons["Badge Buttons (inside OverLayer div)"]
+            direction LR
+            BB1["&lt;button&gt;\nid: badge-modal-{id}"]
+            BB2["&lt;button&gt;\nid: badge-link-{id}"]
+            BBN["&lt;button&gt;\nid: user badge..."]
+        end
+        OLD --> BadgeButtons
+    end
+
+    %% ════════════════════════════════════════════════════════════
+    %% TYPES (types.ts L165-186)
+    %% ════════════════════════════════════════════════════════════
+
+    subgraph TypeDefs["Type Definitions (types.ts)"]
+        direction TB
+
+        subgraph BadgeAnchorType["BadgeAnchor (L165-173)\nDiscriminated Union on 'space'"]
+            direction LR
+            BAScreen["{ space: 'screen'\n  x: number\n  y: number }"]
+            BAScene["{ space: 'scene'\n  x: number\n  y: number }"]
+            BAElement["{ space: 'element'\n  elementId: string\n  corner: 'center' | 'top-right'\n    | 'top-left' | 'bottom-right'\n    | 'bottom-left' }"]
+        end
+
+        subgraph OverlayBadgeType["OverlayBadge (L175-186)"]
+            OBFields["id: string\nanchor: BadgeAnchor\ntext: string\nonClick: () => void\nstyle?: {\n  color?: string\n  background?: string\n  borderColor?: string\n}"]
+        end
+
+        BadgeAnchorType --> OverlayBadgeType
+    end
+
+    %% ════════════════════════════════════════════════════════════
+    %% PROPS (over-layer.tsx L54-59)
+    %% ════════════════════════════════════════════════════════════
+
+    subgraph ComponentAPI["OverLayer Component API (over-layer.tsx L54-59)"]
+        direction LR
+        Prop1["badges: OverlayBadge[]"]
+        Prop2["scene: Scene"]
+        Prop3["transformRef: RefObject&lt;Transform&gt;\n(mutable ref, read every frame)"]
+    end
+
+    %% ════════════════════════════════════════════════════════════
+    %% resolveAnchor (over-layer.tsx L5-52)
+    %% ════════════════════════════════════════════════════════════
+
+    subgraph ResolveAnchor["resolveAnchor(anchor, transform, scene) → {x, y}\n(over-layer.tsx L5-52)"]
+        direction TB
+
+        RA_Switch{"switch\n(anchor.space)"}
+
+        subgraph ScreenCase["Case: 'screen' (L8-9)"]
+            SC_Logic["return { x: anchor.x, y: anchor.y }\nNo transform applied\nFixed screen position"]
+        end
+
+        subgraph SceneCase["Case: 'scene' (L11-15)"]
+            WC_Logic["return {\n  x: anchor.x × scale + tx,\n  y: anchor.y × scale + ty\n}\nTracks world coordinate"]
+        end
+
+        subgraph ElementCase["Case: 'element' (L17-50)"]
+            direction TB
+            EC_Step1["bounds = scene.getWorldBounds(elementId)\n(L18)"]
+            EC_Guard{"bounds.width === 0\n&& bounds.height === 0?\n(L19)"}
+            EC_Zero["return { x: 0, y: 0 }"]
+            EC_Corner{"switch\n(anchor.corner)\n(L23-43)"}
+            EC_TL["top-left:\nsx = bounds.x\nsy = bounds.y"]
+            EC_TR["top-right:\nsx = bounds.x + bounds.width\nsy = bounds.y"]
+            EC_BL["bottom-left:\nsx = bounds.x\nsy = bounds.y + bounds.height"]
+            EC_BR["bottom-right:\nsx = bounds.x + bounds.width\nsy = bounds.y + bounds.height"]
+            EC_Center["default (center):\nsx = bounds.x + width/2\nsy = bounds.y + height/2"]
+            EC_Convert["return {\n  x: sx × scale + tx,\n  y: sy × scale + ty\n}\n(L46-49)"]
+
+            EC_Step1 --> EC_Guard
+            EC_Guard -- "yes" --> EC_Zero
+            EC_Guard -- "no" --> EC_Corner
+            EC_Corner --> EC_TL & EC_TR & EC_BL & EC_BR & EC_Center
+            EC_TL & EC_TR & EC_BL & EC_BR & EC_Center --> EC_Convert
+        end
+
+        RA_Switch --> ScreenCase
+        RA_Switch --> SceneCase
+        RA_Switch --> ElementCase
+    end
+
+    %% ════════════════════════════════════════════════════════════
+    %% RAF SYNC LOOP (over-layer.tsx L67-89)
+    %% ════════════════════════════════════════════════════════════
+
+    subgraph RAFLoop["rAF Sync Loop (over-layer.tsx L68-89)"]
+        direction TB
+
+        UE(["useEffect(() => {...})\ndeps: [badges, scene, transformRef]"])
+        EarlyExit{"badges.length === 0?"}
+        NoOp["return (no effect)"]
+
+        InitRAF["let rafId: number\nconst sync = () => { ... }"]
+        FirstFrame["rafId = requestAnimationFrame(sync)\n(L87)"]
+
+        ReadT["const t = transformRef.current\n(L73 — mutable ref read)"]
+        NullGuard{"t is null?\n(L74)"}
+        SkipFrame["Schedule next frame\n& return early (L75-76)"]
+
+        IterBadges["for (const badge of badges)\n(L78)"]
+        GetDOM["const dom = badgeRefsMap.current\n  .get(badge.id)\n(L79)"]
+        DOMGuard{"dom exists?\n(L80)"}
+        SkipBadge["continue"]
+        CallResolve["pos = resolveAnchor(\n  badge.anchor, t, scene\n)\n(L81)"]
+        MutateDOM["dom.style.left = pos.x + 'px'\ndom.style.top = pos.y + 'px'\n(L82-83)\nDirect DOM mutation — no React"]
+        NextFrame["rafId = requestAnimationFrame(sync)\n(L85)"]
+        Cleanup(["return () =>\n  cancelAnimationFrame(rafId)\n(L88)"])
+
+        UE --> EarlyExit
+        EarlyExit -- "yes" --> NoOp
+        EarlyExit -- "no" --> InitRAF --> FirstFrame --> ReadT
+        ReadT --> NullGuard
+        NullGuard -- "yes" --> SkipFrame --> ReadT
+        NullGuard -- "no" --> IterBadges --> GetDOM --> DOMGuard
+        DOMGuard -- "no" --> SkipBadge --> IterBadges
+        DOMGuard -- "yes" --> CallResolve --> MutateDOM --> IterBadges
+        IterBadges -. "all done" .-> NextFrame --> ReadT
+        UE -. "cleanup" .-> Cleanup
+    end
+
+    %% ════════════════════════════════════════════════════════════
+    %% BADGE RENDERING (over-layer.tsx L93-126)
+    %% ════════════════════════════════════════════════════════════
+
+    subgraph BadgeRendering["Badge &lt;button&gt; Rendering (over-layer.tsx L96-123)"]
+        direction TB
+
+        BtnEl["&lt;button type='button' key={badge.id}&gt;"]
+
+        subgraph RefCallback["Ref Callback (L99-104)"]
+            RC_Set["el truthy → badgeRefsMap.set(badge.id, el)"]
+            RC_Del["el null → badgeRefsMap.delete(badge.id)"]
+        end
+
+        subgraph TailwindClasses["className (L106)"]
+            TW["absolute\nflex items-center justify-center\nrounded-full\ntext-[10px] font-bold leading-none\ncursor-pointer\ntransition-transform hover:scale-125"]
+        end
+
+        subgraph InlineStyles["Inline Styles (L107-116)"]
+            IS["width: 18, height: 18\nmarginLeft: -9, marginTop: -9\ncolor: badge.style?.color ?? '#fff'\nbackground: badge.style?.background ?? '#4C9AFF'\nborder: 1.5px solid (borderColor ?? 'transparent')\npointerEvents: 'auto'"]
+        end
+
+        subgraph ClickHandler["onClick (L117-120)"]
+            CH["e.stopPropagation()\nbadge.onClick()\n// Prevents Viewport click handler"]
+        end
+
+        BtnEl --> RefCallback
+        BtnEl --> TailwindClasses
+        BtnEl --> InlineStyles
+        BtnEl --> ClickHandler
+        BtnEl --> Content["Children: {badge.text}\n(single char/emoji)"]
+    end
+
+    %% ════════════════════════════════════════════════════════════
+    %% BADGE CREATION (diagram-content-area.tsx L167-196)
+    %% ════════════════════════════════════════════════════════════
+
+    subgraph BadgeCreation["Badge Creation (diagram-content-area.tsx L167-196)"]
+        direction TB
+
+        UseMemo["const badges = useMemo(() => {\n  const result: OverlayBadge[] = []\n  for (const [id, el] of scene.getAllElements())\n}, [scene, openPopup, executeJump])"]
+
+        subgraph ModalCheck["Modal Badge (L170-180)"]
+            MC_If{"el.interactive?.modal\nexists?"}
+            MC_Badge["push({\n  id: 'badge-modal-' + id\n  anchor: { space: 'element',\n    elementId: id,\n    corner: 'top-right' }\n  text: '⬡'\n  onClick: () => openPopup(el.interactive!)\n  style: { background: '#A371F7',\n    color: '#fff' }\n})"]
+        end
+
+        subgraph LinkCheck["Link Badge (L181-191)"]
+            LC_If{"el.interactive?.link\nexists?"}
+            LC_Badge["push({\n  id: 'badge-link-' + id\n  anchor: { space: 'element',\n    elementId: id,\n    corner: 'top-right' }\n  text: '→'\n  onClick: () => executeJump(el.interactive!)\n  style: { background: '#D4A72C',\n    color: '#fff' }\n})"]
+        end
+
+        Merge["const allBadges = useMemo(\n  () => [...badges, ...userBadges],\n  [badges, userBadges]\n)\n(L196)"]
+
+        UseMemo --> MC_If
+        MC_If -- "yes" --> MC_Badge
+        MC_If -- "no" --> LC_If
+        MC_Badge --> LC_If
+        LC_If -- "yes" --> LC_Badge
+        LC_If -- "no" --> UseMemo
+        LC_Badge --> UseMemo
+        UseMemo --> Merge
+    end
+
+    %% ════════════════════════════════════════════════════════════
+    %% DATA FLOW CONNECTIONS
+    %% ════════════════════════════════════════════════════════════
+
+    BadgeCreation -- "allBadges passed as\nbadges prop" --> ComponentAPI
+    ComponentAPI -- "props destructured in\nOverLayer component (L64)" --> RAFLoop
+    ComponentAPI --> BadgeRendering
+    TypeDefs -. "types used by" .-> ComponentAPI
+    TypeDefs -. "BadgeAnchor used by" .-> ResolveAnchor
+    RAFLoop -- "calls resolveAnchor\nper badge per frame" --> ResolveAnchor
+    RAFLoop -- "mutates DOM of" --> BadgeButtons
+    BadgeRendering -- "registers refs into\nbadgeRefsMap" --> RAFLoop
+
+    %% ════════════════════════════════════════════════════════════
+    %% STYLE CLASSES
+    %% ════════════════════════════════════════════════════════════
+
+    classDef domNode fill:#1F2428,stroke:#30363D,color:#E6EDF3
+    classDef overlayer fill:#24292E,stroke:#A371F7,color:#E6EDF3
+    classDef types fill:#2D3339,stroke:#4C9AFF,color:#E6EDF3
+    classDef resolve fill:#24292E,stroke:#D29922,color:#E6EDF3
+    classDef raf fill:#24292E,stroke:#3FB950,color:#E6EDF3
+    classDef render fill:#24292E,stroke:#F85149,color:#E6EDF3
+    classDef creation fill:#24292E,stroke:#D4A72C,color:#E6EDF3
+    classDef decision fill:#353C43,stroke:#8B949E,color:#E6EDF3
+
+    class DOM,VC,TD,OLD,SO domNode
+    class BadgeButtons,BB1,BB2,BBN overlayer
+    class TypeDefs,BadgeAnchorType,OverlayBadgeType,BAScreen,BAScene,BAElement,OBFields types
+    class ComponentAPI,Prop1,Prop2,Prop3 types
+    class ResolveAnchor,RA_Switch,ScreenCase,SceneCase,ElementCase resolve
+    class SC_Logic,WC_Logic,EC_Step1,EC_Convert,EC_TL,EC_TR,EC_BL,EC_BR,EC_Center resolve
+    class RAFLoop,UE,InitRAF,FirstFrame,ReadT,IterBadges,GetDOM,CallResolve,MutateDOM,NextFrame,Cleanup,SkipFrame,SkipBadge,NoOp raf
+    class BadgeRendering,BtnEl,RefCallback,TailwindClasses,InlineStyles,ClickHandler,Content,RC_Set,RC_Del,TW,IS,CH render
+    class BadgeCreation,UseMemo,ModalCheck,LinkCheck,Merge,MC_Badge,LC_Badge creation
+    class EarlyExit,NullGuard,DOMGuard,EC_Guard,EC_Corner,MC_If,LC_If decision

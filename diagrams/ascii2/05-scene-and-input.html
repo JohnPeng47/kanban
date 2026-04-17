@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><title>Scene &amp; Input</title>
+  <style>body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; } svg { display: block; width: 100%; height: 100%; }</style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1920" font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace" font-size="11">
+  <style>
+    text { fill: #8B949E; } .white { fill: #E6EDF3; } .blue { fill: #4C9AFF; } .green { fill: #3FB950; } .violet { fill: #A371F7; } .orange { fill: #D29922; } .red { fill: #F85149; } .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; } .heading { font-size: 13px; font-weight: 600; } .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; } @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/></marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/></marker>
+  </defs>
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g data-reflow-group="title"
+     data-interactive="ETI"
+     data-source-span="0:0-0:50"
+     data-entity-name="title"
+     data-entity-kind="text"
+     data-entity-desc="Diagram title"
+     data-code-ref-id=""
+     class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">SCENE &amp; INPUT — useDiagram, DiagramScene, SceneInput</text>
+  </g>
+
+  <!-- ═══ useDiagram(html) ═══ -->
+  <g data-reflow-group="use-diagram"
+     data-interactive="EUD"
+     data-ref="web-ui/src/diagram/use-diagram.ts:8-52"
+     data-category="module"
+     data-label="useDiagram(html)"
+     data-source-span="1:52-13:85"
+     data-entity-name="useDiagram(html)"
+     data-entity-kind="box"
+     data-entity-desc="Hook: HTML parse → SvgScene → Scene lifecycle"
+     data-code-ref-id="CUD"
+     class="fade-section" style="animation-delay: 0.05s">
+
+    <rect x="350" y="50" width="420" height="200" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
+    <text x="362" y="72" class="blue heading"
+          data-tt="use-diagram.ts:8 — Hook: HTML parse → SvgScene → Scene lifecycle">
+      useDiagram(html) [EUD]
+    </text>
+
+    <g data-interactive="EUD1"
+       data-source-span="4:4-12:60"
+       data-entity-name="parse flow"
+       data-entity-kind="text"
+       data-entity-desc="html → DOMParser → svg → body.appendChild → SvgScene → return Scene"
+       data-entity-parent="EUD"
+       data-code-ref-id="CUD">
+      <text x="362" y="100" class="white">[EUD1]</text>
+      <text x="362" y="118" class="dim subhead">html → DOMParser → &lt;svg&gt; → body.appendChild</text>
+      <text x="362" y="136" class="dim subhead">                          │</text>
+      <text x="362" y="154" class="dim subhead">               new SvgScene(svg) [CSC]</text>
+      <text x="362" y="172" class="dim subhead">                          │</text>
+      <text x="362" y="190" class="dim subhead">               body.removeChild(svg)</text>
+      <text x="362" y="208" class="dim subhead">               return Scene / cleanup: .destroy()</text>
+    </g>
+  </g>
+
+  <!-- Arrow: EUD → EDC (Scene object passed down) -->
+  <g data-arrow
+     data-arrow-src="EUD"
+     data-arrow-target="EDC"
+     data-arrow-desc="Scene object passed down"
+     data-source-span="14:56-15:56"
+     class="fade-section" style="animation-delay: 0.1s">
+    <line x1="560" y1="250" x2="560" y2="280" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    <text x="570" y="270" class="dim subhead">Scene</text>
+  </g>
+
+  <!-- ═══ DiagramContentArea ═══ -->
+  <g data-reflow-group="diagram-content-area"
+     data-interactive="EDC"
+     data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354"
+     data-category="module"
+     data-label="DiagramContentArea"
+     data-source-span="15:32-25:105"
+     data-entity-name="DiagramContentArea"
+     data-entity-kind="box"
+     data-entity-desc="Wrapper: props, loading states, passes Scene to DiagramScene"
+     data-code-ref-id="CDC"
+     class="fade-section" style="animation-delay: 0.15s">
+
+    <rect x="160" y="286" width="780" height="150" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
+    <text x="172" y="308" class="blue heading"
+          data-tt="diagram-content-area.tsx:286 — Wrapper: props, loading states, passes Scene to DiagramScene">
+      DiagramContentArea [EDC]
+    </text>
+
+    <g data-interactive="EDC1"
+       data-source-span="18:4-19:66"
+       data-entity-name="props"
+       data-entity-kind="text"
+       data-entity-desc="content, isLoading, error, selectedPath, pendingJumpElementId, etc."
+       data-entity-parent="EDC"
+       data-code-ref-id="CDC">
+      <text x="172" y="338" class="white">[EDC1]</text>
+      <text x="172" y="356" class="dim subhead">props: content, isLoading, error, selectedPath, pendingJumpElementId, onRequestJump</text>
+      <text x="172" y="374" class="dim subhead">       workspaceId, workspacePath</text>
+    </g>
+
+    <g data-interactive="EDC2"
+       data-source-span="22:4-23:80"
+       data-entity-name="states"
+       data-entity-kind="text"
+       data-entity-desc="empty → loading → error | Scene ready → DiagramScene"
+       data-entity-parent="EDC"
+       data-code-ref-id="CDC">
+      <text x="172" y="400" class="white">[EDC2]</text>
+      <text x="172" y="418" class="dim subhead">States: empty → loading → error │ Scene ready → DiagramScene</text>
+    </g>
+  </g>
+
+  <!-- Arrow: EDC → EDS (Scene ready → DiagramScene rendered) -->
+  <g data-arrow
+     data-arrow-src="EDC"
+     data-arrow-target="EDS"
+     data-arrow-desc="Scene ready → DiagramScene rendered"
+     data-source-span="25:72-27:72"
+     class="fade-section" style="animation-delay: 0.2s">
+    <line x1="560" y1="436" x2="560" y2="470" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+  </g>
+
+  <!-- ═══ DiagramScene ═══ -->
+  <g data-reflow-group="diagram-scene"
+     data-interactive="EDS"
+     data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:28-269"
+     data-category="module"
+     data-label="DiagramScene"
+     data-source-span="27:8-95:118"
+     data-entity-name="DiagramScene"
+     data-entity-kind="box"
+     data-entity-desc="Main scene: navigation dispatch + popups + badges + input"
+     data-code-ref-id="CDS"
+     class="fade-section" style="animation-delay: 0.25s">
+
+    <rect x="20" y="476" width="1060" height="640" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1.5"/>
+    <text x="32" y="498" class="blue heading"
+          data-tt="diagram-content-area.tsx:28 — Main scene: navigation dispatch + popups + badges + input">
+      DiagramScene [EDS]
+    </text>
+
+    <!-- Navigation Dispatch -->
+    <g data-reflow-group="navigation-dispatch"
+       data-interactive="ENV"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161"
+       data-category="module"
+       data-label="Navigation Dispatch"
+       data-source-span="30:10-59:44"
+       data-entity-name="Navigation Dispatch"
+       data-entity-kind="box"
+       data-entity-desc="handleNavigate routing: Alt+click, modal, link, default"
+       data-entity-parent="EDS"
+       data-code-ref-id="CNV"
+       class="fade-section" style="animation-delay: 0.3s">
+
+      <rect x="40" y="514" width="340" height="310" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="534" class="blue"
+            data-tt="diagram-content-area.tsx:137 — handleNavigate routing: Alt+click, modal, link, default">
+        Navigation Dispatch [ENV]
+      </text>
+
+      <g data-interactive="ENV1"
+         data-source-span="33:4-57:32"
+         data-entity-name="navigate flow"
+         data-entity-kind="text"
+         data-entity-desc="handleNavigate(interactive, event) dispatch branches"
+         data-entity-parent="ENV"
+         data-code-ref-id="CNV">
+        <text x="52" y="558" class="white">[ENV1]</text>
+        <text x="52" y="576" class="dim subhead">handleNavigate(interactive, event)</text>
+        <text x="70" y="596" class="dim subhead">├── Alt+click</text>
+        <text x="70" y="614" class="dim subhead">│    └─ fireCodeJump [CFJ]</text>
+        <text x="70" y="632" class="dim subhead">│    trpc.diagrams.navigate</text>
+        <text x="70" y="650" class="dim subhead">│    (file, line, newTab)</text>
+        <text x="70" y="670" class="dim subhead">├── modal? → openPopup [COP]</text>
+        <text x="70" y="688" class="dim subhead">│    trpc.getContent(path)</text>
+        <text x="70" y="706" class="dim subhead">│    → push PopupEntry to stack</text>
+        <text x="70" y="726" class="dim subhead">├── link? → executeJump [CEJ]</text>
+        <text x="70" y="744" class="dim subhead">│    ├── same diagram: centerOn(target)</text>
+        <text x="70" y="762" class="dim subhead">│    └── cross diagram: onRequestJump(path)</text>
+        <text x="70" y="782" class="dim subhead">└── default</text>
+        <text x="70" y="800" class="dim subhead">     └─ fireCodeJump</text>
+      </g>
+    </g>
+
+    <!-- SceneInput -->
+    <g data-reflow-group="scene-input"
+       data-interactive="ESI"
+       data-ref="web-ui/src/diagram/input/scene-input.tsx:48-357"
+       data-category="module"
+       data-label="SceneInput"
+       data-source-span="30:50-77:80"
+       data-entity-name="SceneInput"
+       data-entity-kind="box"
+       data-entity-desc="Component wiring: onNavigate, onSelectionChange, onContextMenu, badges"
+       data-entity-parent="EDS"
+       data-code-ref-id="CSI"
+       class="fade-section" style="animation-delay: 0.35s">
+
+      <rect x="400" y="514" width="660" height="420" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="412" y="534" class="blue"
+            data-tt="scene-input.tsx:48 — Component wiring: onNavigate, onSelectionChange, onContextMenu, badges">
+        SceneInput [ESI]
+      </text>
+
+      <g data-interactive="ESI1"
+         data-source-span="33:52-36:72"
+         data-entity-name="callback wiring"
+         data-entity-kind="text"
+         data-entity-desc="onNavigate, onSelectionChange, onContextMenu, badges props"
+         data-entity-parent="ESI"
+         data-code-ref-id="CSI">
+        <text x="412" y="558" class="white">[ESI1]</text>
+        <text x="412" y="576" class="dim subhead">onNavigate → handleNavigate</text>
+        <text x="412" y="594" class="dim subhead">onSelectionChange → (selection data)</text>
+        <text x="412" y="612" class="dim subhead">onContextMenu → context menu state</text>
+        <text x="412" y="630" class="dim subhead">badges → allBadges (modal + link + user)</text>
+      </g>
+
+      <!-- Event Flow -->
+      <g data-reflow-group="event-flow"
+         data-interactive="EEF"
+         data-ref="web-ui/src/diagram/input/scene-input.tsx:245-312"
+         data-category="module"
+         data-label="Event Flow"
+         data-source-span="39:52-70:80"
+         data-entity-name="Event Flow"
+         data-entity-kind="box"
+         data-entity-desc="Click, drag, and selection event handling"
+         data-entity-parent="ESI"
+         data-code-ref-id="CCK"
+         class="fade-section" style="animation-delay: 0.4s">
+
+        <rect x="420" y="648" width="620" height="270" rx="3"
+              fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+        <text x="432" y="668" class="orange"
+              data-tt="scene-input.tsx:245 — Click, drag, and selection event handling">
+          Event Flow [EEF]
+        </text>
+
+        <g data-interactive="EEF1"
+           data-source-span="42:52-69:75"
+           data-entity-name="click flow"
+           data-entity-kind="text"
+           data-entity-desc="Viewport callbacks → handleSceneClick → hitTest → selection → navigate"
+           data-entity-parent="EEF"
+           data-code-ref-id="CCK">
+          <text x="432" y="692" class="white">[EEF1]</text>
+          <text x="432" y="710" class="dim subhead">Viewport callbacks → handleSceneClick [CCK]</text>
+          <text x="450" y="728" class="dim subhead">scene.hitTest(screenPt) [CHT]</text>
+          <text x="450" y="748" class="dim subhead">  ┌──────┴──────┐</text>
+          <text x="450" y="766" class="dim subhead">no hit       hit element</text>
+          <text x="450" y="784" class="dim subhead">  │          ┌───┴───┐</text>
+          <text x="432" y="802" class="dim subhead">clear sel  shift+click  click</text>
+          <text x="432" y="820" class="dim subhead">            toggle     replace</text>
+          <text x="432" y="838" class="dim subhead">           selection  selection</text>
+          <text x="432" y="856" class="dim subhead">                └───┬───┘</text>
+          <text x="432" y="874" class="dim subhead">           fire onNavigate [CFN]</text>
+          <text x="432" y="896" class="dim subhead">handleSelectionDrag [CSD]: hitTestRect, preview .selected</text>
+          <text x="432" y="914" class="dim subhead">handleSelectionDragEnd [CSE]: finalize, clipboard, toast</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Arrow: ESI → ENV (onNavigate callback) -->
+    <g data-arrow
+       data-arrow-src="ESI"
+       data-arrow-target="ENV"
+       data-arrow-desc="onNavigate callback → handleNavigate"
+       data-source-span="34:50-34:56"
+       class="fade-section" style="animation-delay: 0.42s">
+      <line x1="400" y1="570" x2="380" y2="570" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Arrow: EEF → ENV (fire onNavigate after selection) -->
+    <g data-arrow
+       data-arrow-src="EEF"
+       data-arrow-target="ENV"
+       data-arrow-desc="fire onNavigate after selection"
+       data-source-span="59:52-59:60"
+       class="fade-section" style="animation-delay: 0.44s">
+      <path d="M420,874 L390,874 L390,720 L380,720" fill="none" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Popup Stack -->
+    <g data-reflow-group="popup-stack"
+       data-interactive="EPS"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:20-26"
+       data-category="module"
+       data-label="Popup Stack"
+       data-source-span="61:10-81:36"
+       data-entity-name="Popup Stack"
+       data-entity-kind="box"
+       data-entity-desc="Modal popup overlay stack"
+       data-entity-parent="EDS"
+       data-code-ref-id="CPS"
+       class="fade-section" style="animation-delay: 0.46s">
+
+      <rect x="40" y="840" width="340" height="250" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="860" class="blue"
+            data-tt="diagram-content-area.tsx:20 — Modal popup overlay stack">
+        Popup Stack [EPS]
+      </text>
+
+      <g data-interactive="EPS1"
+         data-source-span="64:4-69:36"
+         data-entity-name="popup entry fields"
+         data-entity-kind="text"
+         data-entity-desc="PopupEntry[]: path, content, position, anchorBounds"
+         data-entity-parent="EPS"
+         data-code-ref-id="CPS">
+        <text x="52" y="884" class="white">[EPS1]</text>
+        <text x="52" y="902" class="dim subhead">PopupEntry[]</text>
+        <text x="60" y="918" class="dim subhead">├── path</text>
+        <text x="60" y="934" class="dim subhead">├── content (HTML)</text>
+        <text x="60" y="950" class="dim subhead">├── position</text>
+        <text x="60" y="966" class="dim subhead">└── anchorBounds</text>
+      </g>
+
+      <g data-interactive="EPS2"
+         data-source-span="71:4-80:32"
+         data-entity-name="popup rendering"
+         data-entity-kind="text"
+         data-entity-desc="Each entry renders PopupDiagramOverlay with nested SceneInput"
+         data-entity-parent="EPS"
+         data-code-ref-id="CPO">
+        <text x="52" y="990" class="white">[EPS2]</text>
+        <text x="52" y="1008" class="dim subhead">Each entry renders:</text>
+        <text x="52" y="1024" class="dim subhead">PopupDiagramOverlay [CPO]</text>
+        <text x="60" y="1040" class="dim subhead">├── backdrop (blur), close (ESC/X)</text>
+        <text x="60" y="1056" class="dim subhead">├── useDiagram(content)</text>
+        <text x="60" y="1072" class="dim subhead">└── PopupScene → SceneInput (nested)</text>
+      </g>
+    </g>
+
+    <!-- Arrow: ENV → EPS (modal? → openPopup pushes to PopupEntry stack) -->
+    <g data-arrow
+       data-arrow-src="ENV"
+       data-arrow-target="EPS"
+       data-arrow-desc="modal? → openPopup pushes to PopupEntry stack"
+       data-source-span="42:10-46:10"
+       class="fade-section" style="animation-delay: 0.48s">
+      <line x1="210" y1="824" x2="210" y2="840" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+    <!-- Context Menu -->
+    <g data-reflow-group="context-menu"
+       data-interactive="ECM"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:195-229"
+       data-category="module"
+       data-label="Context Menu"
+       data-source-span="83:10-91:36"
+       data-entity-name="Context Menu"
+       data-entity-kind="box"
+       data-entity-desc="Right-click context menu: add badge, dismiss"
+       data-entity-parent="EDS"
+       data-code-ref-id="CCM"
+       class="fade-section" style="animation-delay: 0.5s">
+
+      <rect x="40" y="1100" width="340" height="110" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="1120" class="blue"
+            data-tt="diagram-content-area.tsx:195 — Right-click context menu: add badge, dismiss">
+        Context Menu [ECM]
+      </text>
+
+      <g data-interactive="ECM1"
+         data-source-span="86:4-90:32"
+         data-entity-name="menu actions"
+         data-entity-kind="text"
+         data-entity-desc="right-click → popup at screen coords, [Add Badge] → userBadges"
+         data-entity-parent="ECM"
+         data-code-ref-id="CCM">
+        <text x="52" y="1144" class="white">[ECM1]</text>
+        <text x="52" y="1162" class="dim subhead">right-click → popup at screen coords</text>
+        <text x="52" y="1178" class="dim subhead">[Add Badge] → userBadges</text>
+        <text x="52" y="1194" class="dim subhead">dismiss on pointerdown</text>
+      </g>
+    </g>
+
+    <!-- Tooltip -->
+    <g data-interactive="ETT"
+       data-source-span="72:4-72:52"
+       data-entity-name="Tooltip"
+       data-entity-kind="text"
+       data-entity-desc="SVG mouseover on [data-tt] elements"
+       data-entity-parent="EDS"
+       data-code-ref-id="CTT"
+       class="fade-section" style="animation-delay: 0.52s">
+      <text x="400" y="960" class="dim subhead">[ETT] Tooltip: SVG mouseover on [data-tt] elements</text>
+    </g>
+
+    <!-- Viewport ref -->
+    <g data-interactive="EVP"
+       data-source-span="74:4-75:80"
+       data-entity-name="Viewport ref"
+       data-entity-kind="text"
+       data-entity-desc="Cross-ref to 03-viewport-and-transforms.txt"
+       data-entity-parent="EDS"
+       data-code-ref-id=""
+       data-link="03-viewport-and-transforms.html"
+       data-link-target-file="03-viewport-and-transforms.txt"
+       data-link-target-id=""
+       data-link-desc="Viewport: pan/zoom, transforms, OverLayer"
+       class="fade-section" style="animation-delay: 0.54s">
+      <text x="400" y="982" class="dim subhead">[EVP] Viewport ** 03-viewport-and-transforms.txt: pan/zoom, transforms, OverLayer</text>
+    </g>
+
+    <!-- Badge Creation -->
+    <g data-reflow-group="badge-creation"
+       data-interactive="EBC"
+       data-ref="web-ui/src/components/diagram-panels/diagram-content-area.tsx:164-193"
+       data-category="module"
+       data-label="Badge Creation"
+       data-source-span="79:52-93:60"
+       data-entity-name="Badge Creation"
+       data-entity-kind="box"
+       data-entity-desc="Badge creation and merging"
+       data-entity-parent="EDS"
+       data-code-ref-id="CBC"
+       class="fade-section" style="animation-delay: 0.56s">
+
+      <rect x="400" y="1000" width="460" height="210" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="412" y="1020" class="blue"
+            data-tt="diagram-content-area.tsx:164 — Badge creation and merging">
+        Badge Creation [EBC]
+      </text>
+
+      <g data-interactive="EBC1"
+         data-source-span="82:4-85:52"
+         data-entity-name="auto-badges"
+         data-entity-kind="text"
+         data-entity-desc="el.interactive.modal → purple badge, el.interactive.link → gold badge"
+         data-entity-parent="EBC"
+         data-code-ref-id="CBC">
+        <text x="412" y="1044" class="white">[EBC1]</text>
+        <text x="412" y="1062" class="dim subhead">Auto-badges (from Scene elements):</text>
+        <text x="420" y="1080" class="dim subhead">el.interactive.modal → "⬡" purple badge</text>
+        <text x="420" y="1098" class="dim subhead">el.interactive.link  → "→" gold badge</text>
+      </g>
+
+      <g data-interactive="EBC2"
+         data-source-span="87:4-89:52"
+         data-entity-name="user badges"
+         data-entity-kind="text"
+         data-entity-desc="Add Badge → green pin badge, click to remove"
+         data-entity-parent="EBC"
+         data-code-ref-id="CBC">
+        <text x="412" y="1122" class="white">[EBC2]</text>
+        <text x="412" y="1140" class="dim subhead">User badges (from context menu):</text>
+        <text x="420" y="1158" class="dim subhead">Add Badge → "📌" green, click to remove</text>
+      </g>
+
+      <g data-interactive="EBC3"
+         data-source-span="91:4-91:52"
+         data-entity-name="merge"
+         data-entity-kind="text"
+         data-entity-desc="All merged: [...autoBadges, ...userBadges]"
+         data-entity-parent="EBC"
+         data-code-ref-id="CBC">
+        <text x="412" y="1182" class="white">[EBC3]</text>
+        <text x="412" y="1200" class="dim subhead">All merged: [...autoBadges, ...userBadges]</text>
+      </g>
+    </g>
+
+    <!-- Arrow: ECM → EBC ([Add Badge] → userBadges merged into allBadges) -->
+    <g data-arrow
+       data-arrow-src="ECM"
+       data-arrow-target="EBC"
+       data-arrow-desc="[Add Badge] → userBadges merged into allBadges"
+       data-source-span="89:10-89:52"
+       class="fade-section" style="animation-delay: 0.58s">
+      <line x1="380" y1="1160" x2="400" y2="1160" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"/>
+    </g>
+
+  </g><!-- end DiagramScene -->
+
+  <!-- ═══ Scene Interface ═══ -->
+  <g data-reflow-group="scene-interface"
+     data-interactive="EIF"
+     data-ref="web-ui/src/diagram/rendering/scene.ts:47-94"
+     data-category="module"
+     data-label="Scene Interface"
+     data-source-span="98:8-126:117"
+     data-entity-name="Scene Interface"
+     data-entity-kind="box"
+     data-entity-desc="Scene interface: 5 method groups"
+     data-code-ref-id="CIF"
+     class="fade-section" style="animation-delay: 0.6s">
+
+    <rect x="20" y="1170" width="1060" height="330" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1.5"/>
+    <text x="32" y="1192" class="orange heading"
+          data-tt="scene.ts:47 — Scene interface: 5 method groups">
+      Scene Interface [EIF]
+    </text>
+
+    <!-- Element Tree -->
+    <g data-interactive="EET"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:48-54"
+       data-category="module"
+       data-label="Element Tree"
+       data-source-span="101:4-109:30"
+       data-entity-name="Element Tree"
+       data-entity-kind="box"
+       data-entity-desc="getRoot, getElement, getAllElements, getChildren"
+       data-entity-parent="EIF"
+       data-code-ref-id="CET"
+       class="fade-section" style="animation-delay: 0.65s">
+      <rect x="40" y="1210" width="220" height="110" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="1230" class="orange"
+            data-tt="scene.ts:48 — Element tree accessor methods">
+        Element Tree [EET]
+      </text>
+      <g data-interactive="EET1"
+         data-source-span="104:4-107:26"
+         data-entity-name="methods"
+         data-entity-kind="text"
+         data-entity-desc="Element tree accessor methods"
+         data-entity-parent="EET"
+         data-code-ref-id="CET">
+        <text x="52" y="1254" class="dim subhead">[EET1]</text>
+        <text x="52" y="1270" class="dim subhead">getRoot()</text>
+        <text x="52" y="1286" class="dim subhead">getElement(id)</text>
+        <text x="52" y="1302" class="dim subhead">getAllElements()</text>
+        <text x="52" y="1318" class="dim subhead">getChildren(id)</text>
+      </g>
+    </g>
+
+    <!-- Bounds -->
+    <g data-interactive="EBD"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:55-58"
+       data-category="module"
+       data-label="Bounds"
+       data-source-span="101:30-109:60"
+       data-entity-name="Bounds"
+       data-entity-kind="box"
+       data-entity-desc="getLocalBounds, getWorldBounds (cached)"
+       data-entity-parent="EIF"
+       data-code-ref-id="CBD"
+       class="fade-section" style="animation-delay: 0.7s">
+      <rect x="280" y="1210" width="230" height="110" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="292" y="1230" class="orange"
+            data-tt="scene.ts:55 — Bounds accessor methods with cache invalidation">
+        Bounds [EBD]
+      </text>
+      <g data-interactive="EBD1"
+         data-source-span="104:30-107:56"
+         data-entity-name="methods"
+         data-entity-kind="text"
+         data-entity-desc="Bounds accessor methods with cache invalidation"
+         data-entity-parent="EBD"
+         data-code-ref-id="CBD">
+        <text x="292" y="1254" class="dim subhead">[EBD1]</text>
+        <text x="292" y="1270" class="dim subhead">getLocalBounds(id)</text>
+        <text x="292" y="1286" class="dim subhead">getWorldBounds(id)</text>
+        <text x="292" y="1302" class="dim subhead">  └─ cached, invalidated</text>
+        <text x="292" y="1318" class="dim subhead">     on transform change</text>
+      </g>
+    </g>
+
+    <!-- Transforms -->
+    <g data-interactive="ETF"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:60-64"
+       data-category="module"
+       data-label="Transforms"
+       data-source-span="101:64-109:96"
+       data-entity-name="Transforms"
+       data-entity-kind="box"
+       data-entity-desc="setTransform, getTransform, getWorldTransform"
+       data-entity-parent="EIF"
+       data-code-ref-id="CTF"
+       class="fade-section" style="animation-delay: 0.75s">
+      <rect x="530" y="1210" width="250" height="110" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="542" y="1230" class="orange"
+            data-tt="scene.ts:60 — Transform get/set and world compose">
+        Transforms [ETF]
+      </text>
+      <g data-interactive="ETF1"
+         data-source-span="104:64-107:92"
+         data-entity-name="methods"
+         data-entity-kind="text"
+         data-entity-desc="Transform get/set and world compose"
+         data-entity-parent="ETF"
+         data-code-ref-id="CTF">
+        <text x="542" y="1254" class="dim subhead">[ETF1]</text>
+        <text x="542" y="1270" class="dim subhead">setTransform(id, t)</text>
+        <text x="542" y="1286" class="dim subhead">getTransform(id)</text>
+        <text x="542" y="1302" class="dim subhead">getWorldTransform(id)</text>
+        <text x="542" y="1318" class="dim subhead">  └─ compose chain to root</text>
+      </g>
+    </g>
+
+    <!-- Hit Testing -->
+    <g data-interactive="EHX"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:79-84"
+       data-category="module"
+       data-label="Hit Testing"
+       data-source-span="101:100-110:28"
+       data-entity-name="Hit Testing"
+       data-entity-kind="box"
+       data-entity-desc="hitTest (point), hitTestRect (area)"
+       data-entity-parent="EIF"
+       data-code-ref-id="CHX"
+       class="fade-section" style="animation-delay: 0.8s">
+      <rect x="800" y="1210" width="260" height="110" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="812" y="1230" class="orange"
+            data-tt="scene.ts:79 — Point query and AABB area query">
+        Hit Testing [EHX]
+      </text>
+      <g data-interactive="EHX1"
+         data-source-span="104:100-110:24"
+         data-entity-name="methods"
+         data-entity-kind="text"
+         data-entity-desc="Point query and AABB area query"
+         data-entity-parent="EHX"
+         data-code-ref-id="CHX">
+        <text x="812" y="1254" class="dim subhead">[EHX1]</text>
+        <text x="812" y="1270" class="dim subhead">hitTest(screenPt)</text>
+        <text x="812" y="1286" class="dim subhead">  → elementFromPoint</text>
+        <text x="812" y="1302" class="dim subhead">  → closest [selector]</text>
+        <text x="812" y="1318" class="dim subhead">hitTestRect(rect, mode)</text>
+      </g>
+    </g>
+
+    <!-- Mutations -->
+    <g data-interactive="EMU"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:67-78"
+       data-category="module"
+       data-label="Mutations"
+       data-source-span="111:4-122:28"
+       data-entity-name="Mutations"
+       data-entity-kind="box"
+       data-entity-desc="growVisualBounds, addElement, removeElement, addSubtree"
+       data-entity-parent="EIF"
+       data-code-ref-id="CMU"
+       class="fade-section" style="animation-delay: 0.85s">
+      <rect x="40" y="1340" width="220" height="130" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="1360" class="orange"
+            data-tt="scene.ts:67 — Mutation method signatures">
+        Mutations [EMU]
+      </text>
+      <g data-interactive="EMU1"
+         data-source-span="114:4-121:24"
+         data-entity-name="methods"
+         data-entity-kind="text"
+         data-entity-desc="Mutation method signatures"
+         data-entity-parent="EMU"
+         data-code-ref-id="CMU">
+        <text x="52" y="1384" class="dim subhead">[EMU1]</text>
+        <text x="52" y="1400" class="dim subhead">growVisualBounds(id,</text>
+        <text x="52" y="1416" class="dim subhead">  deltaW, deltaH)</text>
+        <text x="52" y="1432" class="dim subhead">addElement(id, dom, parentId)</text>
+        <text x="52" y="1448" class="dim subhead">removeElement(id)</text>
+        <text x="52" y="1464" class="dim subhead">addSubtree(dom, parentId)</text>
+      </g>
+    </g>
+
+    <!-- Rendering / Lifecycle -->
+    <g data-interactive="ERL"
+       data-ref="web-ui/src/diagram/rendering/scene.ts:86-93"
+       data-category="module"
+       data-label="Rendering / Lifecycle"
+       data-source-span="111:30-118:68"
+       data-entity-name="Rendering / Lifecycle"
+       data-entity-kind="box"
+       data-entity-desc="getSvgElement, destroy"
+       data-entity-parent="EIF"
+       data-code-ref-id="CRL"
+       class="fade-section" style="animation-delay: 0.9s">
+      <rect x="280" y="1340" width="480" height="100" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="292" y="1360" class="orange"
+            data-tt="scene.ts:86 — SVG element access and cleanup">
+        Rendering / Lifecycle [ERL]
+      </text>
+      <g data-interactive="ERL1"
+         data-source-span="114:30-116:64"
+         data-entity-name="methods"
+         data-entity-kind="text"
+         data-entity-desc="SVG element access and cleanup"
+         data-entity-parent="ERL"
+         data-code-ref-id="CRL">
+        <text x="292" y="1384" class="dim subhead">[ERL1]</text>
+        <text x="292" y="1400" class="dim subhead">getSvgElement() → SVGSVGElement</text>
+        <text x="292" y="1416" class="dim subhead">destroy() → clear all maps</text>
+      </g>
+    </g>
+
+    <!-- SvgScene impl ref -->
+    <g data-interactive="ESV"
+       data-source-span="124:4-125:80"
+       data-entity-name="SvgScene impl ref"
+       data-entity-kind="text"
+       data-entity-desc="Cross-ref to 06-scene-svgscene-detail.txt"
+       data-entity-parent="EIF"
+       data-code-ref-id="CSV"
+       data-modal="06-scene-svgscene-detail.html"
+       class="fade-section" style="animation-delay: 0.95s">
+      <text x="40" y="1490" class="dim subhead">[ESV] Impl: SvgScene → see modal: 06-scene-svgscene-detail.txt</text>
+    </g>
+  </g><!-- end Scene Interface -->
+
+  <!-- ═══ SceneElement ═══ -->
+  <g data-reflow-group="scene-element"
+     data-interactive="EEL"
+     data-ref="web-ui/src/diagram/rendering/scene.ts:10-44"
+     data-category="module"
+     data-label="SceneElement"
+     data-source-span="129:8-150:83"
+     data-entity-name="SceneElement"
+     data-entity-kind="box"
+     data-entity-desc="SceneElement interface definition"
+     data-code-ref-id="CEL"
+     class="fade-section" style="animation-delay: 1.0s">
+
+    <rect x="20" y="1530" width="1060" height="260" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1.5"/>
+    <text x="32" y="1552" class="orange heading"
+          data-tt="scene.ts:10 — SceneElement interface definition">
+      SceneElement [EEL]
+    </text>
+
+    <!-- Identity -->
+    <g data-interactive="EID"
+       data-source-span="132:4-148:28"
+       data-entity-name="Identity"
+       data-entity-kind="box"
+       data-entity-desc="id, parentId, childIds"
+       data-entity-parent="EEL"
+       data-code-ref-id="CEL"
+       class="fade-section" style="animation-delay: 1.05s">
+      <rect x="40" y="1570" width="300" height="200" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="52" y="1590" class="orange">Identity [EID]</text>
+      <g data-interactive="EID1"
+         data-source-span="135:4-138:26"
+         data-entity-name="fields"
+         data-entity-kind="text"
+         data-entity-desc="id: string, parentId: string?, childIds: string[]"
+         data-entity-parent="EID"
+         data-code-ref-id="CEL">
+        <text x="52" y="1614" class="dim subhead">[EID1]</text>
+        <text x="52" y="1630" class="dim subhead">id: string</text>
+        <text x="52" y="1646" class="dim subhead">parentId: string?</text>
+        <text x="52" y="1662" class="dim subhead">childIds: string[]</text>
+      </g>
+      <g data-interactive="EID2"
+         data-source-span="140:4-146:26"
+         data-entity-name="id resolution"
+         data-entity-kind="text"
+         data-entity-desc="data-reflow-grp, data-interactive, data-arrow, root"
+         data-entity-parent="EID"
+         data-code-ref-id="CEL">
+        <text x="52" y="1686" class="dim subhead">[EID2] ID resolution:</text>
+        <text x="60" y="1702" class="dim subhead">├ data-reflow-grp</text>
+        <text x="60" y="1718" class="dim subhead">├ data-interactive</text>
+        <text x="60" y="1734" class="dim subhead">├ data-arrow → "arrow-{n}"</text>
+        <text x="60" y="1750" class="dim subhead">└ root: "root"</text>
+      </g>
+    </g>
+
+    <!-- Spatial -->
+    <g data-interactive="ESP"
+       data-source-span="132:30-148:56"
+       data-entity-name="Spatial"
+       data-entity-kind="box"
+       data-entity-desc="localBounds, transform, hasVisualRect"
+       data-entity-parent="EEL"
+       data-code-ref-id="CEL"
+       class="fade-section" style="animation-delay: 1.1s">
+      <rect x="360" y="1570" width="300" height="200" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="372" y="1590" class="orange">Spatial [ESP]</text>
+      <g data-interactive="ESP1"
+         data-source-span="135:30-139:52"
+         data-entity-name="fields"
+         data-entity-kind="text"
+         data-entity-desc="localBounds: Rect, transform: Transform, hasVisualRect: boolean"
+         data-entity-parent="ESP"
+         data-code-ref-id="CEL">
+        <text x="372" y="1614" class="dim subhead">[ESP1]</text>
+        <text x="372" y="1630" class="dim subhead">localBounds: Rect</text>
+        <text x="372" y="1646" class="dim subhead">transform: Transform</text>
+        <text x="372" y="1662" class="dim subhead">hasVisualRect: boolean</text>
+      </g>
+      <g data-interactive="ESP2"
+         data-source-span="142:30-145:52"
+         data-entity-name="metadata"
+         data-entity-kind="text"
+         data-entity-desc="metadata: Record<str,str> (all data-* attr)"
+         data-entity-parent="ESP"
+         data-code-ref-id="CEL">
+        <text x="372" y="1686" class="dim subhead">[ESP2]</text>
+        <text x="372" y="1702" class="dim subhead">metadata:</text>
+        <text x="372" y="1718" class="dim subhead">  Record&lt;str,str&gt;</text>
+        <text x="372" y="1734" class="dim subhead">  (all data-* attr)</text>
+      </g>
+    </g>
+
+    <!-- Roles -->
+    <g data-interactive="ERO"
+       data-source-span="132:60-148:84"
+       data-entity-name="Roles"
+       data-entity-kind="box"
+       data-entity-desc="interactive, reflow"
+       data-entity-parent="EEL"
+       data-code-ref-id="CEL"
+       class="fade-section" style="animation-delay: 1.15s">
+      <rect x="680" y="1570" width="380" height="200" rx="3"
+            fill="#2D3339" stroke="#D29922" stroke-width="0.6"/>
+      <text x="692" y="1590" class="orange">Roles [ERO]</text>
+      <g data-interactive="ERO1"
+         data-source-span="135:60-141:80"
+         data-entity-name="interactive"
+         data-entity-kind="text"
+         data-entity-desc="InteractiveData: ref, parsedRef, category, label, navTarget, modal, link"
+         data-entity-parent="ERO"
+         data-code-ref-id="CEL">
+        <text x="692" y="1614" class="dim subhead">[ERO1]</text>
+        <text x="692" y="1630" class="dim subhead">interactive: InteractiveData?</text>
+        <text x="700" y="1646" class="dim subhead">├ ref, parsedRef</text>
+        <text x="700" y="1662" class="dim subhead">├ category, label</text>
+        <text x="700" y="1678" class="dim subhead">├ navTarget</text>
+        <text x="700" y="1694" class="dim subhead">├ modal: DiagramModal</text>
+        <text x="700" y="1710" class="dim subhead">└ link: DiagramLink</text>
+      </g>
+      <g data-interactive="ERO2"
+         data-source-span="144:60-147:80"
+         data-entity-name="reflow"
+         data-entity-kind="text"
+         data-entity-desc="ReflowState: originalBounds"
+         data-entity-parent="ERO"
+         data-code-ref-id="CEL">
+        <text x="692" y="1734" class="dim subhead">[ERO2]</text>
+        <text x="692" y="1750" class="dim subhead">reflow: ReflowState?</text>
+        <text x="700" y="1766" class="dim subhead">└ originalBounds</text>
+      </g>
+    </g>
+  </g><!-- end SceneElement -->
+
+</svg>

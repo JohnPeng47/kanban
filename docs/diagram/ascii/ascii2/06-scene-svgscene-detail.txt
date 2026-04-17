@@ -1,96 +1,106 @@
 ```diagram
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  SvgScene Implementation Detail                                                                                                    │
+│ ESS  SvgScene Implementation Detail                                                                                               │
 │                                                                                                                                    │
 │  ┌──────────────────────────────────────────────┐           ┌────────────────────────────────────────────────────────────────────┐  │
-│  │  Internal Maps [IM]                          │           │  Constructor Flow [CF]                                            │  │
+│  │ EIM  Internal Maps                           │           │ ECF  Constructor Flow                                             │  │
 │  │                                              │           │                                                                    │  │
+│  │  [EIM1]                                      │           │  [ECF1]                                                            │  │
 │  │  elements: Map<id, SceneElement>             │           │  1. Remove viewBox, set width/height for 1:1 rendering             │  │
 │  │  domElements: Map<id, SVGGElement>           │           │  2. Set overflow:visible, display:block                            │  │
-│  │  visualRects: Map<id, SVGRectElement>        │           │  3. injectInteractionStyles(svg) [IS]                              │  │
-│  │  worldBoundsCache: Map<id, Rect>             │           │  4. buildElementTree() [BT]                                       │  │
+│  │  visualRects: Map<id, SVGRectElement>        │           │  3. injectInteractionStyles(svg) [CIS]                             │  │
+│  │  worldBoundsCache: Map<id, Rect>             │           │  4. buildElementTree() [CBT]                                      │  │
 │  │                                              │           │                                                                    │  │
 │  └──────────────────────────────────────────────┘           └────────────────────────────────────────────────────────────────────┘  │
 │                                                                                                                                    │
 │  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │  buildElementTree() [BT]                                                                                                    │    │
+│  │ EBT  buildElementTree()                                                                                                    │    │
 │  │                                                                                                                             │    │
-│  │                                         selector: "[data-reflow-group], [data-interactive], [data-arrow]"                    │    │
+│  │  [EBT1]                                    selector: "[data-reflow-group], [data-interactive], [data-arrow]"                 │    │
 │  │                                                                                                                             │    │
 │  │  1. Create root element (id="root", parentId=null)                                                                          │    │
 │  │                                                                                                                             │    │
 │  │  2. querySelectorAll ──→ tagged <g> elements                                                                                │    │
 │  │       │                                                                                                                     │    │
 │  │       ▼                                                                                                                     │    │
-│  │  3. resolveElementId(g) [RI]                4. For each (g, id):                                                            │    │
+│  │  [EBT2]                                                                                                                     │    │
+│  │  3. resolveElementId(g) [CRI]                4. For each (g, id):                                                           │    │
 │  │       │                                          │                                                                          │    │
 │  │       ├── data-reflow-group ──→ its value        ├── readMetadata(g) ──→ all data-* attrs                                   │    │
 │  │       ├── data-interactive  ──→ its value        ├── findVisualRect(g) ──→ direct <rect> child                               │    │
 │  │       ├── data-arrow        ──→ "arrow-{n}"      │                                                                          │    │
-│  │       └── none              ──→ skip              ├── Walk DOM ancestry to find parentId [PA]                                │    │
+│  │       └── none              ──→ skip              ├── Walk DOM ancestry to find parentId [CPA]                               │    │
 │  │                                                   │    ancestor.closest tagged <g> ──→ parentId                              │    │
 │  │                                                   │    no ancestor ──→ parentId = "root"                                     │    │
 │  │                                                   │                                                                          │    │
-│  │                                                   ├── g.getBBox() ──→ localBounds [LB]                                      │    │
+│  │                                                   ├── g.getBBox() ──→ localBounds [CLB]                                     │    │
 │  │                                                   │                                                                          │    │
-│  │                                                   ├── parseInteractiveData(id, metadata) ──→ interactive [PI]                │    │
+│  │                                                   ├── parseInteractiveData(id, metadata) ──→ interactive [CPI]               │    │
 │  │                                                   │    (only if metadata.interactive exists)                                  │    │
 │  │                                                   │    parses: ref, category, label, tooltip, navTarget, modal, link          │    │
 │  │                                                   │                                                                          │    │
 │  │                                                   └── reflow: { originalBounds } if data-reflow-group or data-arrow          │    │
 │  │                                                                                                                             │    │
+│  │  [EBT3]                                                                                                                     │    │
 │  │  5. Root localBounds = svg.width x svg.height                                                                               │    │
 │  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
 │                                                                                                                                    │
 │  ┌────────────────────────────────────────────────────────┐    ┌──────────────────────────────────────────────────────────────────┐  │
-│  │  Bounds System [BS]                                    │    │  Hit Testing [HZ]                                                │  │
+│  │ EBS  Bounds System                                     │    │ EHZ  Hit Testing                                                │  │
 │  │                                                        │    │                                                                  │  │
-│  │  getLocalBounds(id):                                   │    │  hitTest(screenPoint) ── point query [HP]                        │  │
+│  │  [EBS1]                                                │    │  [EHZ1]                                                          │  │
+│  │  getLocalBounds(id):                                   │    │  hitTest(screenPoint) ── point query [CHP]                       │  │
 │  │    └─ return element.localBounds directly              │    │    │                                                             │  │
 │  │                                                        │    │    ├── document.elementFromPoint(x, y)                           │  │
-│  │  getWorldBounds(id): [WB]                              │    │    ├── check svg.contains(domElement)                            │  │
-│  │    ├── check worldBoundsCache ──→ return if cached     │    │    ├── closest("[data-reflow-group],                             │  │
-│  │    ├── getAncestorTransform(id) [AT]                   │    │    │           [data-interactive],                               │  │
-│  │    │     walk parent chain to root                     │    │    │           [data-arrow]")                                    │  │
-│  │    │     compose transforms in order                   │    │    └── lookup in domElements map ──→ id                         │  │
-│  │    ├── transformRect(localBounds, ancestorTransform)    │    │                                                                  │  │
-│  │    └── store in cache                                  │    │  hitTestRect(sceneRect, mode) ── area query [HR]                 │  │
+│  │  [EBS2]                                                │    │    ├── check svg.contains(domElement)                            │  │
+│  │  getWorldBounds(id): [CWB]                             │    │    ├── closest("[data-reflow-group],                             │  │
+│  │    ├── check worldBoundsCache ──→ return if cached     │    │    │           [data-interactive],                               │  │
+│  │    ├── getAncestorTransform(id) [CAT]                  │    │    │           [data-arrow]")                                    │  │
+│  │    │     walk parent chain to root                     │    │    └── lookup in domElements map ──→ id                         │  │
+│  │    │     compose transforms in order                   │    │                                                                  │  │
+│  │    ├── transformRect(localBounds, ancestorTransform)    │    │  [EHZ2]                                                         │  │
+│  │    └── store in cache                                  │    │  hitTestRect(sceneRect, mode) ── area query [CHR]                │  │
 │  │                                                        │    │    │                                                             │  │
-│  │  Cache invalidation: [CI]                              │    │    ├── for each element with interactive != null:                │  │
-│  │    setTransform(id, t) ──→ invalidateWorldBoundsCache  │    │    │     getWorldBounds(id)                                      │  │
-│  │    growVisualBounds(id) ──→ invalidateWorldBoundsCache  │    │    │                                                             │  │
-│  │    addElement() ──→ invalidate parent subtree          │    │    ├── mode "contain": rectContains(sceneRect, worldBounds)      │  │
-│  │                                                        │    │    └── mode "intersect": rectsIntersect(sceneRect, worldBounds)  │  │
-│  │    invalidateWorldBoundsCache(id):                     │    │                                                                  │  │
-│  │      delete cache[id]                                  │    └──────────────────────────────────────────────────────────────────┘  │
-│  │      recurse into all childIds                         │                                                                        │
-│  └────────────────────────────────────────────────────────┘    ┌──────────────────────────────────────────────────────────────────┐  │
-│                                                                │  Injected CSS Styles [IS]                                        │  │
-│  ┌────────────────────────────────────────────────────────┐    │                                                                  │  │
-│  │  Transform Application [TA]                            │    │  [data-interactive]:                                             │  │
+│  │  [EBS3]                                                │    │    ├── for each element with interactive != null:                │  │
+│  │  Cache invalidation: [CCI]                             │    │    │     getWorldBounds(id)                                      │  │
+│  │    setTransform(id, t) ──→ invalidateWorldBoundsCache  │    │    │                                                             │  │
+│  │    growVisualBounds(id) ──→ invalidateWorldBoundsCache  │    │    ├── mode "contain": rectContains(sceneRect, worldBounds)      │  │
+│  │    addElement() ──→ invalidate parent subtree          │    │    └── mode "intersect": rectsIntersect(sceneRect, worldBounds)  │  │
+│  │                                                        │    │                                                                  │  │
+│  │    invalidateWorldBoundsCache(id):                     │    └──────────────────────────────────────────────────────────────────┘  │
+│  │      delete cache[id]                                  │                                                                        │
+│  │      recurse into all childIds                         │    ┌──────────────────────────────────────────────────────────────────┐  │
+│  └────────────────────────────────────────────────────────┘    │ EIS  Injected CSS Styles                                        │  │
+│                                                                │                                                                  │  │
+│  ┌────────────────────────────────────────────────────────┐    │  [EIS1]                                                          │  │
+│  │ ETA  Transform Application                            │    │  [data-interactive]:                                             │  │
 │  │                                                        │    │    cursor:pointer, transition filter                             │  │
-│  │  setTransform(id, transform): [ST]                     │    │    :hover / .selected ──→ brightness(1.5) + drop-shadow          │  │
-│  │    ├── update element.transform                        │    │                                                                  │  │
+│  │  [ETA1]                                                │    │    :hover / .selected ──→ brightness(1.5) + drop-shadow          │  │
+│  │  setTransform(id, transform): [CST]                    │    │                                                                  │  │
+│  │    ├── update element.transform                        │    │  [EIS2]                                                          │  │
 │  │    ├── invalidateWorldBoundsCache(id)                   │    │  .selected > rect:first-of-type:                                │  │
 │  │    └── if id != "root":                                │    │    stroke: #4C9AFF, stroke-width: 2, drop-shadow                │  │
 │  │        g.style.transform =                             │    │                                                                  │  │
-│  │          translate({tx}px, {ty}px)                      │    │  [data-modal] > rect: purple dashed, animated dash-modal         │  │
-│  │                                                        │    │  [data-link]  > rect: gold dashed, animated dash-link            │  │
-│  │  getWorldTransform(id): [WT]                           │    │                                                                  │  │
-│  │    walk element → root                                 │    │  Injected as <style> inside SVG, before first child              │  │
-│  │    compose all transforms                              │    │                                                                  │  │
-│  │    (element's own included)                            │    └──────────────────────────────────────────────────────────────────┘  │
-│  └────────────────────────────────────────────────────────┘                                                                        │
+│  │          translate({tx}px, {ty}px)                      │    │  [EIS3]                                                          │  │
+│  │                                                        │    │  [data-modal] > rect: purple dashed, animated dash-modal         │  │
+│  │  [ETA2]                                                │    │  [data-link]  > rect: gold dashed, animated dash-link            │  │
+│  │  getWorldTransform(id): [CWT]                          │    │                                                                  │  │
+│  │    walk element → root                                 │    │  [EIS4]                                                          │  │
+│  │    compose all transforms                              │    │  Injected as <style> inside SVG, before first child              │  │
+│  │    (element's own included)                            │    │                                                                  │  │
+│  └────────────────────────────────────────────────────────┘    └──────────────────────────────────────────────────────────────────┘  │
 │                                                                                                                                    │
 │  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │  Dynamic Mutations [DM]                                                                                                     │    │
+│  │ EDM  Dynamic Mutations                                                                                                     │    │
 │  │                                                                                                                             │    │
-│  │  growVisualBounds(id, dW, dH) [GV]         addElement(id, dom, parentId) [AE]         removeElement(id) [RE]                │    │
+│  │  [EDM1]                                                                                                                     │    │
+│  │  growVisualBounds(id, dW, dH) [CGV]         addElement(id, dom, parentId) [CAE]         removeElement(id) [CRE]             │    │
 │  │    ├── update SVGRectElement attrs           ├── readMetadata, findVisualRect            ├── recurse: remove all children    │    │
 │  │    ├── update element.localBounds            ├── getBBox → localBounds                   ├── splice from parent.childIds    │    │
 │  │    └── invalidate cache                      ├── parse interactive + reflow              └── delete from all maps           │    │
 │  │                                              ├── add to elements + domElements                                              │    │
-│  │  addSubtree(rootDom, parentId) [AS]          ├── push to parent.childIds                                                    │    │
+│  │  [EDM2]                                                                                                                     │    │
+│  │  addSubtree(rootDom, parentId) [CAS]          ├── push to parent.childIds                                                   │    │
 │  │    ├── querySelectorAll tagged <g>           └── invalidate parent cache                                                    │    │
 │  │    ├── build local domToId map                                                                                              │    │
 │  │    ├── resolve parents within subtree                                                                                       │    │
@@ -101,27 +111,77 @@
 ```
 
 ```code-refs
-IM  web-ui/src/diagram/rendering/svg-scene.ts:53-58    Internal maps: elements, domElements, visualRects, worldBoundsCache
-CF  web-ui/src/diagram/rendering/svg-scene.ts:60-80    Constructor: viewBox removal, style injection, tree build
-BT  web-ui/src/diagram/rendering/svg-scene.ts:126-206  buildElementTree: selector query, parent resolution, bounds, roles
-RI  web-ui/src/diagram/rendering/svg-scene.ts:18-29    resolveElementId: reflow-group → interactive → arrow → null
-PA  web-ui/src/diagram/rendering/svg-scene.ts:161-169  Parent resolution via DOM ancestry walking
-LB  web-ui/src/diagram/rendering/svg-scene.ts:171-177  localBounds from getBBox()
-PI  web-ui/src/diagram/types.ts:143-161                parseInteractiveData: ref, category, label, modal, link
-BS  web-ui/src/diagram/rendering/svg-scene.ts:230-267  Bounds system: local, world (cached), ancestor transform
-WB  web-ui/src/diagram/rendering/svg-scene.ts:238-249  getWorldBounds: cache check, ancestor compose, transformRect
-AT  web-ui/src/diagram/rendering/svg-scene.ts:251-267  getAncestorTransform: walk parent chain, compose
-CI  web-ui/src/diagram/rendering/svg-scene.ts:312-320  invalidateWorldBoundsCache: recursive child invalidation
-HZ  web-ui/src/diagram/rendering/svg-scene.ts:345-375  Hit testing: point (elementFromPoint) + rect (AABB)
-HP  web-ui/src/diagram/rendering/svg-scene.ts:347-358  hitTest: elementFromPoint → closest selector → id lookup
-HR  web-ui/src/diagram/rendering/svg-scene.ts:360-375  hitTestRect: iterate interactive elements, AABB check
-IS  web-ui/src/diagram/rendering/svg-scene.ts:82-124   Injected CSS: interactive hover, selected, modal/link dashed borders
-TA  web-ui/src/diagram/rendering/svg-scene.ts:269-310  Transform get/set, CSS translate application
-ST  web-ui/src/diagram/rendering/svg-scene.ts:271-286  setTransform: update, invalidate, apply CSS (non-root only)
-WT  web-ui/src/diagram/rendering/svg-scene.ts:294-310  getWorldTransform: compose chain element→root
-GV  web-ui/src/diagram/rendering/svg-scene.ts:324-343  growVisualBounds: resize SVGRect + update localBounds
-AE  web-ui/src/diagram/rendering/svg-scene.ts:379-424  addElement: parse, create SceneElement, link parent
-RE  web-ui/src/diagram/rendering/svg-scene.ts:426-450  removeElement: recursive descent, unlink parent, clear maps
-AS  web-ui/src/diagram/rendering/svg-scene.ts:452-494  addSubtree: batch add tagged elements with local parent resolution
-DM  web-ui/src/diagram/rendering/svg-scene.ts:322-505  Dynamic mutations: grow, add, remove, addSubtree
+CIM  web-ui/src/diagram/rendering/svg-scene.ts:53-58    Internal maps: elements, domElements, visualRects, worldBoundsCache
+CCF  web-ui/src/diagram/rendering/svg-scene.ts:60-80    Constructor: viewBox removal, style injection, tree build
+CBT  web-ui/src/diagram/rendering/svg-scene.ts:126-206  buildElementTree: selector query, parent resolution, bounds, roles
+CRI  web-ui/src/diagram/rendering/svg-scene.ts:18-29    resolveElementId: reflow-group → interactive → arrow → null
+CPA  web-ui/src/diagram/rendering/svg-scene.ts:161-169  Parent resolution via DOM ancestry walking
+CLB  web-ui/src/diagram/rendering/svg-scene.ts:171-177  localBounds from getBBox()
+CPI  web-ui/src/diagram/types.ts:143-161                parseInteractiveData: ref, category, label, modal, link
+CBS  web-ui/src/diagram/rendering/svg-scene.ts:230-267  Bounds system: local, world (cached), ancestor transform
+CWB  web-ui/src/diagram/rendering/svg-scene.ts:238-249  getWorldBounds: cache check, ancestor compose, transformRect
+CAT  web-ui/src/diagram/rendering/svg-scene.ts:251-267  getAncestorTransform: walk parent chain, compose
+CCI  web-ui/src/diagram/rendering/svg-scene.ts:312-320  invalidateWorldBoundsCache: recursive child invalidation
+CHZ  web-ui/src/diagram/rendering/svg-scene.ts:345-375  Hit testing: point (elementFromPoint) + rect (AABB)
+CHP  web-ui/src/diagram/rendering/svg-scene.ts:347-358  hitTest: elementFromPoint → closest selector → id lookup
+CHR  web-ui/src/diagram/rendering/svg-scene.ts:360-375  hitTestRect: iterate interactive elements, AABB check
+CIS  web-ui/src/diagram/rendering/svg-scene.ts:82-124   Injected CSS: interactive hover, selected, modal/link dashed borders
+CTA  web-ui/src/diagram/rendering/svg-scene.ts:269-310  Transform get/set, CSS translate application
+CST  web-ui/src/diagram/rendering/svg-scene.ts:271-286  setTransform: update, invalidate, apply CSS (non-root only)
+CWT  web-ui/src/diagram/rendering/svg-scene.ts:294-310  getWorldTransform: compose chain element→root
+CGV  web-ui/src/diagram/rendering/svg-scene.ts:324-343  growVisualBounds: resize SVGRect + update localBounds
+CAE  web-ui/src/diagram/rendering/svg-scene.ts:379-424  addElement: parse, create SceneElement, link parent
+CRE  web-ui/src/diagram/rendering/svg-scene.ts:426-450  removeElement: recursive descent, unlink parent, clear maps
+CAS  web-ui/src/diagram/rendering/svg-scene.ts:452-494  addSubtree: batch add tagged elements with local parent resolution
+CDM  web-ui/src/diagram/rendering/svg-scene.ts:322-505  Dynamic mutations: grow, add, remove, addSubtree
+```
+
+```entities
+name                          id_type   id    parent  description
+SvgScene Implementation       box       ESS   -       Top-level SvgScene implementation detail container
+  Internal Maps               box       EIM   ESS     Four internal Map stores
+    map fields                text      EIM1  EIM     elements, domElements, visualRects, worldBoundsCache
+  Constructor Flow            box       ECF   ESS     4-step constructor: viewBox, overflow, styles, tree
+    steps                     text      ECF1  ECF     Remove viewBox, set overflow, inject styles, build tree
+  buildElementTree()          box       EBT   ESS     Tree construction from SVG DOM
+    selector + root           text      EBT1  EBT     Selector query and root element creation
+    resolve + per-element     text      EBT2  EBT     resolveElementId, readMetadata, findVisualRect, parent, bounds, interactive, reflow
+    root bounds               text      EBT3  EBT     Root localBounds = svg.width x svg.height
+  Bounds System               box       EBS   ESS     Local bounds, world bounds (cached), cache invalidation
+    getLocalBounds            text      EBS1  EBS     Return element.localBounds directly
+    getWorldBounds            text      EBS2  EBS     Cache check, ancestor transform compose, transformRect, store
+    cache invalidation        text      EBS3  EBS     setTransform/growVisualBounds/addElement → invalidate recursively
+  Hit Testing                 box       EHZ   ESS     Point query and area query hit testing
+    hitTest                   text      EHZ1  EHZ     elementFromPoint → svg.contains → closest selector → id
+    hitTestRect               text      EHZ2  EHZ     Iterate interactive elements, contain or intersect mode
+  Injected CSS Styles         box       EIS   ESS     Interaction and selection CSS injected into SVG
+    interactive styles        text      EIS1  EIS     cursor:pointer, hover/selected brightness + drop-shadow
+    selected rect             text      EIS2  EIS     .selected > rect: stroke #4C9AFF, stroke-width 2
+    modal/link dashed         text      EIS3  EIS     data-modal purple dashed, data-link gold dashed
+    injection point           text      EIS4  EIS     <style> inside SVG before first child
+  Transform Application       box       ETA   ESS     setTransform and getWorldTransform
+    setTransform              text      ETA1  ETA     Update, invalidate cache, apply CSS translate (non-root)
+    getWorldTransform         text      ETA2  ETA     Walk element → root, compose all transforms
+  Dynamic Mutations           box       EDM   ESS     growVisualBounds, addElement, removeElement, addSubtree
+    grow/add/remove           text      EDM1  EDM     growVisualBounds, addElement, removeElement signatures + steps
+    addSubtree                text      EDM2  EDM     querySelectorAll, build domToId map, resolve parents, addElement each
+```
+
+```arrows
+from   to     description
+ECF    EIM    Constructor populates internal maps
+ECF    EBT    Step 4: buildElementTree()
+ECF    EIS    Step 3: injectInteractionStyles
+EBT    EBS    Tree elements feed bounds system
+EBS    EHZ    getWorldBounds used by hitTestRect
+ETA    EBS    setTransform → invalidateWorldBoundsCache
+EDM    EBS    growVisualBounds/addElement → invalidate cache
+EDM    EIM    Mutations update internal maps
+```
+
+```notes
+Code-ref IDs use a "C" prefix (e.g. CIM, CBT) and entity IDs use an "E" prefix
+(e.g. EIM, EBT) to disambiguate the two namespaces. Every text paragraph in the
+diagram is labeled with its entity ID in [EXX] brackets. Box entities show their
+ID at the box corner. Cross-diagram jump targets: ** filename.txt#EXX.
 ```

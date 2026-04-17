@@ -2,121 +2,185 @@
                                              VIEWPORT & COORDINATE TRANSFORMS
                                              ================================
 
-    ┌─ Viewport (container div) [VP] ────────────────────────────────────────────────────────────────────────────────────────────────────┐
-    │  className="relative w-full h-full overflow-hidden select-none touch-none"                                                        │
+    ┌─ Viewport (container div) EVP ────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    │  [EVP] className="relative w-full h-full overflow-hidden select-none touch-none"                                                  │
     │  Pointer events: onPointerDown, onPointerMove, onPointerCancel, onContextMenu                                                     │
     │                                                                                                                                    │
     │  ┌─ transformDiv ─────────────────────────┐  ┌─ OverLayer** 04-over-layer.txt (sibling, z:10) ────────┐  ┌─ selectionRect overlay ──────────────┐    │
-    │  │  style: transform-origin: 0 0          │  │  absolute inset-0                     │  │  absolute, pointer-events-none       │    │
-    │  │         will-change: transform          │  │  Renders <button> badges at           │  │  border-accent bg-accent/8           │    │
-    │  │         translate(tx,ty) scale(s) [AT]  │  │  screen-space positions                │  │  Only shown during Ctrl+drag     [SR]│    │
-    │  │                                         │  │  rAF loop syncs with pan/zoom     [OL]│  └──────────────────────────────────────┘    │
-    │  │  Children:                              │  └──────────────────────────────────────┘                                              │
-    │  │    scene.getSvgElement() [MN]           │                                              ┌─ selectionOverlayPaths ──────────────┐  │
-    │  │    (mounted via useEffect)              │                                              │  Mono labels left of lasso       [SP]│  │
-    │  │                                         │  ┌─ {children} ────────────────────────┐    └──────────────────────────────────────┘  │
-    │  └─────────────────────────────────────────┘  │  passed through (toolbar, etc.)  [CH]│                                             │
+    │  │  [ETD] style: transform-origin: 0 0    │  │  [EOL] absolute inset-0                                │  │  [ESR] absolute, pointer-events-none │    │
+    │  │         will-change: transform          │  │  Renders <button> badges at                            │  │  border-accent bg-accent/8           │    │
+    │  │         translate(tx,ty) scale(s)       │  │  screen-space positions                                │  │  Only shown during Ctrl+drag     ESR │    │
+    │  │                                         │  │  rAF loop syncs with pan/zoom                     EOL │  └──────────────────────────────────────┘    │
+    │  │  Children:                              │  └──────────────────────────────────────────────────────┘                                              │
+    │  │    scene.getSvgElement()                │                                              ┌─ selectionOverlayPaths ──────────────┐  │
+    │  │    (mounted via useEffect)          ETD │                                              │  [ESP] Mono labels left of lasso ESP │  │
+    │  └─────────────────────────────────────────┘  ┌─ {children} ────────────────────────┐    └──────────────────────────────────────┘  │
+    │                                                │  [ECH] passed through (toolbar, etc.) │                                             │
+    │                                                │                                  ECH │                                             │
     │                                                └─────────────────────────────────────┘                                             │
     └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
-    TYPES [TY]                              COORDINATE MATH                                    IMPERATIVE HANDLE [IH]
-    ═══════════                             ════════════════                                    ═══════════════════════
-    Transform { tx, ty, scale }             screenToScene(screenPt) [SS]                       centerOn(scenePoint, opts?)
-    Point { x, y }                          ┌────────────────────────────────┐                  ┌──────────────────────────────────┐
-    Rect { x, y, width, height }            │  container = getBoundingRect() │                  │  scale = opts.scale ?? current   │
-    IDENTITY = { 0, 0, 1 }                  │  { tx, ty, scale } = transform │                  │  tx = W/2 - pt.x * scale        │
-                                            │                                │                  │  ty = H/2 - pt.y * scale        │
-    composeTransforms(parent, child) [CT]   │  sceneX = (scrX - left - tx)   │                  │                                  │
-    ┌───────────────────────────────────┐    │           / scale              │                  │  if animate:                     │
-    │  tx: p.tx + c.tx * p.scale       │    │  sceneY = (scrY - top  - ty)   │                  │    transition 220ms ease         │
-    │  ty: p.ty + c.ty * p.scale       │    │           / scale              │                  │    rAF → applyTransform          │
-    │  scale: p.scale * c.scale        │    └────────────────────────────────┘                  │    setTimeout 240ms clear        │
-    └───────────────────────────────────┘                                                       └──────────────────────────────────┘
-                                            applyTransform(t) [AF]
-    transformRect(rect, t) [TR]             ┌────────────────────────────────┐
-    ┌───────────────────────────────────┐    │  transformRef.current = t      │
-    │  x: r.x * t.scale + t.tx         │    │  el.style.transform =          │
-    │  y: r.y * t.scale + t.ty         │    │   translate(tx,ty) scale(s)    │
-    │  w: r.width * t.scale            │    └────────────────────────────────┘
+    [ETY] TYPES                                [ECM] COORDINATE MATH                                 [EIH] IMPERATIVE HANDLE
+    ═══════════                                ════════════════                                       ═══════════════════════
+    Transform { tx, ty, scale }                screenToScene(screenPt)                                centerOn(scenePoint, opts?)
+    Point { x, y }                             ┌────────────────────────────────────┐                  ┌──────────────────────────────────┐
+    Rect { x, y, width, height }               │  [ESS] container = getBoundingRect()│                  │  [ECO] scale = opts.scale ?? cur │
+    IDENTITY = { 0, 0, 1 }                     │  { tx, ty, scale } = transform     │                  │  tx = W/2 - pt.x * scale        │
+                                                │                                    │                  │  ty = H/2 - pt.y * scale        │
+    composeTransforms(parent, child)            │  sceneX = (scrX - left - tx)       │                  │                                  │
+    ┌───────────────────────────────────┐       │           / scale                  │                  │  if animate:                     │
+    │  [ECT] tx: p.tx + c.tx * p.scale │       │  sceneY = (scrY - top  - ty)       │                  │    transition 220ms ease         │
+    │  ty: p.ty + c.ty * p.scale       │       │           / scale              ESS │                  │    rAF → applyTransform          │
+    │  scale: p.scale * c.scale        │       └────────────────────────────────────┘                  │    setTimeout 240ms clear    ECO │
+    └───────────────────────────────────┘                                                              └──────────────────────────────────┘
+                                                applyTransform(t)
+    transformRect(rect, t)                      ┌────────────────────────────────────┐
+    ┌───────────────────────────────────┐       │  [EAF] transformRef.current = t    │
+    │  [ETR] x: r.x * t.scale + t.tx   │       │  el.style.transform =              │
+    │  y: r.y * t.scale + t.ty         │       │   translate(tx,ty) scale(s)    EAF │
+    │  w: r.width * t.scale            │       └────────────────────────────────────┘
     │  h: r.height * t.scale           │
-    └───────────────────────────────────┘    syncRootTransform(t) [SY]
-                                            ┌────────────────────────────────┐
-                                            │  scene.setTransform("root", t) │
-                                            │  Keeps Scene bounds in sync    │
-                                            └────────────────────────────────┘
+    └───────────────────────────────────┘       syncRootTransform(t)
+                                                ┌────────────────────────────────────┐
+                                                │  [ESY] scene.setTransform("root",t)│
+                                                │  Keeps Scene bounds in sync    ESY │
+                                                └────────────────────────────────────┘
 
 
-    INTERACTION MODES
-    ═════════════════
+    [EIM] INTERACTION MODES
+    ═══════════════════════
 
-    ┌─ Wheel Zoom (pivot around cursor) [WZ] ─────────────────────────┐          ┌─ Pinch-to-Zoom (multi-touch) [PZ] ────────────────────────────────────┐
-    │                                                                  │          │                                                                        │
-    │  delta = -deltaY * ZOOM_SENSITIVITY (0.002)                      │          │  activePointersRef: Map<pointerId, {x,y}>                              │
-    │  (deltaMode===1 line-scroll → * 0.05 instead)                    │          │  pinchStartRef: { distance, midpoint, transform }                      │
-    │                                                                  │          │                                                                        │
-    │  newScale = clamp(scale * (1 + delta), 0.1, 5)                   │          │  2nd finger down:                                                      │
-    │                                                                  │          │    distance = sqrt((b.x-a.x)^2 + (b.y-a.y)^2)                          │
-    │  Pivot formula (cursor stays fixed):                              │          │    midpoint = avg of two pointers                                      │
-    │  ┌─────────────────────────────────────────────┐                 │          │    save current transform                                              │
-    │  │  cursorX = clientX - rect.left              │                 │          │                                                                        │
-    │  │  cursorY = clientY - rect.top               │                 │          │  On move (2 pointers):                                                 │
-    │  │                                             │                 │          │    scaleFactor = currentDist / startDist                                │
-    │  │  newTx = cursorX - (cursorX - tx)           │                 │          │    newScale = clamp(start.scale * scaleFactor, 0.1, 5)                  │
-    │  │          * (newScale / scale)               │                 │          │    Zoom around midpoint + pan by midpoint delta                         │
-    │  │  newTy = cursorY - (cursorY - ty)           │                 │          │                                                                        │
-    │  │          * (newScale / scale)               │                 │          │  Finger up: clear pinchStartRef, suppress click                         │
-    │  └─────────────────────────────────────────────┘                 │          │                                                                        │
-    │                                                                  │          │  Constants: MIN_SCALE=0.1  MAX_SCALE=5                             [ZC] │
-    │  → applyTransform + syncRootTransform                            │          └────────────────────────────────────────────────────────────────────────┘
-    └──────────────────────────────────────────────────────────────────┘
+    ┌─ Wheel Zoom (pivot around cursor) EWZ ─────────────────────────────────┐          ┌─ Pinch-to-Zoom (multi-touch) EPZ ──────────────────────────────────────┐
+    │                                                                        │          │                                                                        │
+    │  [EWZ] delta = -deltaY * ZOOM_SENSITIVITY (0.002)                      │          │  [EPZ] activePointersRef: Map<pointerId, {x,y}>                        │
+    │  (deltaMode===1 line-scroll → * 0.05 instead)                          │          │  pinchStartRef: { distance, midpoint, transform }                      │
+    │                                                                        │          │                                                                        │
+    │  newScale = clamp(scale * (1 + delta), 0.1, 5)                         │          │  2nd finger down:                                                      │
+    │                                                                        │          │    distance = sqrt((b.x-a.x)^2 + (b.y-a.y)^2)                          │
+    │  Pivot formula (cursor stays fixed):                                    │          │    midpoint = avg of two pointers                                      │
+    │  ┌─────────────────────────────────────────────┐                       │          │    save current transform                                              │
+    │  │  [EWF] cursorX = clientX - rect.left        │                       │          │                                                                        │
+    │  │  cursorY = clientY - rect.top               │                       │          │  On move (2 pointers):                                                 │
+    │  │                                             │                       │          │    scaleFactor = currentDist / startDist                                │
+    │  │  newTx = cursorX - (cursorX - tx)           │                       │          │    newScale = clamp(start.scale * scaleFactor, 0.1, 5)                  │
+    │  │          * (newScale / scale)               │                       │          │    Zoom around midpoint + pan by midpoint delta                         │
+    │  │  newTy = cursorY - (cursorY - ty)           │                       │          │                                                                        │
+    │  │          * (newScale / scale)               │                       │          │  Finger up: clear pinchStartRef, suppress click                         │
+    │  └─────────────────────────────────────────────┘                       │          │                                                                        │
+    │                                                                        │          │  Constants: MIN_SCALE=0.1  MAX_SCALE=5                             EZC │
+    │  → applyTransform + syncRootTransform                              EWZ │          └────────────────────────────────────────────────────────────────────────┘
+    └────────────────────────────────────────────────────────────────────────┘
 
 
-    ┌─ Pan (normal drag) [PD] ─────────────────────────┐          ┌─ Selection Lasso (Ctrl+drag) [SL] ─────────────────────────────────────┐
-    │                                                   │          │                                                                        │
-    │  pointerDown: save { x, y, transform, ctrl }     │          │  Trigger: ctrl/meta key OR (selectMode + touch)                         │
-    │  pointerMove:                                     │          │                                                                        │
-    │    dx = clientX - start.x                         │          │  Screen rect (for visual overlay):                                     │
-    │    dy = clientY - start.y                         │          │    x = min(startX, curX) relative to container                          │
-    │    if distance > DRAG_THRESHOLD (4px):            │          │    y = min(startY, curY) relative to container                          │
-    │      didDrag = true                               │          │    w = |curX - startX|                                                 │
-    │      capture pointer                              │          │    h = |curY - startY|                                                 │
-    │                                                   │          │                                                                        │
-    │  newTx = start.tx + dx                            │          │  Scene rect (for hit testing):                                         │
-    │  newTy = start.ty + dy                            │          │    Convert start & current via screenToScene                            │
-    │  scale unchanged                                  │          │    Build Rect from min/max of both points                               │
-    │                                                   │          │                                                                        │
-    │  → applyTransform + syncRootTransform             │          │  onSelectionDrag(sceneRect)    ── live updates during drag              │
-    │                                                   │          │  onSelectionDragEnd(sceneRect) ── final on pointerup                    │
-    │  pointerUp (no drag): fire onSceneClick [SC]      │          │                                                                        │
-    │    screenPoint + scenePoint + domEvent             │          │  pointerUp: clear selectionRect state                                  │
-    └───────────────────────────────────────────────────┘          └────────────────────────────────────────────────────────────────────────┘
+    ┌─ Pan (normal drag) EPD ─────────────────────────────┐          ┌─ Selection Lasso (Ctrl+drag) ESL ──────────────────────────────────────┐
+    │                                                      │          │                                                                        │
+    │  [EPD] pointerDown: save { x, y, transform, ctrl }  │          │  [ESL] Trigger: ctrl/meta key OR (selectMode + touch)                   │
+    │  pointerMove:                                        │          │                                                                        │
+    │    dx = clientX - start.x                            │          │  Screen rect (for visual overlay):                                     │
+    │    dy = clientY - start.y                            │          │    x = min(startX, curX) relative to container                          │
+    │    if distance > DRAG_THRESHOLD (4px):               │          │    y = min(startY, curY) relative to container                          │
+    │      didDrag = true                                  │          │    w = |curX - startX|                                                 │
+    │      capture pointer                                 │          │    h = |curY - startY|                                                 │
+    │                                                      │          │                                                                        │
+    │  newTx = start.tx + dx                               │          │  Scene rect (for hit testing):                                         │
+    │  newTy = start.ty + dy                               │          │    Convert start & current via screenToScene                            │
+    │  scale unchanged                                     │          │    Build Rect from min/max of both points                               │
+    │                                                      │          │                                                                        │
+    │  → applyTransform + syncRootTransform                │          │  onSelectionDrag(sceneRect)    ── live updates during drag              │
+    │                                                      │          │  onSelectionDragEnd(sceneRect) ── final on pointerup                    │
+    │  pointerUp (no drag): fire onSceneClick              │          │                                                                        │
+    │    screenPoint + scenePoint + domEvent           EPD │          │  pointerUp: clear selectionRect state                              ESL │
+    └──────────────────────────────────────────────────────┘          └────────────────────────────────────────────────────────────────────────┘
 
-    Window pointerup listener [WP]
+    [EWP] Window pointerup listener
     Cleans up state even if event target is inside dynamically-appended content (nested SVGs from expand).
     Releases pointer capture, fires onSelectionDragEnd or onSceneClick as appropriate.
 ```
 
 ```code-refs
-VP  web-ui/src/diagram/rendering/viewport.tsx:48-61      Viewport component signature and props destructuring
-AT  web-ui/src/diagram/rendering/viewport.tsx:90-96      applyTransform: set CSS transform on transformDiv
-MN  web-ui/src/diagram/rendering/viewport.tsx:78-88      Mount SVG element into transformDiv via useEffect
-OL  web-ui/src/diagram/rendering/over-layer.tsx:64-127   OverLayer component (see over-layer diagram)
-SR  web-ui/src/diagram/rendering/viewport.tsx:431-441    Selection rect overlay div
-SP  web-ui/src/diagram/rendering/viewport.tsx:442-460    Selection overlay path labels
-CH  web-ui/src/diagram/rendering/viewport.tsx:430        Children pass-through
-TY  web-ui/src/diagram/types.ts:1-24                     Transform, Point, Rect, IDENTITY_TRANSFORM
-SS  web-ui/src/diagram/rendering/viewport.tsx:98-107     screenToScene coordinate conversion
-CT  web-ui/src/diagram/types.ts:204-210                  composeTransforms helper
-TR  web-ui/src/diagram/types.ts:213-220                  transformRect helper
-AF  web-ui/src/diagram/rendering/viewport.tsx:90-96      applyTransform writes CSS transform
-SY  web-ui/src/diagram/rendering/viewport.tsx:110-115    syncRootTransform keeps Scene in sync
-IH  web-ui/src/diagram/rendering/viewport.tsx:118-148    centerOn imperative handle
-WZ  web-ui/src/diagram/rendering/viewport.tsx:151-176    Wheel zoom with cursor pivot
-PZ  web-ui/src/diagram/rendering/viewport.tsx:198-280    Pinch-to-zoom pointer handling
-ZC  web-ui/src/diagram/rendering/viewport.tsx:15-18      Zoom constants (MIN/MAX_SCALE, SENSITIVITY, DRAG_THRESHOLD)
-PD  web-ui/src/diagram/rendering/viewport.tsx:282-331    Pan via normal drag
-SL  web-ui/src/diagram/rendering/viewport.tsx:295-320    Selection lasso (Ctrl+drag)
-SC  web-ui/src/diagram/rendering/viewport.tsx:386-394    Scene click on pointerup without drag
-WP  web-ui/src/diagram/rendering/viewport.tsx:338-399    Window-level pointerup listener
+CVP  web-ui/src/diagram/rendering/viewport.tsx:48-61      Viewport component signature and props destructuring
+CAT  web-ui/src/diagram/rendering/viewport.tsx:90-96      applyTransform: set CSS transform on transformDiv
+CMN  web-ui/src/diagram/rendering/viewport.tsx:78-88      Mount SVG element into transformDiv via useEffect
+COL  web-ui/src/diagram/rendering/over-layer.tsx:64-127   OverLayer component (see over-layer diagram)
+CSR  web-ui/src/diagram/rendering/viewport.tsx:431-441    Selection rect overlay div
+CSP  web-ui/src/diagram/rendering/viewport.tsx:442-460    Selection overlay path labels
+CCH  web-ui/src/diagram/rendering/viewport.tsx:430        Children pass-through
+CTY  web-ui/src/diagram/types.ts:1-24                     Transform, Point, Rect, IDENTITY_TRANSFORM
+CSS  web-ui/src/diagram/rendering/viewport.tsx:98-107     screenToScene coordinate conversion
+CCT  web-ui/src/diagram/types.ts:204-210                  composeTransforms helper
+CTR  web-ui/src/diagram/types.ts:213-220                  transformRect helper
+CAF  web-ui/src/diagram/rendering/viewport.tsx:90-96      applyTransform writes CSS transform
+CSY  web-ui/src/diagram/rendering/viewport.tsx:110-115    syncRootTransform keeps Scene in sync
+CIH  web-ui/src/diagram/rendering/viewport.tsx:118-148    centerOn imperative handle
+CWZ  web-ui/src/diagram/rendering/viewport.tsx:151-176    Wheel zoom with cursor pivot
+CPZ  web-ui/src/diagram/rendering/viewport.tsx:198-280    Pinch-to-zoom pointer handling
+CZC  web-ui/src/diagram/rendering/viewport.tsx:15-18      Zoom constants (MIN/MAX_SCALE, SENSITIVITY, DRAG_THRESHOLD)
+CPD  web-ui/src/diagram/rendering/viewport.tsx:282-331    Pan via normal drag
+CSL  web-ui/src/diagram/rendering/viewport.tsx:295-320    Selection lasso (Ctrl+drag)
+CSC  web-ui/src/diagram/rendering/viewport.tsx:386-394    Scene click on pointerup without drag
+CWP  web-ui/src/diagram/rendering/viewport.tsx:338-399    Window-level pointerup listener
+```
+
+```entities
+# name                    id_type  id     parent  description
+
+# Viewport hierarchy
+viewport                  box      EVP            Viewport container div (pointer events, overflow-hidden)
+  transform-div           box      ETD    EVP     transformDiv: CSS transform for pan/zoom
+  over-layer              box      EOL    EVP     OverLayer sibling (z:10, badge rendering)
+  selection-rect          box      ESR    EVP     selectionRect overlay (Ctrl+drag visual)
+  selection-paths         box      ESP    EVP     selectionOverlayPaths (mono labels beside lasso)
+  children                box      ECH    EVP     {children} pass-through (toolbar, etc.)
+
+# Types section
+types                     text     ETY            TYPES heading (Transform, Point, Rect, IDENTITY)
+compose-transforms        box      ECT            composeTransforms(parent, child) formula
+transform-rect            box      ETR            transformRect(rect, t) formula
+
+# Coordinate math
+coordinate-math           text     ECM            COORDINATE MATH heading
+screen-to-scene           box      ESS            screenToScene(screenPt) conversion
+apply-transform           box      EAF            applyTransform(t): write CSS transform
+sync-root-transform       box      ESY            syncRootTransform(t): keep Scene in sync
+
+# Imperative handle
+imperative-handle         text     EIH            IMPERATIVE HANDLE heading
+center-on                 box      ECO            centerOn(scenePoint, opts?) with animation
+
+# Interaction modes
+interaction-modes         text     EIM            INTERACTION MODES heading
+wheel-zoom                box      EWZ            Wheel zoom with cursor pivot
+  wheel-pivot-formula     box      EWF    EWZ     Pivot formula (cursor stays fixed)
+pinch-zoom                box      EPZ            Pinch-to-zoom (multi-touch)
+zoom-constants            text     EZC    EPZ     MIN_SCALE=0.1, MAX_SCALE=5, SENSITIVITY, DRAG_THRESHOLD
+pan-drag                  box      EPD            Pan via normal drag
+selection-lasso           box      ESL            Selection lasso (Ctrl+drag)
+window-pointerup          text     EWP            Window pointerup listener (cleanup)
+```
+
+```arrows
+# src             target          description
+ETD               EVP             transformDiv is child of Viewport
+EOL               EVP             OverLayer is sibling in Viewport
+ESR               EVP             selectionRect overlay in Viewport
+ESP               EVP             selectionOverlayPaths in Viewport
+ECH               EVP             {children} pass-through in Viewport
+EWZ.apply         EAF             wheel zoom → applyTransform
+EWZ.sync          ESY             wheel zoom → syncRootTransform
+EPZ.apply         EAF             pinch-zoom → applyTransform
+EPZ.sync          ESY             pinch-zoom → syncRootTransform
+EPD.apply         EAF             pan drag → applyTransform
+EPD.sync          ESY             pan drag → syncRootTransform
+EPD.click         EVP             pointerUp (no drag) → fire onSceneClick
+ESL.drag          EVP             onSelectionDrag(sceneRect) live callback
+ESL.end           EVP             onSelectionDragEnd(sceneRect) final callback
+ESS               EAF             screenToScene uses same transform state
+```
+
+```notes
+Code-ref IDs use a "C" prefix (e.g. CVP, CAT) and entity IDs use an "E" prefix
+(e.g. EVP, ETD) to disambiguate the two namespaces. Every text paragraph in the
+diagram is labeled with its entity ID in [EXX] brackets. Box entities show their
+ID at the box corner. Cross-diagram jump targets: ** filename.txt#EXX.
 ```

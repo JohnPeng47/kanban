@@ -4,77 +4,77 @@
 
     ┌─ Viewport** 03-viewport-and-transforms.txt (container) ──────────────────────────────────────────────────────────────────────────────────┐
     │                                                                                                          │
-    │  ┌─ transformDiv ──────────┐   ┌─ OverLayer [OC] ──────────────────────────────────────────────────────┐ │
-    │  │  SVG diagram            │   │  <div absolute inset-0 overflow-hidden z-index:10>                    │ │
-    │  │  Moves with pan/zoom    │   │                                                                       │ │
-    │  │  (CSS transform)        │   │  Props:                                                               │ │
-    │  │                         │   │    badges: OverlayBadge[]                                              │ │
-    │  │                         │   │    scene: Scene            (for getWorldBounds)                        │ │
-    │  │                         │   │    transformRef: Ref<Transform>   (shared with Viewport)               │ │
-    │  │                         │   │                                                                       │ │
-    │  │                         │   │  ┌─ Badge <button> ───────────────────────────────────────────┐       │ │
-    │  │        ╔═══╗            │   │  │  absolute, 18x18px rounded-full                            │       │ │
-    │  │        ║ A ║◄───────────┼───┼──│  margin: -9px (centered on anchor point)                   │       │ │
-    │  │        ╚═══╝            │   │  │  text-[10px] font-bold                                     │       │ │
-    │  │   (scene element)       │   │  │  hover:scale-125 transition                                │       │ │
-    │  │                         │   │  │  onClick → badge.onClick() (stopPropagation)           [BD]│       │ │
-    │  │                         │   │  └────────────────────────────────────────────────────────────┘       │ │
-    │  │                         │   │                                                                       │ │
-    │  └─────────────────────────┘   │  Ref tracking: badgeRefsMap: Map<id, HTMLButtonElement>           [RM]│ │
-    │                                └───────────────────────────────────────────────────────────────────────┘ │
+    │  ┌─ transformDiv ──────────┐   ┌─ OverLayer EOC ──────────────────────────────────────────────────────┐  │
+    │  │  [ETD] SVG diagram      │   │  [EOC] <div absolute inset-0 overflow-hidden z-index:10>             │  │
+    │  │  Moves with pan/zoom    │   │                                                                      │  │
+    │  │  (CSS transform)   ETD  │   │  Props:                                                              │  │
+    │  │                         │   │    badges: OverlayBadge[]                                             │  │
+    │  │                         │   │    scene: Scene            (for getWorldBounds)                       │  │
+    │  │                         │   │    transformRef: Ref<Transform>   (shared with Viewport)              │  │
+    │  │                         │   │                                                                      │  │
+    │  │                         │   │  ┌─ Badge <button> EBD ─────────────────────────────────────────┐    │  │
+    │  │        ╔═══╗            │   │  │  [EBD] absolute, 18x18px rounded-full                        │    │  │
+    │  │        ║ A ║◄───────────┼───┼──│  margin: -9px (centered on anchor point)                     │    │  │
+    │  │        ╚═══╝            │   │  │  text-[10px] font-bold                                       │    │  │
+    │  │   (scene element)       │   │  │  hover:scale-125 transition                                  │    │  │
+    │  │                         │   │  │  onClick → badge.onClick() (stopPropagation)             EBD │    │  │
+    │  │                         │   │  └──────────────────────────────────────────────────────────────┘    │  │
+    │  │                         │   │                                                                      │  │
+    │  └─────────────────────────┘   │  [ERM] Ref tracking: badgeRefsMap: Map<id, HTMLButtonElement>    EOC │  │
+    │                                └──────────────────────────────────────────────────────────────────────┘  │
     └──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
-    rAF SYNC LOOP [RL]                                               BADGE ANCHOR TYPES [BA]
-    ═══════════════════                                              ═══════════════════════
+    [ERL] rAF SYNC LOOP                                                 [EBA] BADGE ANCHOR TYPES
+    ═══════════════════                                                 ════════════════════════
     ┌────────────────────────────────────────────┐
-    │  useEffect (runs when badges change):      │                   BadgeAnchor = one of three spaces:
+    │  [ERL] useEffect (runs when badges change):│                      [EBA] BadgeAnchor = one of three spaces:
     │                                            │
-    │  sync = () => {                            │                   ┌─ "screen" ──────────────────────┐    ┌─ "scene" ──────────────────────────┐
-    │    t = transformRef.current                │                   │  { space:"screen", x, y }       │    │  { space:"scene", x, y }           │
-    │    for each badge:                         │                   │                                  │    │                                     │
-    │      dom = badgeRefsMap.get(badge.id)      │                   │  Screen coords used directly:    │    │  Converted to screen:               │
-    │      pos = resolveAnchor(anchor, t, scene) │                   │    screenX = x                   │    │    screenX = x * scale + tx         │
-    │      dom.style.left = pos.x + "px"         │                   │    screenY = y                   │    │    screenY = y * scale + ty         │
-    │      dom.style.top  = pos.y + "px"         │                   │                                  │    │                                     │
-    │    rafId = requestAnimationFrame(sync)      │                   │  Use: fixed UI anchors       [SA]│    │  Use: pin to diagram coords     [CA]│
-    │  }                                         │                   └──────────────────────────────────┘    └─────────────────────────────────────┘
+    │  sync = () => {                            │                      ┌─ "screen" ESA ─────────────────────┐    ┌─ "scene" ECA ──────────────────────────┐
+    │    t = transformRef.current                │                      │  [ESA] { space:"screen", x, y }    │    │  [ECA] { space:"scene", x, y }         │
+    │    for each badge:                         │                      │                                     │    │                                         │
+    │      dom = badgeRefsMap.get(badge.id)      │                      │  Screen coords used directly:       │    │  Converted to screen:                   │
+    │      pos = resolveAnchor(anchor, t, scene) │                      │    screenX = x                      │    │    screenX = x * scale + tx             │
+    │      dom.style.left = pos.x + "px"         │                      │    screenY = y                      │    │    screenY = y * scale + ty             │
+    │      dom.style.top  = pos.y + "px"         │                      │                                     │    │                                         │
+    │    rafId = requestAnimationFrame(sync)      │                      │  Use: fixed UI anchors          ESA│    │  Use: pin to diagram coords         ECA│
+    │  }                                         │                      └─────────────────────────────────────┘    └─────────────────────────────────────────┘
     │  rafId = requestAnimationFrame(sync)        │
-    │  cleanup: cancelAnimationFrame(rafId)       │                   ┌─ "element" ────────────────────────────────────────────────────────────────┐
-    └────────────────────────────────────────────┘                   │  { space:"element", elementId, corner }                                    │
-                                                                     │                                                                            │
-    Key insight: Badges are DOM elements                             │  corner: "center" | "top-right" | "top-left" | "bottom-right" | "bottom-left"
-    positioned via inline style.left/top,                            │                                                                            │
-    NOT via React state. This avoids                                 │  Resolution steps:                                                         │
-    re-renders during pan/zoom.                                      │    1. bounds = scene.getWorldBounds(elementId)                              │
-                                                                     │    2. Pick corner point (sx, sy) from bounds                                │
-                                                                     │    3. screenX = sx * scale + tx                                             │
-                                                                     │       screenY = sy * scale + ty                                             │
-                                                                     │                                                                            │
-                                                                     │  Use: attach badge to scene element corner (e.g. modal count)          [EA] │
-                                                                     └────────────────────────────────────────────────────────────────────────────┘
+    │  cleanup: cancelAnimationFrame(rafId)  ERL │                      ┌─ "element" EEA ────────────────────────────────────────────────────────────────┐
+    └────────────────────────────────────────────┘                      │  [EEA] { space:"element", elementId, corner }                                  │
+                                                                        │                                                                                │
+    [EKI] Key insight: Badges are DOM elements                          │  corner: "center" | "top-right" | "top-left" | "bottom-right" | "bottom-left"  │
+    positioned via inline style.left/top,                               │                                                                                │
+    NOT via React state. This avoids                                    │  Resolution steps:                                                             │
+    re-renders during pan/zoom.                                         │    1. bounds = scene.getWorldBounds(elementId)                                  │
+                                                                        │    2. Pick corner point (sx, sy) from bounds                                    │
+                                                                        │    3. screenX = sx * scale + tx                                                 │
+                                                                        │       screenY = sy * scale + ty                                                 │
+                                                                        │                                                                                │
+                                                                        │  Use: attach badge to scene element corner (e.g. modal count)              EEA │
+                                                                        └────────────────────────────────────────────────────────────────────────────────┘
 
 
-    resolveAnchor(anchor, transform, scene) [RA]
+    [ERA] resolveAnchor(anchor, transform, scene)
     ═════════════════════════════════════════════
     ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
     │                                                                                             │
-    │   anchor.space ──┬── "screen" ──→ return { x, y } directly                                  │
-    │                  │                                                                          │
-    │                  ├── "scene"  ──→ return { x*scale+tx, y*scale+ty }                          │
-    │                  │                                                                          │
-    │                  └── "element"──→ bounds = scene.getWorldBounds(id)                          │
-    │                                  if empty → return {0,0}                                    │
-    │                                  pick (sx,sy) by corner                                     │
-    │                                  return { sx*scale+tx, sy*scale+ty }                        │
+    │  [ERA] anchor.space ──┬── "screen" ──→ return { x, y } directly                            │
+    │                       │                                                                     │
+    │                       ├── "scene"  ──→ return { x*scale+tx, y*scale+ty }                    │
+    │                       │                                                                     │
+    │                       └── "element"──→ bounds = scene.getWorldBounds(id)                     │
+    │                                        if empty → return {0,0}                              │
+    │                                        pick (sx,sy) by corner                               │
+    │                                        return { sx*scale+tx, sy*scale+ty }              ERA │
     │                                                                                             │
     └─────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
-    OverlayBadge interface [OB]
+    [EOB] OverlayBadge interface
     ═══════════════════════════
     ┌──────────────────────────────────┐
-    │  id: string                      │
+    │  [EOB] id: string                │
     │  anchor: BadgeAnchor             │
     │  text: string                    │
     │  onClick: () => void             │
@@ -82,19 +82,64 @@
     │    color?: string (#fff)         │
     │    background?: string (#4C9AFF) │
     │    borderColor?: string          │
-    │  }                               │
+    │  }                           EOB │
     └──────────────────────────────────┘
 ```
 
 ```code-refs
-OC  web-ui/src/diagram/rendering/over-layer.tsx:64-127   OverLayer component
-BD  web-ui/src/diagram/rendering/over-layer.tsx:96-124   Badge button rendering with ref callback
-RM  web-ui/src/diagram/rendering/over-layer.tsx:65       badgeRefsMap for direct DOM access
-RL  web-ui/src/diagram/rendering/over-layer.tsx:68-89    rAF sync loop
-BA  web-ui/src/diagram/types.ts:166-173                  BadgeAnchor union type
-SA  web-ui/src/diagram/rendering/over-layer.tsx:8-9      Screen-space anchor resolution
-CA  web-ui/src/diagram/rendering/over-layer.tsx:11-15    Scene-space anchor resolution
-EA  web-ui/src/diagram/rendering/over-layer.tsx:17-51    Element-space anchor resolution with corner picking
-RA  web-ui/src/diagram/rendering/over-layer.tsx:6-52     resolveAnchor function
-OB  web-ui/src/diagram/types.ts:176-186                  OverlayBadge interface
+COC  web-ui/src/diagram/rendering/over-layer.tsx:64-127   OverLayer component
+CBD  web-ui/src/diagram/rendering/over-layer.tsx:96-124   Badge button rendering with ref callback
+CRM  web-ui/src/diagram/rendering/over-layer.tsx:65       badgeRefsMap for direct DOM access
+CRL  web-ui/src/diagram/rendering/over-layer.tsx:68-89    rAF sync loop
+CBA  web-ui/src/diagram/types.ts:166-173                  BadgeAnchor union type
+CSA  web-ui/src/diagram/rendering/over-layer.tsx:8-9      Screen-space anchor resolution
+CCA  web-ui/src/diagram/rendering/over-layer.tsx:11-15    Scene-space anchor resolution
+CEA  web-ui/src/diagram/rendering/over-layer.tsx:17-51    Element-space anchor resolution with corner picking
+CRA  web-ui/src/diagram/rendering/over-layer.tsx:6-52     resolveAnchor function
+COB  web-ui/src/diagram/types.ts:176-186                  OverlayBadge interface
+```
+
+```entities
+# name                    id_type  id     parent  description
+
+# Viewport context
+transform-div             box      ETD            transformDiv (SVG diagram, moves with pan/zoom)
+over-layer                box      EOC            OverLayer component (absolute, z:10)
+  badge-button            box      EBD    EOC     Badge <button> (18x18 rounded-full, positioned by rAF)
+  badge-refs-map          text     ERM    EOC     badgeRefsMap: Map<id, HTMLButtonElement>
+
+# rAF sync loop
+raf-sync-loop             box      ERL            rAF sync loop (useEffect, direct DOM positioning)
+key-insight               text     EKI            Key insight: DOM positioning avoids re-renders
+
+# Badge anchor types
+badge-anchor-types        text     EBA            BADGE ANCHOR TYPES heading (BadgeAnchor union)
+  screen-anchor           box      ESA            "screen" anchor: coords used directly
+  scene-anchor            box      ECA            "scene" anchor: converted via scale+translate
+  element-anchor          box      EEA            "element" anchor: getWorldBounds + corner pick
+
+# resolveAnchor
+resolve-anchor            box      ERA            resolveAnchor(anchor, transform, scene) dispatcher
+
+# OverlayBadge interface
+overlay-badge             box      EOB            OverlayBadge interface (id, anchor, text, onClick, style)
+```
+
+```arrows
+# src             target          description
+EBD               EOC             Badge buttons rendered inside OverLayer
+ERL.resolve       ERA             rAF loop calls resolveAnchor for each badge
+ERL.dom           ERM             rAF loop reads badgeRefsMap for DOM references
+ERA.screen        ESA             anchor.space === "screen" → direct coords
+ERA.scene         ECA             anchor.space === "scene" → scale+translate
+ERA.element       EEA             anchor.space === "element" → getWorldBounds + corner
+EOB               EBD             OverlayBadge data drives Badge button rendering
+EOB.anchor        EBA             OverlayBadge.anchor is a BadgeAnchor
+```
+
+```notes
+Code-ref IDs use a "C" prefix (e.g. COC, CBD) and entity IDs use an "E" prefix
+(e.g. EOC, EBD) to disambiguate the two namespaces. Every text paragraph in the
+diagram is labeled with its entity ID in [EXX] brackets. Box entities show their
+ID at the box corner. Cross-diagram jump targets: ** filename.txt#EXX.
 ```

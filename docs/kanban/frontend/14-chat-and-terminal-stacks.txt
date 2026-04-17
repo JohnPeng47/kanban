@@ -1,0 +1,147 @@
+Chat and Terminal UI Stacks
+============================
+
+How the two primary agent interaction surfaces -- Cline chat and PTY terminal --
+are composed from shared hooks through to rendered components.  Both stacks
+follow the same layered pattern (transport → session state → view model →
+component) and both can appear in the detail view or the home sidebar.
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════════════════
+  1. SIDE-BY-SIDE STACK COMPARISON
+═══════════════════════════════════════════════════════════════════════════════════
+
+  CLINE CHAT STACK                          TERMINAL STACK
+  ─────────────────                         ──────────────────
+
+  TRANSPORT                                 TRANSPORT
+  ┌────────────────────────────────┐        ┌────────────────────────────────────┐
+  │ useClineChatRuntimeActions     │        │ PersistentTerminal (xterm.js)      │
+  │                                │        │                                    │
+  │ TRPC wrappers → runtime.*     │        │ IO socket  → /api/terminal/io      │
+  │ Returns ClineChatActionResult  │        │   raw PTY bytes in/out             │
+  │                                │        │ Control WS → /api/terminal/control │
+  │ [→ cline-architecture]        │        │   restore, resize, state, exit     │
+  └──────────┬─────────────────────┘        │                                    │
+             │                               │ Cache: Map<workspaceId:taskId,    │
+             │                               │        PersistentTerminal>        │
+             │                               │                                    │
+             │                               │ [→ pty-session-internals]         │
+             ▼                               └──────────┬─────────────────────────┘
+  SESSION STATE                                          │
+  ┌────────────────────────────────┐                     ▼
+  │ useClineChatSession            │        SESSION STATE
+  │                                │        ┌────────────────────────────────────┐
+  │ Message list with merge/dedup  │        │ TerminalController registry        │
+  │ Stale guard on taskId change   │        │                                    │
+  │ Loads history + merges stream  │        │ input(text), paste(text),          │
+  │                                │        │ waitForLikelyPrompt(ms)            │
+  │ [→ cline-event-and-state]     │        │                                    │
+  └──────────┬─────────────────────┘        │ Map<taskId, TerminalController>    │
+             │                               └──────────┬─────────────────────────┘
+             ▼                                           ▼
+  VIEW MODEL                                VIEW MODEL
+  ┌────────────────────────────────┐        ┌────────────────────────────────────┐
+  │ useClineChatPanelController    │        │ usePersistentTerminalSession       │
+  │                                │        │                                    │
+  │ draft, canSend, canCancel      │        │ containerRef (div for xterm)       │
+  │ showReviewActions              │        │ mount/unmount lifecycle             │
+  │ handleSendDraft/handleCancel   │        │ clearTerminal(), stopTerminal()    │
+  │ 500ms stream activity timer    │        │ Registers TerminalController       │
+  └──────────┬─────────────────────┘        └──────────┬─────────────────────────┘
+             │                                          │
+             ▼                                          ▼
+  COMPONENT                                 COMPONENT
+  ┌────────────────────────────────┐        ┌────────────────────────────────────┐
+  │ ClineAgentChatPanel            │        │ AgentTerminalPanel                 │
+  │                                │        │                                    │
+  │ Scrolling message list         │        │ Session toolbar (status/clear/stop)│
+  │ ThinkingShimmer indicator      │        │ xterm container div                │
+  │ ClineChatComposer              │        │ Error banner                       │
+  │ Review actions footer          │        │ Review actions / trash button      │
+  └────────────────────────────────┘        └────────────────────────────────────┘
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════════════════
+  2. HOME SIDEBAR SPECIAL CASE
+═══════════════════════════════════════════════════════════════════════════════════
+
+  The home sidebar runs one "synthetic" agent session per workspace.
+  No real kanban task card -- ephemeral taskId routes to chat or terminal
+  based on agent type.
+
+  ┌───────────────────────────────────────────────────────────────────────────┐
+  │ useHomeAgentSession                                                       │
+  │                                                                           │
+  │ Agent type detection:                                                     │
+  │   isNativeClineAgentSelected(agentId)                                     │
+  │     ├── true  → panelMode = "chat",     descriptorKey = provider+model    │
+  │     └── false → panelMode = "terminal", descriptorKey = agentId+command   │
+  │                                                                           │
+  │ Synthetic taskId: stable while descriptor stays the same; rotates on      │
+  │ config change. Terminal mode auto-starts; chat mode is lazy (first msg).  │
+  │                                                                           │
+  │ Output: { panelMode: "chat"|"terminal"|null, taskId: string|null }        │
+  └───────────────────────────────────┬───────────────────────────────────────┘
+                                      │
+                                      ▼
+  ┌───────────────────────────────────────────────────────────────────────────┐
+  │ useHomeSidebarAgentPanel                                                  │
+  │                                                                           │
+  │ Wires useHomeAgentSession + useClineChatRuntimeActions → ReactElement:    │
+  │   panelMode === "chat"     → <ClineAgentChatPanel />                     │
+  │   panelMode === "terminal" → <AgentTerminalPanel />                      │
+  │   null / no config         → Loading spinner or setup prompt              │
+  │                                                                           │
+  │ [→ app-and-hook-wiring]  (App.tsx passes config, sessions, git info)     │
+  └───────────────────────────────────────────────────────────────────────────┘
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════════════════
+  3. SHARED PATTERN: PARALLEL FOUR-LAYER ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════════
+
+    ┌─────────────────────────┐          ┌─────────────────────────────┐
+    │    TRANSPORT LAYER      │          │    TRANSPORT LAYER          │
+    │  TRPC mutations         │          │  WebSocket IO + Control     │
+    │  (runtime-actions hook) │          │  (PersistentTerminal class) │
+    └────────────┬────────────┘          └──────────────┬──────────────┘
+                 │                                       │
+                 ▼                                       ▼
+    ┌─────────────────────────┐          ┌─────────────────────────────┐
+    │    SESSION STATE        │          │    SESSION STATE            │
+    │  Message merge/dedup    │          │  Controller registry        │
+    │  (chat-session hook)    │          │  (terminal-session hook)    │
+    └────────────┬────────────┘          └──────────────┬──────────────┘
+                 │                                       │
+                 ▼                                       ▼
+    ┌─────────────────────────┐          ┌─────────────────────────────┐
+    │    VIEW MODEL           │          │    VIEW MODEL               │
+    │  Draft, flags, handlers │          │  containerRef, error,       │
+    │  (panel-controller)     │          │  stop/clear handlers        │
+    └────────────┬────────────┘          └──────────────┬──────────────┘
+                 │                                       │
+                 ▼                                       ▼
+    ┌─────────────────────────┐          ┌─────────────────────────────┐
+    │    COMPONENT            │          │    COMPONENT                │
+    │  ClineAgentChatPanel    │          │  AgentTerminalPanel         │
+    └─────────────────────────┘          └─────────────────────────────┘
+
+  Both consume state-hub events through their respective channels:
+    Chat  ← incomingMessage/incomingMessages props (from state stream)
+    Term  ← control WS "state" frames → onSummary callback
+
+  Both can appear in:
+    • Detail view (task card opened in main content area)
+    • Home sidebar (via useHomeSidebarAgentPanel synthetic taskId)
+
+  [→ cline-event-and-state]  state-hub events that feed chat messages
+  [→ pty-session-internals]  server-side PTY that feeds terminal WS
+  [→ app-and-hook-wiring]    App.tsx that wires detail + sidebar consumers
+  [→ cline-architecture]     backend session stack the chat TRPC calls hit
+```

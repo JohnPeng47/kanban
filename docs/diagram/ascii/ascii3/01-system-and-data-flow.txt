@@ -1,87 +1,87 @@
 ```diagram
 DIAGRAM FEATURE — SYSTEM OVERVIEW & DATA FLOW
 
-  ┌─ TIER 1: BROWSER ───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  ┌─ TIER 1: BROWSER ─────────────────────────────────────────────────────────────────────────────────────────────────────── E01
   │                                                                                                                            │
-  │  URL: ?view=diagram&path=...&at=...                                                                                        │
+  │  [E02] URL: ?view=diagram&path=...&at=...                                                                                  │
   │        │                                                                                                                   │
   │        ▼                                                                                                                   │
-  │  ┌─ DiagramViewer ──────────────────────────────────────────────────────────────────────────────────────────────────────┐   │
-  │  │  3-panel layout with resize handles                                                                             DW  │   │
-  │  │  ** 02-viewer-layout.txt                                                                                            │   │
+  │  ┌─ DiagramViewer ──────────────────────────────────────────────────────────────────────────────────────────────────── E03
+  │  │  [E04] 3-panel layout with resize handles                                                                          │   │
+  │  │  ** 02-viewer-layout.txt                                                                                           │   │
   │  │                                                                                                                     │   │
-  │  │  ┌─ useDiagramViewer(workspaceId) ──────────────────────────────────────────────────────────────────────────────┐   │   │
-  │  │  │  Owns ALL viewer state:                                                                                      │   │   │
+  │  │  ┌─ useDiagramViewer(workspaceId) ────────────────────────────────────────────────────────────────────────────── E05
+  │  │  │  [E06] Owns ALL viewer state:                                                                               │   │   │
   │  │  │    tree, selectedPath, expandedFolders, content, workspacePath                                               │   │   │
   │  │  │    pendingJumpElementId, requestJump(), consumeJump()                                                        │   │   │
   │  │  │                                                                                                              │   │   │
-  │  │  │  TRPC calls:                                                                                                 │   │   │
+  │  │  │  [E07] TRPC calls:                                                                                           │   │   │
   │  │  │    mount  ──→ diagrams.list.query ──────────────────────────────┐                                            │   │   │
   │  │  │    select ──→ diagrams.getContent.query ───────────────────────┤                                            │   │   │
-  │  │  │                                                                │                                        VH  │   │   │
+  │  │  │                                                                │                                             │   │   │
   │  │  └────────────────────────────────────────────────────────────────┤                                            │   │   │
   │  │                                                                   │                                            │   │   │
-  │  │  ┌─ useCodeVizStatus(workspaceId) ──┐                             │                                            │   │   │
-  │  │  │  Poll every 30s                  │                             │                                            │   │   │
+  │  │  ┌─ useCodeVizStatus(workspaceId) ──┐ E08                         │                                            │   │   │
+  │  │  │  [E09] Poll every 30s            │                             │                                            │   │   │
   │  │  │  diagrams.checkExtension.query ──┤                             │                                            │   │   │
   │  │  │  → "connected" | "disconnected"  │                             │                                            │   │   │
-  │  │  │  | "workspace-not-registered" VS │                             │                                            │   │   │
+  │  │  │  | "workspace-not-registered"    │                             │                                            │   │   │
   │  │  └──────────────────────────────────┘                             │                                            │   │   │
   │  │                                                                   │                                            │   │   │
-  │  │  ┌─ DiagramContentArea ──────────────────────────────────┐        │                                            │   │   │
-  │  │  │  ** 05-content-and-navigation.txt                     │        │                                            │   │   │
+  │  │  ┌─ DiagramContentArea ──────────────────────────────────┐ E10    │                                            │   │   │
+  │  │  │  [E11] ** 05-content-and-navigation.txt               │        │                                            │   │   │
   │  │  │                                                       │        │                                            │   │   │
-  │  │  │  fireCodeJump() ──→ diagrams.navigate.mutate ─────────┤        │                                            │   │   │
+  │  │  │  [E12] fireCodeJump() ──→ diagrams.navigate.mutate ──┤        │                                            │   │   │
   │  │  │  openPopup()    ──→ diagrams.getContent.query ────────┤        │                                            │   │   │
   │  │  │  executeJump()  ──→ requestJump(path, elementId)      │        │                                            │   │   │
-  │  │  │                                                   CA  │        │                                            │   │   │
+  │  │  │                                                       │        │                                            │   │   │
   │  │  └───────────────────────────────────────────────────────┘        │                                            │   │   │
   │  └──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────┘   │
   │                                                                     │                                                │
-  │                       getRuntimeTrpcClient(workspaceId) ◄───────────┘                                                │
+  │                       [E13] getRuntimeTrpcClient(workspaceId) ◄─────┘                                                │
   │                                     │                                                                                │
   └─────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────┘
-                                        │ HTTP (tRPC over fetch)
-  ┌─ TIER 2: NODE.JS SERVER ────────────┼────────────────────────────────────────────────────────────────────────────────────┐
+                                        │ [E14] HTTP (tRPC over fetch)
+  ┌─ TIER 2: NODE.JS SERVER ────────────┼──────────────────────────────────────────────────────────────────────────────────── E15
   │                                     ▼                                                                                    │
-  │  ┌─ TRPC app-router ──────────────────────────────────────────────────────────────────────┐                              │
-  │  │  diagrams.list           → listDiagrams(scope, input) ──→ buildDiagramTree()       TR  │                              │
-  │  │  diagrams.getContent     → getDiagramContent(scope, input) ──→ fs.readFile()           │                              │
-  │  │  diagrams.navigate       → navigateToDiagramSource(scope, input) ──→ codeVizClient     │                              │
-  │  │  diagrams.checkExtension → checkExtensionStatus(scope) ──→ codeVizClient               │                              │
-  │  └───────────────────────────────────────────────┬────────────────────────────────────────┘                              │
+  │  ┌─ TRPC app-router ──────────────────────────────────────────────────────────────────┐ E16                              │
+  │  │  [E17] diagrams.list           → listDiagrams(scope, input) ──→ buildDiagramTree() │                                  │
+  │  │  diagrams.getContent     → getDiagramContent(scope, input) ──→ fs.readFile()       │                                  │
+  │  │  diagrams.navigate       → navigateToDiagramSource(scope, input) ──→ codeVizClient │                                  │
+  │  │  diagrams.checkExtension → checkExtensionStatus(scope) ──→ codeVizClient           │                                  │
+  │  └───────────────────────────────────────────────┬────────────────────────────────────┘                                  │
   │                                                  │                                                                       │
-  │  ┌─ diagrams-api.ts ─────────────────────────────┤────────────────────────────────────────┐                              │
-  │  │  Path safety: isPathSafe(), hasUnsafeSegments()                                        │                              │
-  │  │  File limit: 5 MB max                                                                  │                              │
-  │  │  Root: {workspacePath}/diagrams/                                                       │                              │
-  │  │  Tree: recursive readdir, filters *.html, sorts dirs-first                         DA  │                              │
-  │  └────────────────────────────────────────────────┤───────────────────────────────────────┘                              │
+  │  ┌─ diagrams-api.ts ─────────────────────────────┤──────────────────────────────────────┐ E18                            │
+  │  │  [E19] Path safety: isPathSafe(), hasUnsafeSegments()                                │                                │
+  │  │  File limit: 5 MB max                                                                │                                │
+  │  │  Root: {workspacePath}/diagrams/                                                     │                                │
+  │  │  Tree: recursive readdir, filters *.html, sorts dirs-first                           │                                │
+  │  └────────────────────────────────────────────────┤─────────────────────────────────────┘                                │
   │                                                   │                                                                      │
-  │  ┌─ code-viz-client.ts ──────────────┐            │                                                                      │
-  │  │  Base URL: localhost:{24680}      │◄───────────┘                                                                      │
+  │  ┌─ code-viz-client.ts ──────────────┐ E20        │                                                                      │
+  │  │  [E21] Base URL: localhost:{24680}│◄───────────┘                                                                      │
   │  │  Timeout: 2.5s per request        │                                                                                   │
   │  │  Methods:                         │                                                                                   │
   │  │    checkHealth()     GET  /health │──────┐                                                                            │
   │  │    checkWorkspace()  GET  /workspaces │──┤                                                                            │
   │  │    navigate()        POST /navigate  │──┤                                                                            │
-  │  │                                  CC  │  │                                                                             │
+  │  │                                      │  │                                                                             │
   │  └──────────────────────────────────────┘  │                                                                             │
   │                                            │                                                                             │
   └────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────┘
-                                               │ HTTP :24680
-  ┌─ TIER 3: CODE VIZ EXTENSION ───────────────┼────────────────────────────────────────────────┐
-  │  VSCode Extension (optional, local)        ▼                                                │
+                                               │ [E22] HTTP :24680
+  ┌─ TIER 3: CODE VIZ EXTENSION ───────────────┼──────────────────────────────────────────────── E23
+  │  [E24] VSCode Extension (optional, local)  ▼                                                │
   │                                                                                             │
-  │  GET  /api/health      → { status, pid, isRouter, port }                                    │
+  │  [E25] GET  /api/health      → { status, pid, isRouter, port }                              │
   │  GET  /api/workspaces  → { workspaces: [{ root, port }] }  (realpath comparison)            │
-  │  POST /api/navigate    → { ok, error? }  (opens file:line in editor, supports newTab)   CV  │
+  │  POST /api/navigate    → { ok, error? }  (opens file:line in editor, supports newTab)       │
   └─────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
 ═══ REQUEST SEQUENCE ══════════════════════════════════════════════════════
 
- Browser                      Server                    Code Viz
+ [E26] Browser                Server                    Code Viz
  ───────                      ──────                    ────────
     │                            │                          │
     │── diagrams.list ──────────►│                          │
@@ -101,12 +101,62 @@ DIAGRAM FEATURE — SYSTEM OVERVIEW & DATA FLOW
 ```
 
 ```code-refs
-DW  web-ui/src/components/diagram-viewer.tsx:19-156        DiagramViewer component (3-panel + resize)
-VH  web-ui/src/hooks/use-diagram-viewer.ts:49-224          useDiagramViewer hook (tree fetch, content fetch, jump state)
-VS  web-ui/src/hooks/use-code-viz-status.ts:14-50          useCodeVizStatus polling hook (30s)
-CA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354  DiagramContentArea wrapper
-TR  src/trpc/diagrams-api.ts:73-155                        createDiagramsApi factory (4 API methods)
-DA  src/trpc/diagrams-api.ts:33-69                         buildDiagramTree recursive *.html scanner
-CC  src/diagram/code-viz-client.ts:108-112                 codeVizClient exported object
-CV  (external)                                             Code Viz VSCode Extension on :24680
+CDW  web-ui/src/components/diagram-viewer.tsx:19-156        DiagramViewer component (3-panel + resize)
+CVH  web-ui/src/hooks/use-diagram-viewer.ts:49-224          useDiagramViewer hook (tree fetch, content fetch, jump state)
+CVS  web-ui/src/hooks/use-code-viz-status.ts:14-50          useCodeVizStatus polling hook (30s)
+CCA  web-ui/src/components/diagram-panels/diagram-content-area.tsx:286-354  DiagramContentArea wrapper
+CTR  src/trpc/diagrams-api.ts:73-155                        createDiagramsApi factory (4 API methods)
+CDA  src/trpc/diagrams-api.ts:33-69                         buildDiagramTree recursive *.html scanner
+CCC  src/diagram/code-viz-client.ts:108-112                 codeVizClient exported object
+CCV  (external)                                             Code Viz VSCode Extension on :24680
+```
+
+```entities
+name                             id_type   id    parent  description
+TIER 1: BROWSER                  box       E01   -       Top-level browser tier boundary
+URL line                         text      E02   E01     Entry point URL with query params
+DiagramViewer                    box       E03   E01     Main 3-panel viewer component
+3-panel layout                   text      E04   E03     Layout description and cross-ref to 02-viewer-layout.txt
+useDiagramViewer                 box       E05   E03     Hook that owns all viewer state
+Viewer state fields              text      E06   E05     State: tree, selectedPath, expandedFolders, etc.
+TRPC calls                       text      E07   E05     Mount and select TRPC queries
+useCodeVizStatus                 box       E08   E03     Polling hook for extension health
+Poll description                 text      E09   E08     30s poll cycle and status values
+DiagramContentArea               box       E10   E03     Content area wrapper component
+Content cross-ref                text      E11   E10     Cross-reference to 05-content-and-navigation.txt
+Content actions                  text      E12   E10     fireCodeJump, openPopup, executeJump methods
+getRuntimeTrpcClient             text      E13   E01     TRPC client factory connecting browser to server
+HTTP transport                   text      E14   -       tRPC-over-fetch transport between tiers 1 and 2
+TIER 2: NODE.JS SERVER           box       E15   -       Server tier boundary
+TRPC app-router                  box       E16   E15     Router with 4 diagram API endpoints
+Router endpoints                 text      E17   E16     list, getContent, navigate, checkExtension
+diagrams-api.ts                  box       E18   E15     Diagram file-system API module
+API details                      text      E19   E18     Path safety, file limit, root, tree scanning
+code-viz-client.ts               box       E20   E15     HTTP client for Code Viz extension
+Client details                   text      E21   E20     Base URL, timeout, methods
+HTTP :24680                      text      E22   -       Transport between server and Code Viz extension
+TIER 3: CODE VIZ EXTENSION       box       E23   -       VSCode extension tier boundary
+Extension description            text      E24   E23     Optional local VSCode extension
+Extension endpoints              text      E25   E23     /health, /workspaces, /navigate endpoints
+Request sequence                 text      E26   -       Sequence diagram: browser ↔ server ↔ code viz
+```
+
+```arrows
+from   to     label
+E02    E03    URL triggers viewer
+E05    E07    hook owns TRPC calls
+E07    E13    queries flow to TRPC client
+E12    E13    mutations flow to TRPC client
+E09    E13    poll flows to TRPC client
+E13    E16    HTTP tRPC fetch
+E17    E18    list/getContent delegate to diagrams-api
+E17    E20    navigate/checkExtension delegate to code-viz-client
+E20    E23    HTTP :24680
+```
+
+```notes
+Code-ref IDs use a "C" prefix (e.g. CDW, CVH) and entity IDs use an "E" prefix
+(e.g. E01, E03) to disambiguate the two namespaces. Every text paragraph in the
+diagram is labeled with its entity ID in [EXX] brackets. Box entities show their
+ID at the box corner. Cross-diagram jump targets: ** filename.txt#EXX.
 ```

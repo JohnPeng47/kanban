@@ -172,17 +172,38 @@ export type BadgeAnchor =
 			corner: "center" | "top-right" | "top-left" | "bottom-right" | "bottom-left";
 	  };
 
-/** A clickable badge drawn on top of the diagram at a fixed pixel size. */
+/** A badge drawn on top of the diagram at a fixed pixel size. */
 export interface OverlayBadge {
 	id: string;
 	anchor: BadgeAnchor;
 	text: string;
-	onClick: () => void;
+	/** Interactive data for the anchored element. Null for user-placed badges. */
+	interactive: InteractiveData | null;
 	style?: {
 		color?: string;
 		background?: string;
 		borderColor?: string;
 	};
+}
+
+// ─── Click target identification ────────────────────────────
+
+/** Result of identifying what the user clicked on in the diagram UI. */
+export type ClickTarget = SvgClickTarget | OverlayClickTarget | MissClickTarget;
+
+export interface SvgClickTarget {
+	kind: "svg";
+	elementId: string;
+	interactive: InteractiveData | null;
+}
+
+export interface OverlayClickTarget {
+	kind: "overlay";
+	badge: OverlayBadge;
+}
+
+export interface MissClickTarget {
+	kind: "miss";
 }
 
 /** Test whether two rects intersect (AABB). */

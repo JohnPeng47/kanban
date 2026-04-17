@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { type ReactElement, useCallback, useEffect, useMemo, useRef } from "react";
 
-import { SceneInput } from "@/diagram/input/scene-input";
+import { SceneInput } from "@/diagram/input/input";
 import type { Scene } from "@/diagram/rendering/scene";
 import type { InteractiveData, OverlayPosition, Rect } from "@/diagram/types";
 import { useDiagram } from "@/diagram/use-diagram";

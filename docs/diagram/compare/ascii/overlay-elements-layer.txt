@@ -1,0 +1,372 @@
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                        OVERLAY ELEMENTS LAYER (OverLayer) — Full Architecture                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ DOM HIERARCHY — Viewport Container (position: relative, overflow: hidden)                          │
+│                                                                                                     │
+│  ┌───────────────────────────┐  ┌──────────────────────────────────┐  ┌─────────────────────────┐  │
+│  │ Transform Div             │  │ OverLayer <div>                  │  │ Selection Overlay       │  │
+│  │                           │  │ className="absolute inset-0     │  │                         │  │
+│  │ CSS transform:            │  │           overflow-hidden"       │  │ (sibling, separate      │  │
+│  │   scale(s) translate(tx,  │  │ style={ zIndex: 10 }            │  │  concern)               │  │
+│  │   ty)                     │  │                                  │  │                         │  │
+│  │                           │  │  ┌────────┐ ┌────────┐ ┌─────┐  │  │                         │  │
+│  │ Contains: <svg> diagram   │  │  │ Badge  │ │ Badge  │ │ ... │  │  │                         │  │
+│  │ (pans & zooms)            │  │  │ Button │ │ Button │ │     │  │  │                         │  │
+│  │                           │  │  │ (abs)  │ │ (abs)  │ │     │  │  │                         │  │
+│  │                           │  │  └────────┘ └────────┘ └─────┘  │  │                         │  │
+│  └───────────────────────────┘  └──────────────────────────────────┘  └─────────────────────────┘  │
+│         sibling ──────────────────────── sibling ──────────────────────── sibling                   │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  Badges are HTML elements (not SVG) so they stay constant pixel size regardless of zoom.
+  OverLayer sits as a sibling to the transform div, covering the entire container area.
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  TYPE DEFINITIONS  (web-ui/src/diagram/types.ts)                                                   ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                     ║
+║  BadgeAnchor  (L165-173)  — Discriminated union on "space"                                         ║
+║  ┌─────────────────────────┬─────────────────────────┬──────────────────────────────────────────┐   ║
+║  │ { space: "screen"       │ { space: "scene"        │ { space: "element"                      │   ║
+║  │   x: number             │   x: number             │   elementId: string                     │   ║
+║  │   y: number }           │   y: number }           │   corner: "center" | "top-right"        │   ║
+║  │                         │                         │     | "top-left" | "bottom-right"       │   ║
+║  │ Fixed pixel offset.     │ World coordinates.      │     | "bottom-left" }                   │   ║
+║  │ No transform applied.   │ Moves with pan/zoom.    │                                        │   ║
+║  │                         │                         │ Sticks to element corner.               │   ║
+║  └─────────────────────────┴─────────────────────────┴──────────────────────────────────────────┘   ║
+║                          │                                                                          ║
+║                          ▼                                                                          ║
+║  OverlayBadge  (L175-186)                                                                          ║
+║  ┌──────────────────────────────────────────────────────────────────┐                               ║
+║  │ id:      string                                                 │                               ║
+║  │ anchor:  BadgeAnchor                                            │                               ║
+║  │ text:    string               (single char/emoji)               │                               ║
+║  │ onClick: () => void                                             │                               ║
+║  │ style?:  { color?: string, background?: string,                 │                               ║
+║  │            borderColor?: string }                               │                               ║
+║  └──────────────────────────────────────────────────────────────────┘                               ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  COMPONENT API  (web-ui/src/diagram/rendering/over-layer.tsx L54-59)                               ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                     ║
+║  OverLayerProps {                                                                                   ║
+║    badges:       OverlayBadge[]                                                                    ║
+║    scene:        Scene                                                                             ║
+║    transformRef: React.RefObject<Transform>   ◄── mutable ref, read every animation frame          ║
+║  }                                                                                                  ║
+║                                                                                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+          │                    │                   │
+          │ badges             │ scene             │ transformRef
+          ▼                    ▼                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  OverLayer Component  (over-layer.tsx L64-127)                              │
+│                                                                             │
+│  Internal state:                                                            │
+│    badgeRefsMap = useRef<Map<string, HTMLButtonElement>>(new Map())  (L65)   │
+│                                                                             │
+│  ┌───────────────────────┐      ┌─────────────────────────────────┐         │
+│  │  rAF Sync Loop        │      │  JSX Badge Rendering            │         │
+│  │  (useEffect, L68-89)  │      │  (L93-126)                      │         │
+│  │                       │◄─────│  Registers refs into            │         │
+│  │  Reads transformRef   │ refs │  badgeRefsMap via ref callback   │         │
+│  │  Mutates DOM directly │      │                                 │         │
+│  └───────────┬───────────┘      └─────────────────────────────────┘         │
+│              │                                                              │
+│              │ calls per badge per frame                                    │
+│              ▼                                                              │
+│  ┌─────────────────────────────────┐                                        │
+│  │  resolveAnchor()  (L5-52)       │                                        │
+│  │  Converts anchor → screen {x,y} │                                        │
+│  └─────────────────────────────────┘                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  resolveAnchor(anchor, transform, scene) → { x, y }                                               ║
+║  (over-layer.tsx L5-52)                                                                            ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                     ║
+║                              ┌────────────────────┐                                                ║
+║                              │  switch(anchor.space)│                                                ║
+║                              └──┬───────┬────────┬─┘                                                ║
+║                 ┌───────────────┘       │        └───────────────────┐                              ║
+║                 ▼                       ▼                            ▼                              ║
+║  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────────────────────────┐  ║
+║  │ "screen" (L8-9)      │  │ "scene" (L11-15)     │  │ "element" (L17-50)                      │  ║
+║  │                      │  │                      │  │                                          │  ║
+║  │ return {             │  │ return {             │  │ bounds = scene.getWorldBounds(elementId) │  ║
+║  │   x: anchor.x       │  │   x: anchor.x       │  │                    (L18)                 │  ║
+║  │   y: anchor.y        │  │       × scale + tx   │  │                                          │  ║
+║  │ }                    │  │   y: anchor.y        │  │ ┌──────────────────────────────────────┐ │  ║
+║  │                      │  │       × scale + ty   │  │ │ bounds empty? (w=0 && h=0)   (L19)  │ │  ║
+║  │ No transform.        │  │ }                    │  │ │   YES → return { x:0, y:0 }         │ │  ║
+║  │ Fixed on screen.     │  │                      │  │ │   NO  → pick corner ▼               │ │  ║
+║  │                      │  │ Tracks world point.  │  │ └──────────────────────────────────────┘ │  ║
+║  └──────────────────────┘  └──────────────────────┘  │                                          │  ║
+║                                                       │  switch(anchor.corner)  (L23-43)         │  ║
+║                                                       │  ┌──────────────┬──────────────────────┐ │  ║
+║                                                       │  │ top-left     │ sx = x               │ │  ║
+║                                                       │  │              │ sy = y               │ │  ║
+║                                                       │  ├──────────────┼──────────────────────┤ │  ║
+║                                                       │  │ top-right    │ sx = x + width       │ │  ║
+║                                                       │  │              │ sy = y               │ │  ║
+║                                                       │  ├──────────────┼──────────────────────┤ │  ║
+║                                                       │  │ bottom-left  │ sx = x               │ │  ║
+║                                                       │  │              │ sy = y + height      │ │  ║
+║                                                       │  ├──────────────┼──────────────────────┤ │  ║
+║                                                       │  │ bottom-right │ sx = x + width       │ │  ║
+║                                                       │  │              │ sy = y + height      │ │  ║
+║                                                       │  ├──────────────┼──────────────────────┤ │  ║
+║                                                       │  │ default      │ sx = x + width/2     │ │  ║
+║                                                       │  │ (center)     │ sy = y + height/2    │ │  ║
+║                                                       │  └──────────────┴──────────────────────┘ │  ║
+║                                                       │                                          │  ║
+║                                                       │  return {                                │  ║
+║                                                       │    x: sx × scale + tx                    │  ║
+║                                                       │    y: sy × scale + ty    (L46-49)        │  ║
+║                                                       │  }                                       │  ║
+║                                                       └──────────────────────────────────────────┘  ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  rAF SYNC LOOP  (over-layer.tsx L68-89)                                                            ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                     ║
+║  useEffect deps: [badges, scene, transformRef]                                                      ║
+║                                                                                                     ║
+║      ┌──────────────────────────────┐                                                              ║
+║      │ badges.length === 0?  (L69)  │                                                              ║
+║      └──────────┬───────────────┬───┘                                                              ║
+║            YES  │               │ NO                                                               ║
+║                 ▼               ▼                                                                   ║
+║      ┌──────────────┐  ┌───────────────────────┐                                                   ║
+║      │ return       │  │ let rafId: number      │                                                   ║
+║      │ (no effect)  │  │ const sync = () => {   │                                                   ║
+║      └──────────────┘  └───────────┬───────────┘                                                   ║
+║                                    ▼                                                                ║
+║                ┌──────────────────────────────────────┐                                            ║
+║                │ rafId = requestAnimationFrame(sync)   │  ◄── first frame (L87)                    ║
+║                └──────────────────┬───────────────────┘                                            ║
+║                                   ▼                                                                 ║
+║  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐             ║
+║  │  ANIMATION FRAME (runs ~60fps)                                                    │             ║
+║  │                                                                                   │             ║
+║  │   ┌────────────────────────────────────────────┐                                  │             ║
+║  │   │ t = transformRef.current  (L73)            │                                  │             ║
+║  │   │ (mutable ref — not React state)            │                                  │             ║
+║  │   └──────────────────┬─────────────────────────┘                                  │             ║
+║  │                      ▼                                                            │             ║
+║  │   ┌──────────────────────────────┐                                                │             ║
+║  │   │ t is null?  (L74)           │                                                │             ║
+║  │   └────────┬─────────────┬──────┘                                                │             ║
+║  │       YES  │             │ NO                                                     │             ║
+║  │            ▼             ▼                                                        │             ║
+║  │   ┌──────────────┐  ┌────────────────────────────────────────────┐                │             ║
+║  │   │ schedule     │  │ for (const badge of badges)  (L78)        │                │             ║
+║  │   │ next frame   │  │                                            │                │             ║
+║  │   │ & return     │  │  ┌──────────────────────────────────────┐  │                │             ║
+║  │   │ (L75-76)     │  │  │ dom = badgeRefsMap.get(badge.id)     │  │                │             ║
+║  │   └──────┬───────┘  │  │                            (L79)     │  │                │             ║
+║  │          │          │  └──────────┬───────────────────────────┘  │                │             ║
+║  │          │          │             ▼                               │                │             ║
+║  │          │          │  ┌──────────────────────────────────────┐  │                │             ║
+║  │          │          │  │ dom exists?  (L80)                   │  │                │             ║
+║  │          │          │  └────┬───────────────────────┬─────────┘  │                │             ║
+║  │          │          │  NO  │                        │ YES        │                │             ║
+║  │          │          │      ▼                        ▼            │                │             ║
+║  │          │          │  ┌──────────┐  ┌──────────────────────┐   │                │             ║
+║  │          │          │  │ continue │  │ pos = resolveAnchor( │   │                │             ║
+║  │          │          │  │ (skip)   │  │   badge.anchor,      │   │                │             ║
+║  │          │          │  └──────────┘  │   t, scene)  (L81)   │   │                │             ║
+║  │          │          │                │                      │   │                │             ║
+║  │          │          │                │ dom.style.left =     │   │                │             ║
+║  │          │          │                │   pos.x + "px" (L82) │   │                │             ║
+║  │          │          │                │ dom.style.top =      │   │                │             ║
+║  │          │          │                │   pos.y + "px" (L83) │   │                │             ║
+║  │          │          │                │                      │   │                │             ║
+║  │          │          │                │ ◄── Direct DOM       │   │                │             ║
+║  │          │          │                │     mutation, no     │   │                │             ║
+║  │          │          │                │     React re-render  │   │                │             ║
+║  │          │          │                └──────────────────────┘   │                │             ║
+║  │          │          └────────────────────────────────────────────┘                │             ║
+║  │          │                        │                                               │             ║
+║  │          │                        ▼  (all badges done)                            │             ║
+║  │          │          ┌──────────────────────────────────────┐                      │             ║
+║  │          └─────────►│ rafId = requestAnimationFrame(sync)  │◄─────────────────────│             ║
+║  │                     │                            (L85)     │     loops back        │             ║
+║  │                     └──────────────────────────────────────┘                      │             ║
+║  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘             ║
+║                                                                                                     ║
+║  Cleanup: return () => cancelAnimationFrame(rafId)  (L88)                                          ║
+║                                                                                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  BADGE <button> RENDERING  (over-layer.tsx L96-123)                                                ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                     ║
+║  badges.map((badge) => ...)   wrapped in <div className="absolute inset-0 ..." zIndex:10>          ║
+║                                                                                                     ║
+║  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐   ║
+║  │  <button type="button" key={badge.id}>                                                      │   ║
+║  │                                                                                              │   ║
+║  │  ┌─ Ref Callback (L99-104) ───────────────────────────────────────────────────────────────┐  │   ║
+║  │  │  el truthy  →  badgeRefsMap.current.set(badge.id, el)                                  │  │   ║
+║  │  │  el null    →  badgeRefsMap.current.delete(badge.id)                                   │  │   ║
+║  │  │                                                                                        │  │   ║
+║  │  │  Links each button DOM node to the rAF loop via the shared Map                        │  │   ║
+║  │  └────────────────────────────────────────────────────────────────────────────────────────┘  │   ║
+║  │                                                                                              │   ║
+║  │  ┌─ Tailwind Classes (L106) ──────────────────────────────────────────────────────────────┐  │   ║
+║  │  │  absolute                          positioned by rAF loop                              │  │   ║
+║  │  │  flex items-center justify-center  centers content                                     │  │   ║
+║  │  │  rounded-full                      circular shape                                      │  │   ║
+║  │  │  text-[10px] font-bold leading-none                                                    │  │   ║
+║  │  │  cursor-pointer                                                                        │  │   ║
+║  │  │  transition-transform hover:scale-125   hover grow effect                              │  │   ║
+║  │  └────────────────────────────────────────────────────────────────────────────────────────┘  │   ║
+║  │                                                                                              │   ║
+║  │  ┌─ Inline Styles (L107-116) ─────────────────────────────────────────────────────────────┐  │   ║
+║  │  │  width:  18px    height: 18px                                                          │  │   ║
+║  │  │  marginLeft: -9   marginTop: -9      ◄── centers the 18px circle on anchor point       │  │   ║
+║  │  │  color:      badge.style?.color      ?? "#fff"                                         │  │   ║
+║  │  │  background: badge.style?.background ?? "#4C9AFF"                                      │  │   ║
+║  │  │  border:     1.5px solid (borderColor ?? "transparent")                                │  │   ║
+║  │  │  pointerEvents: "auto"               ◄── clickable despite container                   │  │   ║
+║  │  └────────────────────────────────────────────────────────────────────────────────────────┘  │   ║
+║  │                                                                                              │   ║
+║  │  ┌─ onClick Handler (L117-120) ───────────────────────────────────────────────────────────┐  │   ║
+║  │  │  e.stopPropagation()     ◄── prevents click from reaching Viewport's click handler     │  │   ║
+║  │  │  badge.onClick()                                                                       │  │   ║
+║  │  └────────────────────────────────────────────────────────────────────────────────────────┘  │   ║
+║  │                                                                                              │   ║
+║  │  Children: {badge.text}   (single character or emoji, e.g. "⬡" or "→")                     │   ║
+║  │                                                                                              │   ║
+║  └──────────────────────────────────────────────────────────────────────────────────────────────┘   ║
+║                                                                                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  BADGE CREATION  (diagram-content-area.tsx L167-196)                                               ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                     ║
+║  const badges = useMemo(() => { ... }, [scene, openPopup, executeJump])                            ║
+║                                                                                                     ║
+║  for (const [id, el] of scene.getAllElements())                                                     ║
+║      │                                                                                              ║
+║      ▼                                                                                              ║
+║  ┌──────────────────────────┐     ┌──────────────────────────┐     ┌────────────────────────┐       ║
+║  │ el.interactive?.modal ?  │     │ el.interactive?.link ?   │     │ User badges            │       ║
+║  │          (L170)          │     │         (L181)           │     │ (right-click context    │       ║
+║  └─────┬──────────┬─────────┘     └─────┬──────────┬─────────┘     │  menu "Add Badge")     │       ║
+║    YES │          │ NO              YES │          │ NO            └────────────┬───────────┘       ║
+║        ▼          │                     ▼          │                            │                    ║
+║  ┌─────────────┐  │               ┌─────────────┐  │                            │                    ║
+║  │ MODAL BADGE │  │               │ LINK BADGE  │  │                            │                    ║
+║  │             │  │               │             │  │                            │                    ║
+║  │ id: badge-  │  │               │ id: badge-  │  │                            │                    ║
+║  │   modal-{id}│  │               │   link-{id} │  │                            │                    ║
+║  │             │  │               │             │  │                            │                    ║
+║  │ text: "⬡"  │  │               │ text: "→"   │  │                            │                    ║
+║  │             │  │               │             │  │                            │                    ║
+║  │ bg: #A371F7 │  │               │ bg: #D4A72C │  │                            │                    ║
+║  │ (purple)    │  │               │ (gold)      │  │                            │                    ║
+║  │             │  │               │             │  │                            │                    ║
+║  │ onClick:    │  │               │ onClick:    │  │                            │                    ║
+║  │  openPopup  │  │               │  executeJump│  │                            │                    ║
+║  │  (L176)     │  │               │  (L187)     │  │                            │                    ║
+║  │             │  │               │             │  │                            │                    ║
+║  │ anchor:     │  │               │ anchor:     │  │                            │                    ║
+║  │  element /  │  │               │  element /  │  │                            │                    ║
+║  │  top-right  │  │               │  top-right  │  │                            │                    ║
+║  └──────┬──────┘  │               └──────┬──────┘  │                            │                    ║
+║         │         │                      │         │                            │                    ║
+║         └─────────┴──────────────────────┘─────────┘                            │                    ║
+║                          │                                                      │                    ║
+║                          ▼                                                      │                    ║
+║                  ┌───────────────┐                                              │                    ║
+║                  │    badges     │                                               │                    ║
+║                  └───────┬───────┘                                              │                    ║
+║                          │                                                      │                    ║
+║                          ▼                                                      │                    ║
+║              ┌─────────────────────────────────────────────────────┐             │                    ║
+║              │ const allBadges = [...badges, ...userBadges] (L196)│◄────────────┘                    ║
+║              └────────────────────────┬────────────────────────────┘                                 ║
+║                                       │                                                              ║
+║                                       ▼                                                              ║
+║                          passed as "badges" prop to OverLayer                                        ║
+║                                                                                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  BADGE TYPES SUMMARY                                                                               ║
+╠════════════╦════════╦════════════════╦══════════════════════════════════════╦═══════════════════════╣
+║ Type       ║ Text   ║ Color          ║ Trigger                              ║ onClick Action       ║
+╠════════════╬════════╬════════════════╬══════════════════════════════════════╬═══════════════════════╣
+║ Modal      ║  ⬡     ║ #A371F7 purple ║ el.interactive.modal exists          ║ openPopup()          ║
+╠════════════╬════════╬════════════════╬══════════════════════════════════════╬═══════════════════════╣
+║ Link       ║  →     ║ #D4A72C gold   ║ el.interactive.link exists           ║ executeJump()        ║
+╠════════════╬════════╬════════════════╬══════════════════════════════════════╬═══════════════════════╣
+║ User       ║ varies ║ #3FB950 green  ║ Right-click "Add Badge" context menu ║ user-defined         ║
+╚════════════╩════════╩════════════════╩══════════════════════════════════════╩═══════════════════════╝
+  All badges anchored to: space: "element", corner: "top-right"
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║  DATA FLOW — END TO END                                                                            ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                     ║
+║  diagram-content-area.tsx                  over-layer.tsx                                           ║
+║  ┌────────────────────────┐                ┌──────────────────────────────────────────────────┐     ║
+║  │                        │   allBadges    │                                                  │     ║
+║  │  scene.getAllElements()│───────────────►│  OverLayer({ badges, scene, transformRef })      │     ║
+║  │       │                │   as badges    │       │                                          │     ║
+║  │       ▼                │   prop         │       ├──► JSX renders <button> per badge        │     ║
+║  │  useMemo: build       │                │       │       │                                  │     ║
+║  │  modal + link badges  │                │       │       └──► ref callback populates        │     ║
+║  │       │                │                │       │             badgeRefsMap                  │     ║
+║  │       ▼                │                │       │                    │                      │     ║
+║  │  merge with userBadges│                │       └──► useEffect: rAF sync loop              │     ║
+║  │                        │                │               │                                  │     ║
+║  └────────────────────────┘                │               ▼  (every frame)                   │     ║
+║                                            │         read transformRef.current                │     ║
+║  Viewport (parent)                         │               │                                  │     ║
+║  ┌────────────────────────┐                │               ▼                                  │     ║
+║  │                        │  transformRef  │         for each badge:                          │     ║
+║  │  Updates transform on  │───────────────►│           resolveAnchor(anchor, t, scene)        │     ║
+║  │  pan/zoom via mutable  │  (mutable ref) │               │                                  │     ║
+║  │  ref (not setState)    │                │               ▼                                  │     ║
+║  │                        │                │           dom.style.left/top = pos               │     ║
+║  └────────────────────────┘                │           (direct DOM mutation)                  │     ║
+║                                            │                                                  │     ║
+║  Scene                                     │  Key insight: transform is a mutable ref,        │     ║
+║  ┌────────────────────────┐                │  not React state. This allows 60fps position     │     ║
+║  │  getWorldBounds(id)    │◄───────────────│  updates without triggering React reconciliation │     ║
+║  │  returns element AABB  │  called by     │                                                  │     ║
+║  │  in world coords       │  resolveAnchor │                                                  │     ║
+║  └────────────────────────┘  for "element" └──────────────────────────────────────────────────┘     ║
+║                              anchors                                                                ║
+║                                                                                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝

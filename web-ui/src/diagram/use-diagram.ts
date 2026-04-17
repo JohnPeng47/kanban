@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { extractAsciiSource } from "./diagram-data";
 import type { Scene } from "./rendering/scene";
 import { SvgScene } from "./rendering/svg-scene";
 
@@ -39,6 +40,16 @@ export function useDiagram(html: string | null): Scene | null {
 			if (svg.parentElement === document.body) {
 				document.body.removeChild(svg);
 			}
+		}
+
+		// Log ASCII source detection
+		const asciiSource = html ? extractAsciiSource(html) : null;
+		if (asciiSource) {
+			const lines = asciiSource.split("\n");
+			console.log(`[useDiagram] ASCII source detected: ${lines.length} lines`);
+			console.log(asciiSource.slice(0, 200) + (asciiSource.length > 200 ? "..." : ""));
+		} else {
+			console.log("[useDiagram] No embedded ASCII source found");
 		}
 
 		setScene(newScene);

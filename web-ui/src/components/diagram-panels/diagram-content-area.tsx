@@ -4,7 +4,8 @@ import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } 
 import { showAppToast } from "@/components/app-toaster";
 import { PopupDiagramOverlay } from "@/components/diagram-panels/popup-diagram-overlay";
 import { Spinner } from "@/components/ui/spinner";
-import { SceneInput, type ViewportHandle } from "@/diagram/input/scene-input";
+import { extractAsciiSource } from "@/diagram/diagram-data";
+import { SceneInput, type ViewportHandle } from "@/diagram/input/input";
 import type { Scene } from "@/diagram/rendering/scene";
 import type { ViewportSceneEvent } from "@/diagram/rendering/viewport";
 import type { InteractiveData, OverlayBadge, OverlayPosition, Point, Rect } from "@/diagram/types";
@@ -30,12 +31,14 @@ function DiagramScene({
 	workspaceId,
 	workspacePath,
 	selectedPath,
+	asciiSource,
 	onRequestJump,
 }: {
 	scene: Scene;
 	workspaceId: string | null;
 	workspacePath: string | null;
 	selectedPath: string;
+	asciiSource: string | null;
 	onRequestJump?: (path: string, elementId: string | null) => void;
 }): ReactElement {
 	const viewportRef = useRef<ViewportHandle>(null);
@@ -169,9 +172,7 @@ function DiagramScene({
 					id: `badge-modal-${id}`,
 					anchor: { space: "element", elementId: id, corner: "top-right" },
 					text: "⬡",
-					onClick: () => {
-						openPopup(el.interactive!);
-					},
+					interactive: el.interactive,
 					style: { background: "#A371F7", color: "#fff" },
 				});
 			}
@@ -180,15 +181,13 @@ function DiagramScene({
 					id: `badge-link-${id}`,
 					anchor: { space: "element", elementId: id, corner: "top-right" },
 					text: "→",
-					onClick: () => {
-						executeJump(el.interactive!);
-					},
+					interactive: el.interactive,
 					style: { background: "#D4A72C", color: "#fff" },
 				});
 			}
 		}
 		return result;
-	}, [scene, openPopup, executeJump]);
+	}, [scene]);
 
 	const allBadges = useMemo(() => [...badges, ...userBadges], [badges, userBadges]);
 
@@ -210,15 +209,17 @@ function DiagramScene({
 				id,
 				anchor: { space: "scene" as const, x: scenePoint.x, y: scenePoint.y },
 				text: "📌",
-				onClick: () => {
-					// Remove this badge on click
-					setUserBadges((p) => p.filter((b) => b.id !== id));
-				},
+				interactive: null,
 				style: { background: "#3FB950", color: "#fff" },
 			},
 		]);
 		setContextMenu(null);
 	}, [contextMenu]);
+
+	const handleBadgeClick = useCallback((badge: OverlayBadge) => {
+		// User badges: click to remove
+		setUserBadges((prev) => prev.filter((b) => b.id !== badge.id));
+	}, []);
 
 	// Close context menu on any click outside
 	useEffect(() => {
@@ -235,7 +236,9 @@ function DiagramScene({
 				scene={scene}
 				onNavigate={handleNavigate}
 				onContextMenu={handleContextMenu}
+				onBadgeClick={handleBadgeClick}
 				badges={allBadges}
+				asciiSource={asciiSource}
 			/>
 			{popupStack.map((entry, i) => (
 				<PopupDiagramOverlay
@@ -295,6 +298,7 @@ export function DiagramContentArea({
 	onJumpConsumed,
 }: DiagramContentAreaProps): ReactElement {
 	const scene = useDiagram(content);
+	const asciiSource = useMemo(() => (content ? extractAsciiSource(content) : null), [content]);
 
 	// Consume pending jump after scene loads
 	useEffect(() => {
@@ -347,6 +351,7 @@ export function DiagramContentArea({
 				workspaceId={workspaceId}
 				workspacePath={workspacePath}
 				selectedPath={selectedPath}
+				asciiSource={asciiSource}
 				onRequestJump={onRequestJump}
 			/>
 		</div>

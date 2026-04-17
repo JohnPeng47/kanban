@@ -884,5 +884,108 @@
   <!-- End DiagramContentArea -->
 
 </svg>
+<script type="text/plain" id="ascii-source">
+INTERACTION PIPELINE — SceneInput, Navigation, Popups, Badges
+=============================================================
+** 02-rendering.txt                    (Viewport, Scene, OverLayer)
+** 01-architecture-and-data-flow.txt   (TRPC calls, jump protocol)
+** 04-types-and-data-model.txt         (InteractiveData, DiagramModal, DiagramLink)
+
+
+  ┌─ DiagramContentArea [EDA] ─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                                                                                                                    │
+  │  useDiagram(content) → Scene                                                                                                       │
+  │       │                                                                                                                            │
+  │       ▼                                                                                                                            │
+  │  ┌─ DiagramScene [EDS] ───────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+  │  │                                                                                                                                │ │
+  │  │  state: popupStack[], userBadges[], contextMenu                                                                                │ │
+  │  │                                                                                                                                │ │
+  │  │  ┌─ SceneInput [ESI] ─────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ │
+  │  │  │                                                                                                                            ││ │
+  │  │  │  state: selectedIds: Set<string>, dragPreviewIds                                                                           ││ │
+  │  │  │                                                                                                                            ││ │
+  │  │  │  ┌─ Viewport [EVP] ** 02-rendering.txt ───────────────────────────────────────────────────────────────────────────┐ ││ │
+  │  │  │  │  props: onSceneClick, onContextMenu, onSelectionDrag, onSelectionDragEnd, badges                                      │ ││ │
+  │  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ ││ │
+  │  │  │                                                                                                                            ││ │
+  │  │  │  ┌─ Tooltip [ETT] ───────────────────────────────────┐                                                                    ││ │
+  │  │  │  │  SVG mouseover → closest [data-tt] → show         │                                                                    ││ │
+  │  │  │  │  fixed div, z:100, clientX+14/Y-10                │                                                                    ││ │
+  │  │  │  │  touch: pointerdown → show, tap away → hide       │                                                                    ││ │
+  │  │  │  └───────────────────────────────────────────────────┘                                                                ESI ││ │
+  │  │  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │
+  │  │                                                                                                                                │ │
+  │  │                           ┌──── User click lands here (via Viewport.onSceneClick) ────┐                                        │ │
+  │  │                           │                                                           │                                        │ │
+  │  │                           ▼                                                           │                                        │ │
+  │  │  ┌─ handleSceneClick [EHC] ─────────────────────────────────────┐                     │                                        │ │
+  │  │  │                                                              │                     │                                        │ │
+  │  │  │  scene.hitTest(screenPoint) [EHT]  ** 02-rendering-svgscene-detail.txt                   │                                        │ │
+  │  │  │       │                                                      │                     │                                        │ │
+  │  │  │       ├── null → deselect all, fire onSelectionChange([])    │                     │                                        │ │
+  │  │  │       │                                                      │                     │                                        │ │
+  │  │  │       └── hit element:                                       │                     │                                        │ │
+  │  │  │            ├── shift? → toggle in selectedIds                │                     │                                        │ │
+  │  │  │            └── no shift → clear all, select this             │                     │                                        │ │
+  │  │  │                 │                                            │                     │                                        │ │
+  │  │  │                 └── fire onNavigate(interactive, domEvent) ──┼─────────────────────┘                                        │ │
+  │  │  └──────────────────────────────────────────────────────────────┘                                                              │ │
+  │  │                           │                                                                                                    │ │
+  │  │                           ▼                                                                                                    │ │
+  │  │  ┌─ handleNavigate [EHN] ──────────────────────────────────────────────────────────────────────────────────────────────────┐   │ │
+  │  │  │                                                                                                                         │   │ │
+  │  │  │   ┌─ Alt+click? ──────────┐   ┌─ modal? ──────────────────┐   ┌─ link? ──────────────────────┐   ┌─ default ──────────┐│   │ │
+  │  │  │   │                        │   │                            │   │                              │   │                    ││   │ │
+  │  │  │   │  fireCodeJump [EFJ]    │   │  openPopup [EOP]          │   │  executeJump [EEJ]           │   │  fireCodeJump [EFJ]││   │ │
+  │  │  │   │  TRPC navigate.mutate  │   │  resolveDiagramPath       │   │  same diagram?               │   │  (same as Alt)     ││   │ │
+  │  │  │   │  { root, filePath,     │   │  TRPC getContent.query    │   │   → centerOn(target,animate) │   │                    ││   │ │
+  │  │  │   │    line, newTab }      │   │  push to popupStack ──────┼───┼── cross diagram?             │   │                    ││   │ │
+  │  │  │   │                        │   │                            │   │   → onRequestJump(path,elId) │   │                    ││   │ │
+  │  │  │   │  ** 01-architecture-   │   │  see modal:               │   │   ** 01-architecture-and-    │   │                    ││   │ │
+  │  │  │   │  and-data-flow.txt    │   │  03-interaction-popup-    │   │   data-flow.txt              │   │                    ││   │ │
+  │  │  │   │  (navigate sequence)   │   │  detail.txt              │   │   (jump protocol)            │   │                    ││   │ │
+  │  │  │   │                   EFJ  │   │  detail.txt          EOP  │   │                         EEJ  │   │               EFJ  ││   │ │
+  │  │  │   └────────────────────────┘   └────────────────────────────┘   └──────────────────────────────┘   └────────────────────┘│   │ │
+  │  │  │                                            │                                                                             │   │ │
+  │  │  └─────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────┘   │ │
+  │  │                                                │                                                                                │ │
+  │  │                                                ▼                                                                                │ │
+  │  │  ┌─ Popup Stack [EPS] ────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │ │
+  │  │  │                                                                                                                           │  │ │
+  │  │  │  popupStack.map((entry, i) =>                                                                                             │  │ │
+  │  │  │    PopupDiagramOverlay [EPO]                                                                                              │  │ │
+  │  │  │      zIndex: 50 + i*2                  ┌──────────────────────────────────────────────────────────────────────────────┐    │  │ │
+  │  │  │      onClose: slice stack at i         │  PopupDiagramOverlay internals:                                              │    │  │ │
+  │  │  │      onNavigate: relay to parent ──┐   │   backdrop (blur, click to close) + ESC key                                  │    │  │ │
+  │  │  │                                    │   │   useDiagram(entry.content) → popup Scene                                    │    │  │ │
+  │  │  │                                    │   │   SceneInput (nested, fully interactive, can open more popups)                │    │  │ │
+  │  │  │                                    │   │   layout: min 200×150, max 85% container, 24px offset                        │    │  │ │
+  │  │  │                                    └──►│   onNavigate relayed back → handleNavigate (recursive!)                 EPO  │    │  │ │
+  │  │  │                                        └──────────────────────────────────────────────────────────────────────────────┘    │  │ │
+  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │ │
+  │  │                                                                                                                                │ │
+  │  │  ┌─ Lasso Selection [ESD/ESE] ───────────────────────────────────┐   ┌─ Badges + Context Menu ──────────────────────────────────┐ │ │
+  │  │  │                                                             │   │                                                         │ │ │
+  │  │  │  Ctrl+drag (or selectMode touch)                            │   │  Auto badges (useMemo) [EAB]:                           │ │ │
+  │  │  │       │                                                     │   │   el.modal → ⬡ purple #A371F7 → openPopup              │ │ │
+  │  │  │       ▼                                                     │   │   el.link  → → gold #D4A72C   → executeJump             │ │ │
+  │  │  │  handleSelectionDrag [ESD]                                  │   │   anchor: element top-right corner                      │ │ │
+  │  │  │   scene.hitTestRect(sceneRect, "intersect")                 │   │                                                         │ │ │
+  │  │  │   filter to .interactive only                               │   │  User badges (context menu) [EUB]:                      │ │ │
+  │  │  │   toggle .selected CSS class                                │   │   right-click → menu (z:200) → "Add Badge"              │ │ │
+  │  │  │   show dragPreviewPaths beside lasso                        │   │   📌 green #3FB950, scene-anchored                       │ │ │
+  │  │  │       │                                                     │   │   click pin → remove                                    │ │ │
+  │  │  │       ▼ (on pointer up)                                     │   │                                                         │ │ │
+  │  │  │  handleSelectionDragEnd [ESE]                               │   │  allBadges = [...auto, ...user]                          │ │ │
+  │  │  │   final hitTestRect → setSelectedIds                        │   │   → passed to SceneInput → Viewport → OverLayer          │ │ │
+  │  │  │   refs → clipboard.writeText → toast "Copied N ref(s)"     │   │   ** 02-rendering.txt (OverLayer rAF loop)        │ │ │
+  │  │  │   fire onSelectionChange(interactiveData[])                 │   │                                                    ECM  │ │ │
+  │  │  └─────────────────────────────────────────────────────────────┘   └─────────────────────────────────────────────────────────┘ │ │
+  │  │                                                                                                                           EDS  │ │
+  │  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+  │                                                                                                                               EDA  │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</script>
 </body>
 </html>

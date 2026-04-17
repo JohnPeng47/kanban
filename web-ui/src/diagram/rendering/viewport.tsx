@@ -9,7 +9,7 @@ import {
 	useState,
 } from "react";
 import { IDENTITY_TRANSFORM, type OverlayBadge, type Point, type Rect, type Transform } from "../types";
-import { OverLayer } from "./over-layer";
+import { OverLayer, type OverLayerHandle } from "./over-layer";
 import type { Scene } from "./scene";
 
 const ZOOM_SENSITIVITY = 0.002;
@@ -27,8 +27,8 @@ export interface ViewportProps {
 	scene: Scene;
 	onSceneClick?: (event: ViewportSceneEvent) => void;
 	onContextMenu?: (event: ViewportSceneEvent) => void;
-	onSelectionDrag?: (sceneRect: Rect) => void;
-	onSelectionDragEnd?: (sceneRect: Rect) => void;
+	onSelectionDrag?: (sceneRect: Rect, alt: boolean) => void;
+	onSelectionDragEnd?: (sceneRect: Rect, alt: boolean) => void;
 	/** When a selection lasso is active, render these labels to the left of the box. */
 	selectionOverlayPaths?: Array<{ id: string; path: string }>;
 	/** Overlay badges rendered on top of the diagram at fixed pixel size. */
@@ -41,6 +41,8 @@ export interface ViewportProps {
 /** Imperative handle for programmatic viewport control. */
 export interface ViewportHandle {
 	centerOn(scenePoint: Point, opts?: { scale?: number; animate?: boolean }): void;
+	/** Identify which overlay badge (if any) a DOM element belongs to. */
+	identifyOverlay(domEl: Element): OverlayBadge | null;
 }
 
 /** Viewport component that owns pan/zoom and coordinate conversion.
@@ -62,9 +64,12 @@ export const Viewport = forwardRef<ViewportHandle, ViewportProps>(function Viewp
 	const containerRef = useRef<HTMLDivElement>(null);
 	const transformDivRef = useRef<HTMLDivElement>(null);
 	const transformRef = useRef<Transform>({ ...IDENTITY_TRANSFORM });
+	const overlayRef = useRef<OverLayerHandle>(null);
 
 	// Pan state
-	const pointerDownRef = useRef<{ x: number; y: number; transform: Transform; ctrl: boolean } | null>(null);
+	const pointerDownRef = useRef<{ x: number; y: number; transform: Transform; ctrl: boolean; alt: boolean } | null>(
+		null,
+	);
 	const didDragRef = useRef(false);
 
 	// Multi-touch pinch-to-zoom state
@@ -142,6 +147,9 @@ export const Viewport = forwardRef<ViewportHandle, ViewportProps>(function Viewp
 					applyTransform(newTransform);
 					syncRootTransform(newTransform);
 				}
+			},
+			identifyOverlay(domEl: Element) {
+				return overlayRef.current?.identify(domEl) ?? null;
 			},
 		}),
 		[applyTransform, syncRootTransform],
@@ -225,6 +233,7 @@ export const Viewport = forwardRef<ViewportHandle, ViewportProps>(function Viewp
 				y: event.clientY,
 				transform: { ...transformRef.current },
 				ctrl: isSelecting,
+				alt: event.altKey,
 			};
 			didDragRef.current = false;
 			// Don't capture yet — only capture when drag threshold is exceeded
@@ -317,7 +326,7 @@ export const Viewport = forwardRef<ViewportHandle, ViewportProps>(function Viewp
 						width: Math.abs(currentScene.x - startScene.x),
 						height: Math.abs(currentScene.y - startScene.y),
 					};
-					onSelectionDrag(sceneRect);
+					onSelectionDrag(sceneRect, start.alt);
 				} else {
 					// Normal drag → pan
 					const newTransform: Transform = {
@@ -356,6 +365,7 @@ export const Viewport = forwardRef<ViewportHandle, ViewportProps>(function Viewp
 
 			const wasDrag = didDragRef.current;
 			const wasCtrl = start.ctrl;
+			const wasAlt = start.alt;
 
 			// Clear state FIRST — ensures cleanup even if click handler throws
 			pointerDownRef.current = null;
@@ -378,7 +388,7 @@ export const Viewport = forwardRef<ViewportHandle, ViewportProps>(function Viewp
 						width: Math.abs(endScene.x - startScene.x),
 						height: Math.abs(endScene.y - startScene.y),
 					};
-					onSelectionDragEnd(sceneRect);
+					onSelectionDragEnd(sceneRect, wasAlt);
 				}
 				return;
 			}
@@ -426,7 +436,9 @@ export const Viewport = forwardRef<ViewportHandle, ViewportProps>(function Viewp
 			onContextMenu={handleContextMenu}
 		>
 			<div ref={transformDivRef} style={{ transformOrigin: "0 0", willChange: "transform" }} />
-			{badges && badges.length > 0 && <OverLayer badges={badges} scene={scene} transformRef={transformRef} />}
+			{badges && badges.length > 0 && (
+				<OverLayer ref={overlayRef} badges={badges} scene={scene} transformRef={transformRef} />
+			)}
 			{children}
 			{selectionRect && (
 				<div

@@ -1,0 +1,26 @@
+# anchor-text	code-ref	label
+createWorkspaceRegistry	src/server/workspace-registry.ts:186-475	createWorkspaceRegistry factory — initializes from cwd or indexed workspaces
+WorkspaceRegistry	src/server/workspace-registry.ts:51-92	WorkspaceRegistry interface — public API surface
+ensureTerminalManagerForWorkspace	src/server/workspace-registry.ts:220-253	ensureTerminalManagerForWorkspace — lazy-loads manager, hydrates from disk
+resolveWorkspaceForStream	src/server/workspace-registry.ts:354-435	resolveWorkspaceForStream — prunes stale projects, resolves target for WS connection
+buildWorkspaceStateSnapshot	src/server/workspace-registry.ts:315-325	buildWorkspaceStateSnapshot — loads persisted state, overlays live terminal summaries
+buildProjectsPayload	src/server/workspace-registry.ts:327-352	buildProjectsPayload — lists indexed workspaces, counts tasks, returns summaries
+createRuntimeStateHub	src/server/runtime-state-hub.ts:63-604	createRuntimeStateHub factory — builds hub with WS server and all broadcast methods
+RuntimeStateHub	src/server/runtime-state-hub.ts:41-61	RuntimeStateHub interface — public API surface
+trackTerminalManager	src/server/runtime-state-hub.ts:496-504	trackTerminalManager — subscribes to terminal manager onSummary
+trackClineTaskSessionService	src/server/runtime-state-hub.ts:505-541	trackClineTaskSessionService — subscribes to Cline summary + message events
+queueTaskSessionSummaryBroadcast	src/server/runtime-state-hub.ts:169-183	queueTaskSessionSummaryBroadcast — 150ms batching with per-workspace timer
+flushTaskSessionSummaries	src/server/runtime-state-hub.ts:148-167	flushTaskSessionSummaries — sends batched summaries and triggers project update
+broadcastTaskChatMessage	src/server/runtime-state-hub.ts:185-199	broadcastTaskChatMessage — immediate fan-out of Cline chat messages
+broadcastRuntimeProjectsUpdated	src/server/runtime-state-hub.ts:103-119	broadcastRuntimeProjectsUpdated — global broadcast of project list to all clients
+broadcastClineMcpAuthStatusesUpdated	src/server/runtime-state-hub.ts:121-132	broadcastClineMcpAuthStatusesUpdated — global broadcast of MCP auth statuses
+broadcastRuntimeWorkspaceStateUpdated	src/server/runtime-state-hub.ts:300-323	broadcastRuntimeWorkspaceStateUpdated — workspace state + metadata monitor update
+broadcastTaskReadyForReview	src/server/runtime-state-hub.ts:325-339	broadcastTaskReadyForReview — notification when task enters awaiting_review
+TASK_SESSION_STREAM_BATCH_MS	src/server/runtime-state-hub.ts:27	batching constant 150ms
+handleUpgrade	src/server/runtime-state-hub.ts:544-548	handleUpgrade — delegates HTTP upgrade to internal WebSocketServer
+workspaceMetadataMonitor	src/server/runtime-state-hub.ts:75-90	createWorkspaceMetadataMonitor — polls git state, fires onMetadataUpdated
+disposeWorkspace	src/server/runtime-state-hub.ts:241-298	disposeWorkspace — unsubscribes all listeners, clears timers, optionally disconnects clients
+[→ workspace-sync-cycle]	docs/kanban/state-and-streaming/10-workspace-sync-cycle.txt:1	browser-side consumption of the runtime state stream
+[→ pty-launch-pipeline]	docs/kanban/task-execution/02-pty-launch-pipeline.txt:1	terminal manager is the source of terminal session summaries
+[→ cline-event-and-state]	docs/kanban/cline-integration/06-cline-event-and-state.txt:1	Cline task session service is the source of Cline summaries/messages
+[→ app-and-hook-wiring]	docs/kanban/frontend/12-app-and-hook-wiring.txt:1	browser hooks that consume the websocket stream

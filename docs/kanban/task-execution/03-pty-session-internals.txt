@@ -1,0 +1,112 @@
+```diagram
+KANBAN PTY SESSION INTERNALS
+Covers: session-manager.ts, session-state-machine.ts, terminal-protocol-filter.ts,
+        terminal-state-mirror.ts, ws-server.ts, claude-workspace-trust.ts, codex-workspace-trust.ts
+
+═══ SECTION 1 — SESSION ENTRY ANATOMY ════════════════════════════════════════════════════════════
+
+  TerminalSessionManager owns a Map<taskId, SessionEntry>.
+
+  ┌─ SessionEntry ────────────────────────────────────────────────────────────────────┐
+  │  summary: RuntimeTaskSessionSummary                                               │
+  │    { taskId, state, agentId, workspacePath, pid, startedAt, updatedAt,            │
+  │      lastOutputAt, reviewReason, exitCode, latestTurnCheckpoint, ... }            │
+  │                                                                                   │
+  │  active: ActiveProcessState | null                                                │
+  │    { session (PtySession), workspaceTrustBuffer, cols, rows,                      │
+  │      terminalProtocolFilter, onSessionCleanup, detectOutputTransition, ... }      │
+  │                                                                                   │
+  │  terminalStateMirror: TerminalStateMirror | null   Headless xterm (Section 4)     │
+  │  listeners: Map<id, TerminalSessionListener>       WS bridges / consumers         │
+  │  restartRequest: RestartableSessionRequest | null   For auto-restart (Section 6)  │
+  │  autoRestartTimestamps: number[]                    Crash throttle window          │
+  └───────────────────────────────────────────────────────────────────────────────────┘
+
+  Summary changes flow outward via emitSummary() → summaryListeners Set
+  [→ state-hub-and-registry] summaryListeners is how the state hub subscribes to PTY state
+
+
+═══ SECTION 2 — STATE MACHINE ════════════════════════════════════════════════════════════════════
+
+  reduceSessionTransition(summary, event) is a pure reducer.
+  Events: hook.to_review, hook.to_in_progress, agent.prompt-ready, process.exit
+
+  State diagram:
+
+                          hook.to_review
+               ┌──────────────────────────────┐
+               │                              │
+               v                              │
+          ┌─────────┐   startTaskSession   ┌──┴────┐
+          │  idle   │ ────────────────────>│running│<────────────────────────────┐
+          └─────────┘                      └───┬───┘                            │
+                                               │                                │
+                                  process.exit │          hook.to_in_progress   │
+                          ┌────────────────────┤          agent.prompt-ready    │
+                          │                    │                                │
+                          v                    v                                │
+                   ┌─────────────┐    ┌─────────────────┐                      │
+                   │   failed    │    │ awaiting_review  │──────────────────────┘
+                   └─────────────┘    └────────┬────────┘
+                   exitCode != 0 &&            │
+                   !interrupted          process.exit
+                                               │
+                   ┌─────────────┐             │
+                   │ interrupted │<────────────┘ (if interrupted flag)
+                   └─────────────┘
+
+  Eligibility: hook.to_review only from "running"; hook.to_in_progress and
+  agent.prompt-ready only from "awaiting_review" with reviewReason in {attention, hook, error}.
+  process.exit maps exitCode/interrupted to the appropriate reviewReason and target state.
+
+
+═══ SECTION 3 — PROTOCOL FILTER ══════════════════════════════════════════════════════════════════
+
+  filterTerminalProtocolOutput() does byte-level ANSI parsing on raw PTY Buffers.
+  At PTY spawn time, TUI agents query terminal colors (OSC 10/11) before any browser is
+  connected — the filter intercepts these and writes synthetic color replies to PTY stdin.
+  Once a browser's xterm.js attaches, interception is disabled and xterm handles queries natively.
+  For Droid, CSI Device Attribute queries are also suppressed to prevent TUI hangs.
+
+  [→ agent-adapter-catalog] Droid uses suppressDeviceAttributeQueries; others use OSC intercept
+
+
+═══ SECTION 4 — TERMINAL STATE MIRROR ════════════════════════════════════════════════════════════
+
+  Headless @xterm/headless instance (10K scrollback) that replays all PTY output server-side.
+  When a new browser tab connects, the mirror serializes its full terminal state into an ANSI
+  snapshot string, which is sent over the control WebSocket as a "restore" message. The browser
+  applies the snapshot to its local xterm.js, then sends "restore_complete" to flush any output
+  that arrived during the handshake.
+
+
+═══ SECTION 5 — WEBSOCKET BRIDGE ═════════════════════════════════════════════════════════════════
+
+  createTerminalWebSocketBridge() fans out 1 PTY to N browser viewers over two WS channels:
+  IO socket (binary: keystrokes in, terminal bytes out) and control socket (JSON: resize, stop,
+  restore, state, exit). Each viewer gets a TerminalViewerState with pending-output buffering.
+  Backpressure uses dual watermarks — WS bufferedAmount (16KB high / 4KB low) plus ACK-based
+  flow control (100KB unacked high / 5KB low) — pausing the PTY when ANY viewer is overwhelmed
+  and resuming only when ALL backpressured viewers clear.
+
+  [→ pty-launch-pipeline] PTY spawning creates the PtySession that feeds output here
+
+
+═══ SECTION 6 — AUTO-RESTART ═════════════════════════════════════════════════════════════════════
+
+  When a task PTY exits unexpectedly (not explicitly stopped, has listeners, is a task session),
+  the session manager re-launches from the saved restartRequest. A throttle window allows at most
+  3 restarts within 5 seconds to prevent crash loops. If a restart is already in flight, the
+  new request is skipped.
+
+
+═══ SECTION 7 — WORKSPACE TRUST ══════════════════════════════════════════════════════════════════
+
+  Agents prompt "trust this folder?" on first run — Kanban auto-confirms to avoid blocking.
+  A rolling 16KB buffer of PTY output is checked for trust prompt patterns: Claude uses regex
+  matching (only for Kanban-managed worktrees), Codex uses ordered token sequence detection
+  (always enabled). On match, a "\r" keystroke is sent after a 100ms delay.
+
+  [→ agent-adapter-catalog] adapter.prepare() determines which trust detection to enable
+
+```

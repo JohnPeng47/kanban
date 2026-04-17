@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><title>OverLayer: Badge Anchoring &amp; Rendering</title>
+  <style>body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; } svg { display: block; width: 100%; height: 100%; }</style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1700" font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace" font-size="11">
+  <style>
+    text { fill: #8B949E; } .white { fill: #E6EDF3; } .blue { fill: #4C9AFF; } .green { fill: #3FB950; } .violet { fill: #A371F7; } .orange { fill: #D29922; } .red { fill: #F85149; } .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; } .heading { font-size: 13px; font-weight: 600; } .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; } @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/></marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/></marker>
+  </defs>
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- ============================================================ -->
+  <!-- Title                                                        -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="title"
+     data-interactive="ETI"
+     data-source-span="0:0-1:44"
+     data-entity-name="title"
+     data-entity-kind="text"
+     data-entity-desc="Diagram title"
+     class="fade-section" style="animation-delay: 0s">
+    <text x="20" y="28" class="white title">OVERLAYER: BADGE ANCHORING &amp; RENDERING</text>
+    <text x="20" y="48" class="dim subhead">DOM badge positioning via rAF, anchor resolution, OverlayBadge interface</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Viewport context (outer container)                           -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="viewport-context"
+     data-interactive="EVP"
+     data-source-span="4:4-24:99"
+     data-entity-name="viewport-context"
+     data-entity-kind="box"
+     data-entity-desc="Viewport context (container)"
+     data-link="03-viewport-and-transforms.html#EVP"
+     data-link-target-file="03-viewport-and-transforms.txt"
+     data-link-target-id="EVP"
+     data-link-desc="Viewport detail diagram"
+     class="fade-section" style="animation-delay: 0.05s">
+
+    <rect x="20" y="68" width="1060" height="380" rx="4"
+          fill="#24292E" stroke="#30363D" stroke-width="1" stroke-dasharray="6,3"/>
+    <text x="32" y="90" class="blue heading">Viewport** 03-viewport-and-transforms.html</text>
+    <text x="32" y="108" class="dim">(container)</text>
+
+    <!-- transformDiv (ETD) -->
+    <g data-interactive="ETD"
+       data-source-span="6:4-22:28"
+       data-entity-parent="EVP"
+       data-entity-name="transform-div"
+       data-entity-kind="box"
+       data-entity-desc="transformDiv (SVG diagram, moves with pan/zoom)">
+      <rect x="40" y="120" width="220" height="310" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="52" y="140" class="blue">transformDiv</text>
+      <text x="210" y="140" class="dim subhead">ETD</text>
+      <text x="52" y="160" class="white">SVG diagram</text>
+      <text x="52" y="176" class="white">Moves with pan/zoom</text>
+      <text x="52" y="192" class="dim">(CSS transform)</text>
+
+      <!-- Scene element "A" illustration -->
+      <rect x="100" y="260" width="50" height="30" rx="2"
+            fill="none" stroke="#A371F7" stroke-width="1.4"/>
+      <text x="118" y="280" class="violet" font-weight="600">A</text>
+      <text x="80" y="310" class="dim subhead">(scene element)</text>
+    </g>
+
+    <!-- OverLayer (EOC) -->
+    <g data-interactive="EOC"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:64-127"
+       data-category="module"
+       data-label="OverLayer"
+       data-tt="over-layer.tsx:64 &#x2014; OverLayer component"
+       data-source-span="6:28-23:65"
+       data-entity-name="over-layer"
+       data-entity-kind="box"
+       data-entity-desc="OverLayer component (absolute, z:10)"
+       data-code-ref-id="COC">
+
+      <rect x="290" y="120" width="530" height="310" rx="3"
+            fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="302" y="140" class="blue heading">OverLayer</text>
+      <text x="764" y="140" class="dim subhead">EOC</text>
+      <text x="302" y="160" class="white">&lt;div absolute inset-0 overflow-hidden z-index:10&gt;</text>
+      <text x="302" y="184" class="orange">Props:</text>
+      <text x="318" y="200" class="white">badges: OverlayBadge[]</text>
+      <text x="318" y="216" class="white">scene: Scene</text>
+      <text x="480" y="216" class="dim">(for getWorldBounds)</text>
+      <text x="318" y="232" class="white">transformRef: Ref&lt;Transform&gt;</text>
+      <text x="546" y="232" class="dim">(shared with Viewport)</text>
+
+      <!-- Badge <button> (EBD) -->
+      <g data-interactive="EBD"
+         data-ref="web-ui/src/diagram/rendering/over-layer.tsx:96-124"
+         data-category="module"
+         data-label="Badge button"
+         data-source-span="14:5-20:68"
+         data-entity-parent="EOC"
+         data-entity-name="badge-button"
+         data-entity-kind="box"
+         data-entity-desc="Badge <button> (18x18 rounded-full, positioned by rAF)"
+         data-code-ref-id="CBD">
+        <rect x="310" y="252" width="480" height="110" rx="3"
+              fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+        <text x="322" y="272" class="orange heading">Badge &lt;button&gt;</text>
+        <text x="736" y="272" class="dim subhead">EBD</text>
+        <text x="322" y="292" class="white">absolute, 18x18px rounded-full</text>
+        <text x="322" y="308" class="white">margin: -9px (centered on anchor point)</text>
+        <text x="322" y="324" class="white">text-[10px] font-bold</text>
+        <text x="322" y="340" class="white">hover:scale-125 transition</text>
+        <text x="322" y="356" class="white">onClick &#x2192; badge.onClick() (stopPropagation)</text>
+      </g>
+
+      <!-- Arrow from badge to scene element "A" -->
+      <line x1="310" y1="290" x2="150" y2="275" stroke="#8B949E" stroke-width="0.8" marker-end="url(#a)"
+            data-arrow="EBD.anchor" data-arrow-src="EBD" data-arrow-target="ETD" data-arrow-desc="Badge anchored to scene element"/>
+
+      <!-- badgeRefsMap (ERM) -->
+      <g data-interactive="ERM"
+         data-ref="web-ui/src/diagram/rendering/over-layer.tsx:65"
+         data-source-span="22:4-22:62"
+         data-entity-parent="EOC"
+         data-entity-name="badge-refs-map"
+         data-entity-kind="text"
+         data-entity-desc="badgeRefsMap: Map<id, HTMLButtonElement>"
+         data-code-ref-id="CRM">
+        <text x="302" y="400" class="white">Ref tracking: badgeRefsMap: Map&lt;id, HTMLButtonElement&gt;</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- rAF SYNC LOOP (ERL)                                          -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="raf-sync-loop"
+     data-interactive="ERL"
+     data-ref="web-ui/src/diagram/rendering/over-layer.tsx:68-89"
+     data-category="function"
+     data-label="rAF sync loop"
+     data-tt="over-layer.tsx:68 &#x2014; rAF sync loop"
+     data-source-span="27:4-43:48"
+     data-entity-name="raf-sync-loop"
+     data-entity-kind="box"
+     data-entity-desc="rAF sync loop (useEffect, direct DOM positioning)"
+     data-code-ref-id="CRL"
+     class="fade-section" style="animation-delay: 0.1s">
+
+    <text x="20" y="490" class="white heading">rAF SYNC LOOP</text>
+    <text x="20" y="510" class="dim subhead">ERL</text>
+    <rect x="20" y="518" width="370" height="230" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="540" class="blue">useEffect (runs when badges change):</text>
+
+    <text x="40" y="564" class="white">sync = () =&gt; {</text>
+    <text x="56" y="580" class="white">t = transformRef.current</text>
+    <text x="56" y="596" class="orange">for each badge:</text>
+    <text x="72" y="612" class="white">dom = badgeRefsMap.get(badge.id)</text>
+    <text x="72" y="628" class="white">pos = resolveAnchor(anchor, t, scene)</text>
+    <text x="72" y="644" class="white">dom.style.left = pos.x + &quot;px&quot;</text>
+    <text x="72" y="660" class="white">dom.style.top  = pos.y + &quot;px&quot;</text>
+    <text x="56" y="680" class="white">rafId = requestAnimationFrame(sync)</text>
+    <text x="40" y="696" class="white">}</text>
+    <text x="40" y="716" class="white">rafId = requestAnimationFrame(sync)</text>
+    <text x="40" y="736" class="dim">cleanup: cancelAnimationFrame(rafId)</text>
+  </g>
+
+  <!-- Key insight (EKI) -->
+  <g data-reflow-group="key-insight"
+     data-interactive="EKI"
+     data-source-span="45:4-49:40"
+     data-entity-name="key-insight"
+     data-entity-kind="text"
+     data-entity-desc="Key insight: DOM positioning avoids re-renders"
+     class="fade-section" style="animation-delay: 0.15s">
+    <text x="20" y="772" class="orange">Key insight:</text>
+    <text x="120" y="772" class="white">Badges are DOM elements</text>
+    <text x="20" y="788" class="white">positioned via inline style.left/top,</text>
+    <text x="20" y="804" class="white">NOT via React state. This avoids</text>
+    <text x="20" y="820" class="white">re-renders during pan/zoom.</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- BADGE ANCHOR TYPES (EBA)                                     -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="badge-anchor-types"
+     data-interactive="EBA"
+     data-ref="web-ui/src/diagram/types.ts:166-173"
+     data-category="type"
+     data-label="BadgeAnchor"
+     data-source-span="27:60-54:80"
+     data-entity-name="badge-anchor-types"
+     data-entity-kind="text"
+     data-entity-desc="BADGE ANCHOR TYPES heading (BadgeAnchor union)"
+     data-code-ref-id="CBA"
+     class="fade-section" style="animation-delay: 0.2s">
+
+    <text x="500" y="490" class="white heading">BADGE ANCHOR TYPES</text>
+    <text x="500" y="510" class="dim subhead">EBA</text>
+    <text x="500" y="530" class="white">BadgeAnchor = one of three spaces:</text>
+
+    <!-- "screen" anchor (ESA) -->
+    <g data-interactive="ESA"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:8-9"
+       data-category="type"
+       data-label="screen anchor"
+       data-source-span="32:38-39:55"
+       data-entity-name="screen-anchor"
+       data-entity-kind="box"
+       data-entity-desc="screen anchor: coords used directly"
+       data-code-ref-id="CSA">
+      <rect x="500" y="545" width="270" height="120" rx="4"
+            fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+      <text x="512" y="567" class="blue heading">&quot;screen&quot;</text>
+      <text x="720" y="567" class="dim subhead">ESA</text>
+      <text x="512" y="587" class="white">{ space:&quot;screen&quot;, x, y }</text>
+      <text x="512" y="611" class="white">Screen coords used directly:</text>
+      <text x="528" y="627" class="white">screenX = x</text>
+      <text x="528" y="643" class="white">screenY = y</text>
+      <text x="512" y="659" class="dim">Use: fixed UI anchors</text>
+    </g>
+
+    <!-- "scene" anchor (ECA) -->
+    <g data-interactive="ECA"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:11-15"
+       data-category="type"
+       data-label="scene anchor"
+       data-source-span="32:75-39:99"
+       data-entity-name="scene-anchor"
+       data-entity-kind="box"
+       data-entity-desc="scene anchor: converted via scale+translate"
+       data-code-ref-id="CCA">
+      <rect x="790" y="545" width="280" height="120" rx="4"
+            fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+      <text x="802" y="567" class="blue heading">&quot;scene&quot;</text>
+      <text x="1020" y="567" class="dim subhead">ECA</text>
+      <text x="802" y="587" class="white">{ space:&quot;scene&quot;, x, y }</text>
+      <text x="802" y="611" class="white">Converted to screen:</text>
+      <text x="818" y="627" class="white">screenX = x * scale + tx</text>
+      <text x="818" y="643" class="white">screenY = y * scale + ty</text>
+      <text x="802" y="659" class="dim">Use: pin to diagram coords</text>
+    </g>
+
+    <!-- "element" anchor (EEA) -->
+    <g data-interactive="EEA"
+       data-ref="web-ui/src/diagram/rendering/over-layer.tsx:17-51"
+       data-category="type"
+       data-label="element anchor"
+       data-source-span="42:38-54:80"
+       data-entity-name="element-anchor"
+       data-entity-kind="box"
+       data-entity-desc="element anchor: getWorldBounds + corner pick"
+       data-code-ref-id="CEA">
+      <rect x="500" y="685" width="570" height="170" rx="4"
+            fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+      <text x="512" y="707" class="blue heading">&quot;element&quot;</text>
+      <text x="1016" y="707" class="dim subhead">EEA</text>
+      <text x="512" y="727" class="white">{ space:&quot;element&quot;, elementId, corner }</text>
+      <text x="512" y="751" class="white">corner: &quot;center&quot; | &quot;top-right&quot; | &quot;top-left&quot; | &quot;bottom-right&quot; | &quot;bottom-left&quot;</text>
+
+      <text x="512" y="775" class="orange">Resolution steps:</text>
+      <text x="528" y="791" class="white">1. bounds = scene.getWorldBounds(elementId)</text>
+      <text x="528" y="807" class="white">2. Pick corner point (sx, sy) from bounds</text>
+      <text x="528" y="823" class="white">3. screenX = sx * scale + tx</text>
+      <text x="528" y="839" class="white">   screenY = sy * scale + ty</text>
+
+      <text x="512" y="855" class="dim">Use: attach badge to scene element corner (e.g. modal count)</text>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- resolveAnchor (ERA)                                          -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="resolve-anchor"
+     data-interactive="ERA"
+     data-ref="web-ui/src/diagram/rendering/over-layer.tsx:6-52"
+     data-category="function"
+     data-label="resolveAnchor"
+     data-tt="over-layer.tsx:6 &#x2014; resolveAnchor dispatcher"
+     data-source-span="57:4-70:90"
+     data-entity-name="resolve-anchor"
+     data-entity-kind="box"
+     data-entity-desc="resolveAnchor(anchor, transform, scene) dispatcher"
+     data-code-ref-id="CRA"
+     class="fade-section" style="animation-delay: 0.25s">
+
+    <text x="20" y="910" class="white heading">resolveAnchor(anchor, transform, scene)</text>
+    <text x="20" y="930" class="dim subhead">ERA</text>
+    <rect x="20" y="938" width="750" height="150" rx="4"
+          fill="#24292E" stroke="#D29922" stroke-width="1"/>
+
+    <text x="40" y="966" class="orange">anchor.space</text>
+
+    <text x="180" y="966" class="dim">&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;</text>
+    <text x="220" y="966" class="white">&quot;screen&quot;</text>
+    <text x="300" y="966" class="dim">&#x2192;</text>
+    <text x="320" y="966" class="white">return { x, y } directly</text>
+
+    <text x="180" y="994" class="dim">&#x2502;</text>
+    <text x="180" y="1010" class="dim">&#x251C;&#x2500;&#x2500;</text>
+    <text x="220" y="1010" class="white">&quot;scene&quot;</text>
+    <text x="300" y="1010" class="dim">&#x2192;</text>
+    <text x="320" y="1010" class="white">return { x*scale+tx, y*scale+ty }</text>
+
+    <text x="180" y="1038" class="dim">&#x2502;</text>
+    <text x="180" y="1054" class="dim">&#x2514;&#x2500;&#x2500;</text>
+    <text x="220" y="1054" class="white">&quot;element&quot;</text>
+    <text x="310" y="1054" class="dim">&#x2192;</text>
+    <text x="330" y="1054" class="white">bounds = scene.getWorldBounds(id)</text>
+    <text x="330" y="1070" class="dim">if empty &#x2192; return {0,0}</text>
+    <text x="330" y="1086" class="white">pick (sx,sy) by corner &#x2192; return { sx*scale+tx, sy*scale+ty }</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- OverlayBadge interface (EOB)                                 -->
+  <!-- ============================================================ -->
+  <g data-reflow-group="overlay-badge"
+     data-interactive="EOB"
+     data-ref="web-ui/src/diagram/types.ts:176-186"
+     data-category="type"
+     data-label="OverlayBadge"
+     data-tt="types.ts:176 &#x2014; OverlayBadge interface"
+     data-source-span="73:4-85:36"
+     data-entity-name="overlay-badge"
+     data-entity-kind="box"
+     data-entity-desc="OverlayBadge interface (id, anchor, text, onClick, style)"
+     data-code-ref-id="COB"
+     class="fade-section" style="animation-delay: 0.3s">
+
+    <text x="20" y="1130" class="white heading">OverlayBadge interface</text>
+    <text x="20" y="1150" class="dim subhead">EOB</text>
+    <rect x="20" y="1158" width="280" height="160" rx="4"
+          fill="#24292E" stroke="#4C9AFF" stroke-width="1"/>
+    <text x="32" y="1180" class="white">id: string</text>
+    <text x="32" y="1196" class="white">anchor: BadgeAnchor</text>
+    <text x="32" y="1212" class="white">text: string</text>
+    <text x="32" y="1228" class="white">onClick: () =&gt; void</text>
+    <text x="32" y="1248" class="dim">style?: {</text>
+    <text x="48" y="1264" class="dim">color?: string (#fff)</text>
+    <text x="48" y="1280" class="dim">background?: string (#4C9AFF)</text>
+    <text x="48" y="1296" class="dim">borderColor?: string</text>
+    <text x="32" y="1312" class="dim">}</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- Arrows                                                       -->
+  <!-- ============================================================ -->
+
+  <!-- rAF loop → resolveAnchor -->
+  <line x1="390" y1="640" x2="450" y2="640" stroke="#8B949E" stroke-width="0.8"/>
+  <line x1="450" y1="640" x2="450" y2="960" stroke="#8B949E" stroke-width="0.8"/>
+  <line x1="450" y1="960" x2="390" y2="960" stroke="#8B949E" stroke-width="0.8" marker-end="url(#a)"
+        data-arrow="ERL.resolve" data-arrow-src="ERL" data-arrow-target="ERA" data-arrow-desc="rAF loop calls resolveAnchor for each badge"/>
+
+  <!-- rAF loop → badgeRefsMap -->
+  <line x1="200" y1="518" x2="200" y2="480" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <line x1="200" y1="480" x2="490" y2="480" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <line x1="490" y1="480" x2="490" y2="400" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3" marker-end="url(#a)"
+        data-arrow="ERL.dom" data-arrow-src="ERL" data-arrow-target="ERM" data-arrow-desc="rAF loop reads badgeRefsMap for DOM references"/>
+
+  <!-- resolveAnchor → screen anchor -->
+  <line x1="560" y1="966" x2="560" y2="665" stroke="#4C9AFF" stroke-width="0.8" stroke-dasharray="4,3" marker-end="url(#ab)"
+        data-arrow="ERA.screen" data-arrow-src="ERA" data-arrow-target="ESA" data-arrow-desc="anchor.space === screen &#x2192; direct coords"/>
+
+  <!-- resolveAnchor → scene anchor -->
+  <line x1="650" y1="1010" x2="900" y2="1010" stroke="#4C9AFF" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <line x1="900" y1="1010" x2="900" y2="665" stroke="#4C9AFF" stroke-width="0.8" stroke-dasharray="3,3" marker-end="url(#ab)"
+        data-arrow="ERA.scene" data-arrow-src="ERA" data-arrow-target="ECA" data-arrow-desc="anchor.space === scene &#x2192; scale+translate"/>
+
+  <!-- resolveAnchor → element anchor -->
+  <line x1="700" y1="1054" x2="780" y2="1054" stroke="#4C9AFF" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <line x1="780" y1="1054" x2="780" y2="855" stroke="#4C9AFF" stroke-width="0.8" stroke-dasharray="3,3" marker-end="url(#ab)"
+        data-arrow="ERA.element" data-arrow-src="ERA" data-arrow-target="EEA" data-arrow-desc="anchor.space === element &#x2192; getWorldBounds + corner"/>
+
+  <!-- OverlayBadge → Badge button -->
+  <line x1="300" y1="1200" x2="500" y2="1200" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <line x1="500" y1="1200" x2="500" y2="362" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3" marker-end="url(#a)"
+        data-arrow="EOB.render" data-arrow-src="EOB" data-arrow-target="EBD" data-arrow-desc="OverlayBadge data drives Badge button rendering"/>
+
+  <!-- OverlayBadge.anchor → BadgeAnchor -->
+  <line x1="300" y1="1196" x2="380" y2="1196" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <line x1="380" y1="1196" x2="380" y2="530" stroke="#8B949E" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <line x1="380" y1="530" x2="500" y2="530" stroke="#8B949E" stroke-width="0.8" marker-end="url(#a)"
+        data-arrow="EOB.anchor" data-arrow-src="EOB" data-arrow-target="EBA" data-arrow-desc="OverlayBadge.anchor is a BadgeAnchor"/>
+
+</svg>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>3-Tier System Architecture</title>
+  <style>
+    body { margin: 0; padding: 0; background: #1F2428; overflow: hidden; height: 100vh; }
+    svg { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1100 1340"
+  font-family="'JetBrains Mono','Fira Code','SF Mono','Cascadia Code','Consolas',monospace"
+  font-size="11">
+  <style>
+    text { fill: #8B949E; }
+    .white { fill: #E6EDF3; }
+    .blue { fill: #4C9AFF; }
+    .green { fill: #3FB950; }
+    .violet { fill: #A371F7; }
+    .orange { fill: #D29922; }
+    .red { fill: #F85149; }
+    .dim { fill: #6E7681; }
+    .title { font-size: 14px; font-weight: 600; }
+    .heading { font-size: 13px; font-weight: 600; }
+    .subhead { font-size: 10px; }
+    .fade-section { opacity: 0; animation: fade-up 0.6s ease forwards; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#8B949E" stroke-width="1"/>
+    </marker>
+    <marker id="ab" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="none" stroke="#4C9AFF" stroke-width="1"/>
+    </marker>
+  </defs>
+  <rect x="-5000" y="-5000" width="11000" height="11000" fill="#1F2428"/>
+
+  <!-- Title -->
+  <g class="fade-section" style="animation-delay: 0s"
+     data-reflow-group="title"
+     data-entity-name="Title" data-entity-kind="text" data-entity-desc="Diagram title"
+     data-source-span="0:0-0:44">
+    <text x="30" y="35" class="title white">DIAGRAM FEATURE — 3-TIER SYSTEM ARCHITECTURE</text>
+  </g>
+
+  <!-- ═══ BROWSER BOX ═══ -->
+  <g class="fade-section" style="animation-delay: 0.05s"
+     data-reflow-group="EBR" data-interactive="EBR"
+     data-ref="CAP" data-category="browser" data-label="Browser" data-tt="Browser tier: App.tsx entry, DiagramViewer component"
+     data-entity-name="Browser" data-entity-kind="box" data-entity-desc="Browser tier: App.tsx entry, DiagramViewer component"
+     data-code-ref-id="CAP"
+     data-source-span="3:14-23:54">
+    <rect x="30" y="60" width="330" height="310" rx="6" ry="6" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="45" y="80" class="heading blue">BROWSER</text>
+    <text x="340" y="80" class="dim subhead">EBR</text>
+
+    <text x="50" y="102" class="white" data-ref="CAP" data-code-ref-id="CAP">App.tsx [CAP]</text>
+    <text x="50" y="117">?view=diagram → open</text>
+    <text x="50" y="132">isDiagramViewerOpen state</text>
+
+    <!-- DiagramViewer inner box -->
+    <g data-reflow-group="EDV" data-interactive="EDV"
+       data-ref="CDV" data-category="component" data-label="DiagramViewer" data-tt="3-panel viewer component with hooks"
+       data-entity-name="DiagramViewer" data-entity-kind="box" data-entity-desc="3-panel viewer component with hooks" data-entity-parent="EBR"
+       data-code-ref-id="CDV"
+       data-source-span="11:16-21:42">
+      <rect x="55" y="150" width="280" height="200" rx="4" ry="4" fill="#2D3339" stroke="#4C9AFF" stroke-width="0.6"/>
+      <text x="70" y="170" class="heading blue">DiagramViewer [CDV]</text>
+      <text x="70" y="188" class="dim" data-link="02-viewer-and-hooks.html" data-modal="02-viewer-and-hooks.html">** 02-viewer-and-hooks.txt</text>
+      <text x="70" y="210">Hooks:</text>
+      <text x="75" y="226" data-ref="CUV" data-code-ref-id="CUV">useDiagramViewer [CUV]</text>
+      <text x="75" y="242" data-ref="CCS" data-code-ref-id="CCS">useCodeVizStatus [CCS]</text>
+      <text x="75" y="258">useDiagramAgentPanel</text>
+      <text x="310" y="340" class="dim subhead">EDV</text>
+    </g>
+    <text x="340" y="360" class="dim subhead">EBR</text>
+  </g>
+
+  <!-- ═══ NODE.JS SERVER BOX ═══ -->
+  <g class="fade-section" style="animation-delay: 0.1s"
+     data-reflow-group="ESV" data-interactive="ESV"
+     data-ref="CTR" data-category="server" data-label="Node.js Server" data-tt="Server tier: TRPC router, diagrams API, code-viz client"
+     data-entity-name="Node.js Server" data-entity-kind="box" data-entity-desc="Server tier: TRPC router, diagrams API, code-viz client"
+     data-code-ref-id="CTR"
+     data-source-span="3:51-26:61">
+    <rect x="400" y="60" width="340" height="310" rx="6" ry="6" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="415" y="80" class="heading blue">NODE.JS SERVER</text>
+    <text x="720" y="80" class="dim subhead">ESV</text>
+
+    <text x="415" y="102" class="white" data-ref="CTR" data-code-ref-id="CTR">TRPC Router [CTR]</text>
+    <text x="415" y="117" class="dim">app-router.ts L680-702</text>
+
+    <text x="415" y="140">diagrams.* procedures</text>
+    <text x="430" y="157" data-ref="CDL" data-code-ref-id="CDL">├─ list          → fs [CDL]</text>
+    <text x="430" y="172" data-ref="CDC" data-code-ref-id="CDC">├─ getContent    → fs [CDC]</text>
+    <text x="430" y="187" data-ref="CDN" data-code-ref-id="CDN">├─ navigate      → CV [CDN]</text>
+    <text x="430" y="202" data-ref="CDE" data-code-ref-id="CDE">└─ checkExtension→ CV [CDE]</text>
+
+    <text x="415" y="230" class="white" data-ref="CDA" data-code-ref-id="CDA">diagrams-api.ts [CDA]</text>
+    <text x="430" y="247">path safety: isPathSafe,</text>
+    <text x="430" y="262">hasUnsafeSegments</text>
+    <text x="430" y="277">5MB file size limit</text>
+
+    <text x="415" y="305" class="white" data-ref="CCC" data-code-ref-id="CCC">code-viz-client.ts [CCC]</text>
+    <text x="430" y="322" data-ref="CCH" data-code-ref-id="CCH">checkHealth()   → :24680</text>
+    <text x="430" y="337" data-ref="CCW" data-code-ref-id="CCW">checkWorkspace() → :24680</text>
+    <text x="430" y="352" data-ref="CCN" data-code-ref-id="CCN">navigate()       → :24680</text>
+    <text x="720" y="365" class="dim subhead">ESV</text>
+  </g>
+
+  <!-- ═══ CODE VIZ EXTENSION BOX ═══ -->
+  <g class="fade-section" style="animation-delay: 0.15s"
+     data-reflow-group="ECZ" data-interactive="ECZ"
+     data-ref="CCZ" data-category="extension" data-label="Code Viz Extension" data-tt="Optional VSCode extension on localhost:24680"
+     data-entity-name="Code Viz Extension" data-entity-kind="box" data-entity-desc="Optional VSCode extension on localhost:24680"
+     data-code-ref-id="CCZ"
+     data-source-span="3:81-21:106">
+    <rect x="780" y="60" width="290" height="310" rx="6" ry="6" fill="#24292E" stroke="#4C9AFF" stroke-width="1.2"/>
+    <text x="795" y="80" class="heading blue">CODE VIZ EXTENSION</text>
+    <text x="1045" y="80" class="dim subhead">ECZ</text>
+
+    <text x="795" y="102">VSCode Extension (optional)</text>
+    <text x="795" y="117">localhost:24680</text>
+
+    <text x="795" y="155" data-ref="CCN" data-code-ref-id="CCN">/api/navigate  [CCN]</text>
+    <text x="795" y="172" data-ref="CCH" data-code-ref-id="CCH">/api/health    [CCH]</text>
+    <text x="795" y="189" data-ref="CCW" data-code-ref-id="CCW">/api/workspaces[CCW]</text>
+
+    <text x="795" y="220">Capabilities:</text>
+    <text x="810" y="237">open file at line in editor</text>
+    <text x="810" y="254">workspace registration check</text>
+    <text x="810" y="271">health monitoring</text>
+    <text x="1045" y="365" class="dim subhead">ECZ</text>
+  </g>
+
+  <!-- ═══ ARROWS between top-level boxes ═══ -->
+  <!-- EBR → ESV: HTTP requests -->
+  <line x1="360" y1="180" x2="400" y2="180"
+        stroke="#4C9AFF" stroke-width="1" marker-end="url(#ab)"
+        class="fade-section" style="animation-delay: 0.2s"
+        data-arrow="EBR-ESV" data-arrow-src="EBR" data-arrow-target="ESV" data-arrow-desc="HTTP requests (TRPC procedures)"
+        data-source-span="8:37-8:47"/>
+  <text x="365" y="174" class="dim subhead fade-section" style="animation-delay: 0.2s">HTTP</text>
+
+  <!-- ESV → ECZ: navigate -->
+  <line x1="740" y1="155" x2="780" y2="155"
+        stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+        class="fade-section" style="animation-delay: 0.25s"
+        data-arrow="ESV-ECZ-nav" data-arrow-src="ESV" data-arrow-target="ECZ" data-arrow-desc="navigate → /api/navigate"/>
+
+  <!-- ESV → ECZ: health -->
+  <line x1="740" y1="172" x2="780" y2="172"
+        stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+        class="fade-section" style="animation-delay: 0.3s"
+        data-arrow="ESV-ECZ-health" data-arrow-src="ESV" data-arrow-target="ECZ" data-arrow-desc="checkExtension → /api/health"/>
+
+  <!-- ESV → ECZ: workspaces -->
+  <line x1="740" y1="189" x2="780" y2="189"
+        stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+        class="fade-section" style="animation-delay: 0.35s"
+        data-arrow="ESV-ECZ-ws" data-arrow-src="ESV" data-arrow-target="ECZ" data-arrow-desc="checkExtension → /api/workspaces"/>
+
+  <!-- ═══ Data Flow Section ═══ -->
+  <g class="fade-section" style="animation-delay: 0.4s"
+     data-reflow-group="EDF"
+     data-entity-name="Data Flow heading" data-entity-kind="text" data-entity-desc="Section header for the 6-step data flow"
+     data-source-span="28:0-28:97">
+    <line x1="30" y1="420" x2="1070" y2="420" stroke="#D29922" stroke-width="1.2"/>
+    <text x="30" y="445" class="heading orange">Data Flow</text>
+    <text x="120" y="445" class="dim">Browser</text>
+    <text x="400" y="445" class="dim">Server</text>
+    <text x="780" y="445" class="dim">Code Viz Extension</text>
+  </g>
+
+  <!-- Step 1 -->
+  <g class="fade-section" style="animation-delay: 0.45s"
+     data-reflow-group="ES1" data-interactive="ES1"
+     data-entity-name="Step 1 Mount" data-entity-kind="text" data-entity-desc="App.tsx opens DiagramViewer from URL param"
+     data-source-span="33:1-35:35">
+    <rect x="30" y="460" width="340" height="60" rx="4" ry="4" fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="45" y="480" class="white">[ES1] 1. Mount / URL has ?view=diagram</text>
+    <text x="55" y="496">App.tsx sets isDiagramViewerOpen</text>
+    <text x="55" y="510">→ renders &lt;DiagramViewer&gt;</text>
+  </g>
+
+  <!-- Step 2 -->
+  <g class="fade-section" style="animation-delay: 0.5s"
+     data-reflow-group="ES2" data-interactive="ES2"
+     data-entity-name="Step 2 Tree loading" data-entity-kind="text" data-entity-desc="useDiagramViewer fetches tree via diagrams.list"
+     data-source-span="37:1-40:44">
+    <rect x="30" y="535" width="700" height="60" rx="4" ry="4" fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="45" y="555" class="white">[ES2] 2. Tree loading</text>
+    <text x="55" y="571">useDiagramViewer</text>
+    <line x1="185" y1="568" x2="400" y2="568" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+          data-arrow="ES2-list" data-arrow-src="ES2" data-arrow-target="ESV" data-arrow-desc="diagrams.list.query"/>
+    <text x="415" y="555">diagrams.list.query</text>
+    <text x="415" y="571" data-ref="CDL" data-code-ref-id="CDL">listDiagrams [CDL]</text>
+    <text x="415" y="587">→ FileTreeNode[] (reads diagrams/)</text>
+  </g>
+
+  <!-- Step 3 -->
+  <g class="fade-section" style="animation-delay: 0.55s"
+     data-reflow-group="ES3" data-interactive="ES3"
+     data-entity-name="Step 3 File selection" data-entity-kind="text" data-entity-desc="Content fetch via diagrams.getContent"
+     data-source-span="42:1-45:42">
+    <rect x="30" y="610" width="700" height="60" rx="4" ry="4" fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="45" y="630" class="white">[ES3] 3. File selection</text>
+    <text x="55" y="646">onSelectPath(path)</text>
+    <line x1="205" y1="643" x2="400" y2="643" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+          data-arrow="ES3-get" data-arrow-src="ES3" data-arrow-target="ESV" data-arrow-desc="diagrams.getContent.query"/>
+    <text x="415" y="630">diagrams.getContent.query</text>
+    <text x="415" y="646" data-ref="CDC" data-code-ref-id="CDC">getDiagramContent [CDC]</text>
+    <text x="415" y="662">→ { content: string (HTML) }, 5MB cap</text>
+  </g>
+
+  <!-- Step 4 -->
+  <g class="fade-section" style="animation-delay: 0.6s"
+     data-reflow-group="ES4" data-interactive="ES4"
+     data-entity-name="Step 4 Code navigation" data-entity-kind="text" data-entity-desc="fireCodeJump → server → extension navigate"
+     data-source-span="47:1-49:55">
+    <rect x="30" y="685" width="1040" height="50" rx="4" ry="4" fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="45" y="705" class="white">[ES4] 4. Code navigation</text>
+    <text x="55" y="721">fireCodeJump</text>
+    <line x1="155" y1="718" x2="400" y2="718" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+          data-arrow="ES4-nav1" data-arrow-src="ES4" data-arrow-target="ESV" data-arrow-desc="diagrams.navigate.mutate"/>
+    <text x="415" y="705" data-ref="CDN" data-code-ref-id="CDN">navigateToDiagramSource [CDN]</text>
+    <line x1="660" y1="718" x2="780" y2="718" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+          data-arrow="ES4-nav2" data-arrow-src="ESV" data-arrow-target="ECZ" data-arrow-desc="navigate(root, file, line)"/>
+    <text x="795" y="705" data-ref="CCN" data-code-ref-id="CCN">navigate(root, file, line) [CCN]</text>
+    <text x="795" y="721">→ { ok: boolean }</text>
+  </g>
+
+  <!-- Step 5 -->
+  <g class="fade-section" style="animation-delay: 0.65s"
+     data-reflow-group="ES5" data-interactive="ES5"
+     data-entity-name="Step 5 Extension health poll" data-entity-kind="text" data-entity-desc="useCodeVizStatus 30s poll through server to extension"
+     data-source-span="51:1-54:55">
+    <rect x="30" y="750" width="1040" height="65" rx="4" ry="4" fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="45" y="770" class="white">[ES5] 5. Extension health poll (30s)</text>
+    <text x="55" y="786" data-ref="CCS" data-code-ref-id="CCS">useCodeVizStatus [CCS]</text>
+    <line x1="225" y1="783" x2="400" y2="783" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+          data-arrow="ES5-check1" data-arrow-src="ES5" data-arrow-target="ESV" data-arrow-desc="diagrams.checkExtension.query"/>
+    <text x="415" y="770" data-ref="CDE" data-code-ref-id="CDE">checkExtensionStatus [CDE]</text>
+    <line x1="640" y1="770" x2="780" y2="770" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+          data-arrow="ES5-health" data-arrow-src="ESV" data-arrow-target="ECZ" data-arrow-desc="checkHealth()"/>
+    <text x="795" y="770" data-ref="CCH" data-code-ref-id="CCH">checkHealth() [CCH]</text>
+    <line x1="640" y1="790" x2="780" y2="790" stroke="#8B949E" stroke-width="1" marker-end="url(#a)"
+          data-arrow="ES5-ws" data-arrow-src="ESV" data-arrow-target="ECZ" data-arrow-desc="checkWorkspace(path)"/>
+    <text x="795" y="790" data-ref="CCW" data-code-ref-id="CCW">checkWorkspace(path) [CCW]</text>
+    <text x="55" y="805">→ { available, workspaceRegistered }</text>
+  </g>
+
+  <!-- Step 6 -->
+  <g class="fade-section" style="animation-delay: 0.7s"
+     data-reflow-group="ES6" data-interactive="ES6"
+     data-entity-name="Step 6 Cross-diagram jump" data-entity-kind="text" data-entity-desc="requestJump triggers path change + pending element ID"
+     data-source-span="56:1-61:35">
+    <rect x="30" y="830" width="500" height="90" rx="4" ry="4" fill="#24292E" stroke="#D29922" stroke-width="0.6"/>
+    <text x="45" y="850" class="white">[ES6] 6. Cross-diagram jump</text>
+    <text x="55" y="866">requestJump(path, elementId)</text>
+    <text x="55" y="882">→ setSelectedPath → triggers #3</text>
+    <text x="55" y="898">→ setPendingJumpElementId</text>
+    <text x="55" y="914">→ pushState (browser back support)</text>
+    <text x="285" y="914" class="dim" data-link="02-viewer-and-hooks.html" data-modal="02-viewer-and-hooks.html">** 02-viewer-and-hooks.txt</text>
+  </g>
+
+</svg>
+<script type="text/plain" id="ascii-source">
+DIAGRAM FEATURE — 3-TIER SYSTEM ARCHITECTURE
+
+                       BROWSER                                    NODE.JS SERVER                            CODE VIZ EXTENSION
+              ┌──────────────────────────────────┐           ┌─────────────────────────────────┐       ┌──────────────────────────────────┐
+              │ EBR                              │           │ ESV                             │       │ ECZ                              │
+              │  App.tsx [CAP]                   │           │  TRPC Router [CTR]              │       │  VSCode Extension (optional)     │
+              │  ?view=diagram → open            │           │  app-router.ts L680-702         │       │  localhost:24680                 │
+              │  isDiagramViewerOpen state        │   HTTP    │                                 │       │                                  │
+              │         │                        │ ────────► │  diagrams.* procedures          │       │                                  │
+              │         ▼                        │           │    │                            │       │                                  │
+              │  ┌────────────────────────┐      │           │    ├─ list          ──→ fs [CDL]│       │                                  │
+              │  │ EDV                    │      │           │    ├─ getContent    ──→ fs [CDC]│       │                                  │
+              │  │ DiagramViewer [CDV]    │      │           │    ├─ navigate      ──→ CV [CDN]│──────►│  /api/navigate  [CCN]            │
+              │  │  ** 02-viewer-and-hooks.txt │  │           │    └─ checkExtension──→ CV [CDE]│──────►│  /api/health    [CCH]            │
+              │  │                        │      │           │                                 │──────►│  /api/workspaces[CCW]            │
+              │  │ Hooks:                 │      │           │  diagrams-api.ts [CDA]          │       │                                  │
+              │  │  useDiagramViewer [CUV]│      │           │    path safety: isPathSafe,     │       │  Capabilities:                   │
+              │  │  useCodeVizStatus [CCS]│      │           │    hasUnsafeSegments             │       │    open file at line in editor   │
+              │  │  useDiagramAgentPanel  │      │           │    5MB file size limit           │       │    workspace registration check  │
+              │  │                    EDV │      │           │                             ESV │       │    health monitoring         ECZ │
+              │  └────────────────────────┘      │           │  code-viz-client.ts [CCC]       │       └──────────────────────────────────┘
+              │                          EBR     │           │    checkHealth()   → :24680     │
+              └──────────────────────────────────┘           │    checkWorkspace() → :24680    │
+                                                             │    navigate()       → :24680    │
+                                                             │                             ESV │
+                                                             └─────────────────────────────────┘
+
+═══ Data Flow ═════════════════════════════════════════════════════════════════════════════════════════════════
+
+ [EDF] Browser                              Server                              Code Viz Extension
+ ───────                              ──────                              ──────────────────
+
+ [ES1] 1. Mount / URL has ?view=diagram
+    App.tsx sets isDiagramViewerOpen
+    ──→ renders <DiagramViewer>
+
+ [ES2] 2. Tree loading                      diagrams.list.query
+    useDiagramViewer ───────────────► listDiagrams [CDL]
+                     ◄─────────────── FileTreeNode[]
+                                      (reads {workspace}/diagrams/)
+
+ [ES3] 3. File selection                    diagrams.getContent.query
+    onSelectPath(path) ────────────► getDiagramContent [CDC]
+                       ◄──────────── { content: string (HTML) }
+                                      (reads file, 5MB cap)
+
+ [ES4] 4. Code navigation                  diagrams.navigate.mutate            /api/navigate
+    fireCodeJump ──────────────────► navigateToDiagramSource [CDN] ─────► navigate(root, file, line) [CCN]
+                                                                  ◄───── { ok: boolean }
+
+ [ES5] 5. Extension health poll (30s)      diagrams.checkExtension.query       /api/health + /api/workspaces
+    useCodeVizStatus [CCS] ────────► checkExtensionStatus [CDE] ────────► checkHealth() [CCH]
+                                                                ────────► checkWorkspace(path) [CCW]
+                     ◄─────────────── { available, workspaceRegistered }
+
+ [ES6] 6. Cross-diagram jump
+    requestJump(path, elementId)
+    → setSelectedPath → triggers #3
+    → setPendingJumpElementId
+    → pushState (browser back support)
+    ** 02-viewer-and-hooks.txt
+</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+Cline SDK Integration Architecture
+====================================
+
+How Kanban drives the Cline agent SDK: session stack, provider stack,
+boundary rules, lifecycle, and supporting modules.
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  1. SESSION STACK (4 layers, top-to-bottom)
+═══════════════════════════════════════════════════════════════════════
+
+  Browser (TRPC)
+       │
+       ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  runtime-api.ts                      [→ trpc-router-and-api-map]│
+  │  TRPC entry point — resolves workspace scope, delegates down    │
+  └──────────────────────┬───────────────────────────────────────────┘
+                         │  getScopedClineTaskSessionService()
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  cline-task-session-service.ts           TASK SEMANTICS          │
+  │                                                                  │
+  │  + Maps taskId → session operations                              │
+  │  + Owns message history (ClineMessageRepository)                 │
+  │  + Emits RuntimeTaskSessionSummary → StateHub                    │
+  │    [→ state-hub-and-registry]                                    │
+  │  + Handles slash commands, reload, rebind, clear                 │
+  │  + Events flow back via handleTaskEvent()                        │
+  │    [→ cline-event-and-state]                                     │
+  └──────────────────────┬───────────────────────────────────────────┘
+                         │  this.sessionRuntime.*
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  cline-session-runtime.ts              SESSION BINDING           │
+  │                                                                  │
+  │  + Binds taskId ↔ sessionId                                      │
+  │  + Owns ClineSdkSessionHost instance                             │
+  │  + Owns ClineMcpRuntimeService [→ cline-mcp-servers]             │
+  │  + Drives host .start() / .send() / .stop()                      │
+  │  + Resumes from persisted session records                        │
+  └──────────────────────┬───────────────────────────────────────────┘
+                         │  createClineSdkSessionHost()
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  sdk-runtime-boundary.ts               SDK TRANSLATION           │
+  │                                                                  │
+  │  + ONLY file importing @clinebot/core for runtime sessions       │
+  │  + Factory: createClineSdkSessionHost()                          │
+  │  + Re-exports all SDK types as ClineSdk* aliases                 │
+  │  + Helpers: data-dir, instruction watcher, slash commands, rules │
+  └──────────────────────────────────────────────────────────────────┘
+
+  Each layer adds one concern:
+    runtime-api          → request parsing + workspace scoping
+    task-session-service → task semantics (messages, summaries, slash cmds)
+    session-runtime      → session binding (taskId↔sessionId, MCP bundle)
+    sdk-runtime-boundary → SDK translation (only @clinebot/* import)
+
+  Non-Cline tasks bypass this entire stack:
+    runtime-api → terminal-manager → PTY [→ pty-launch-pipeline]
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  2. PARALLEL PROVIDER STACK
+═══════════════════════════════════════════════════════════════════════
+
+  Separate vertical — provider CRUD and catalog, not session I/O.
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  cline-provider-service.ts             PROVIDER FACADE           │
+  │                                                                  │
+  │  + CRUD for custom providers + catalog + model listing           │
+  │  + OAuth login flow for managed providers                        │
+  │  + Provider settings persistence                                 │
+  │  [→ cline-provider-and-auth]                                     │
+  └──────────────────────┬───────────────────────────────────────────┘
+                         │  delegates to sdk-provider-boundary
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  sdk-provider-boundary.ts              SDK TRANSLATION           │
+  │                                                                  │
+  │  + ONLY file importing @clinebot/llms + @clinebot/agents        │
+  │  + Provider catalog, model listing, custom provider CRUD         │
+  │  + Re-exports SDK provider types as Sdk* aliases                 │
+  │  + MCP manager factory: createSdkInMemoryMcpManager              │
+  └──────────────────────────────────────────────────────────────────┘
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  3. BOUNDARY RULE
+═══════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │          KANBAN APPLICATION CODE                                │
+  │                                                                 │
+  │  runtime-api.ts                                                 │
+  │  cline-task-session-service.ts                                  │
+  │  cline-session-runtime.ts                                       │
+  │  cline-provider-service.ts                                      │
+  │  cline-watcher-registry.ts                                      │
+  │  cline-runtime-logger.ts                                        │
+  │  cline-telemetry-service.ts                                     │
+  │  ... (all other src/cline-sdk/ files)                           │
+  │                                                                 │
+  │  These files NEVER import @clinebot/* directly.                 │
+  │  They use re-exported ClineSdk* / Sdk* types from below.        │
+  │                                                                 │
+  ╞═════════════════════════════════════════════════════════════════╡
+  │  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓  HARD BOUNDARY  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
+  ╞═════════════════════════════════════════════════════════════════╡
+  │                                                                 │
+  │  sdk-runtime-boundary.ts    ← imports @clinebot/core            │
+  │  sdk-provider-boundary.ts   ← imports @clinebot/llms,           │
+  │                                        @clinebot/agents         │
+  │                                                                 │
+  │  These two files are the ONLY touchpoints with the SDK.         │
+  │  Everything they expose is re-aliased so the rest of Kanban     │
+  │  never couples to SDK internals.                                │
+  │                                                                 │
+  └─────────────────────────────────────────────────────────────────┘
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  4. SESSION LIFECYCLE
+═══════════════════════════════════════════════════════════════════════
+
+  ┌─────────┐    ┌──────────────┐    ┌──────────────┐    ┌─────────┐
+  │  START  │───▶│  SEND INPUT  │───▶│     STOP     │───▶│ RESUME  │
+  └────┬────┘    └──────┬───────┘    └──────┬───────┘    └────┬────┘
+       │                │                    │                 │
+       ▼                ▼                    ▼                 ▼
+  resolve provider   forward text     cleanup taskId↔    read persisted
+  + build MCP        + mode to        sessionId binding  record, rebind,
+  bundle             active session                      restart with
+  [→ cline-mcp-                                          prior messages
+   servers]
+
+  Events flow back asynchronously via handleSessionEvent()
+  → handleTaskEvent() → onSummary / onMessage listeners
+  [→ cline-event-and-state]
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  5. SUPPORTING MODULES
+═══════════════════════════════════════════════════════════════════════
+
+  cline-watcher-registry       Per-workspace watcher setup cache
+  cline-runtime-logger         File + console log routing for SDK ops
+  cline-telemetry-service      Singleton telemetry wrapper for @clinebot/core
+  cline-slash-commands         Built-in slash commands (/clear, etc.)
+  cline-tool-call-display      Pretty-print tool calls for task event UI
+  cline-context-overflow-      Fallback message compaction for overflow
+    compaction
+```

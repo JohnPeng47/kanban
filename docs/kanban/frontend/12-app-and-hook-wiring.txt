@@ -1,0 +1,181 @@
+```diagram
+APP COMPOSITION ROOT AND HOOK WIRING
+
+═══ 1. HOOK GROUPS ═════════════════════════════════════════════════════════════════════════════════════
+
+  App (web-ui/src/App.tsx) is the single composition root. It calls ~20 top-level hooks, grouped
+  by domain. Each hook encapsulates one concern and returns actions + derived state consumed by
+  the surfaces below.
+
+  PROJECT NAVIGATION
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  useProjectNavigation       Project list, selection, add/remove, git-init prompt             │
+  │  useProjectUiState          Display-ready project list, loading flags, nav path              │
+  │  useKanbanAccessGate        License/access gating; returns isBlocked                         │
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  TASK SESSIONS
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  useTaskSessions            TRPC facade for start/stop/send/cleanup task sessions            │
+  │  useTaskEditor              Create/edit task forms, prompt state, branch ref, save logic     │
+  │  useTaskStartActions        Combines create + start into one-shot actions for board/chat     │
+  │  useTaskBranchOptions       Derives branch ref options from workspace git state              │
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  BOARD
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  useBoardInteractions       Drag-drop, card select, trash, review, dependency edges          │
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  STATE SYNC                                                 [→ workspace-sync-cycle]
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  useWorkspaceSync           Applies streamed snapshot/delta into board + sessions            │
+  │  useWorkspacePersistence    Debounced save of board edits to server with revision lock       │
+  │  useDocumentVisibility      Tracks tab visibility for sync pause/resume                      │
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  AGENT SESSIONS
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  useHomeSidebarAgentPanel   Composes sidebar agent chat/terminal for home workspace          │
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  SETTINGS & ONBOARDING                                      [→ settings-and-onboarding]
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  useRuntimeProjectConfig    Fetches per-project runtime config (agent, provider, etc)        │
+  │  useStartupOnboarding       First-launch onboarding dialog state + agent selection           │
+  │  useDebugTools              Debug mode flag, reset-all-state action                          │
+  │  useFeaturebaseFeedbackWidget  External feedback widget with auth token                      │
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  UX & ACTIONS
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  useAppHotkeys              Global keyboard shortcuts (Ctrl+N, Ctrl+`, etc)                  │
+  │  useShortcutActions         Custom user-defined command shortcuts via terminal                │
+  │  useGitActions              Git fetch/pull/push/commit/open-PR actions + error state          │
+  │  useReviewReadyNotifications  Browser notifications when tasks need review                    │
+  │  useOpenWorkspace           Open-in-editor action with target selection                       │
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  TERMINAL                                                   [→ chat-and-terminal-stacks]
+  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  useTerminalPanels          Home + detail terminal open/close/expand/collapse state          │
+  │  useTerminalConnectionReady Tracks PTY WebSocket readiness for shortcut execution            │
+  │  useTerminalThemeColors     Reads CSS custom properties for terminal color config            │
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ 2. SURFACE MAP ═════════════════════════════════════════════════════════════════════════════════════
+
+  App renders these top-level surfaces. Arrows show which hook groups feed each surface.
+
+  ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                         App()                                                   │
+  │  ┌──────────────────────────────────────────────────────────────────────────────────────────┐   │
+  │  │  LayoutCustomizationsProvider                                                            │   │
+  │  │                                                                                          │   │
+  │  │  ┌─────────────────────────┐  ┌──────────────────────────────────────────────────────┐   │   │
+  │  │  │  ProjectNavigationPanel │  │  Main content area                                   │   │   │
+  │  │  │  ◄── useProjectNav      │  │  ┌──────────────────────────────────────────────┐    │   │   │
+  │  │  │  ◄── useHomeSidebarAgent│  │  │  TopBar                                       │    │   │   │
+  │  │  │  ◄── useFeaturebase     │  │  │  ◄── useGitActions (fetch/pull/push)          │    │   │   │
+  │  │  │                         │  │  │  ◄── useTerminalPanels (toggle)               │    │   │   │
+  │  │  │  (hidden when card      │  │  │  ◄── useShortcutActions (run shortcut)        │    │   │   │
+  │  │  │   selected)             │  │  │  ◄── useOpenWorkspace (open in editor)        │    │   │   │
+  │  │  └─────────────────────────┘  │  └──────────────────────────────────────────────────┘    │   │
+  │  │                               │                                                          │   │
+  │  │                               │  ┌──────────────────────────────────────────────────┐    │   │
+  │  │                               │  │  HOME VIEW (no card selected)                    │    │   │
+  │  │                               │  │                                                   │    │   │
+  │  │                               │  │  KanbanBoard                                      │    │   │
+  │  │                               │  │  ◄── useBoardInteractions (drag, select, trash)   │    │   │
+  │  │                               │  │  ◄── useWorkspaceSync (board state)               │    │   │
+  │  │                               │  │  ◄── useTaskEditor (inline edit card)             │    │   │
+  │  │                               │  │  ◄── useTaskStartActions (start from board)       │    │   │
+  │  │                               │  │                                                   │    │   │
+  │  │                               │  │  ── OR ──                                         │    │   │
+  │  │                               │  │  DiagramViewer  ◄── runtimeProjectConfig, sessions│    │   │
+  │  │                               │  │  ── OR ──                                         │    │   │
+  │  │                               │  │  GitHistoryView ◄── useGitActions (gitHistory)    │    │   │
+  │  │                               │  │                                                   │    │   │
+  │  │                               │  │  AgentTerminalPanel (home bottom pane)            │    │   │
+  │  │                               │  │  ◄── useTerminalPanels (homeTerminalTaskId)       │    │   │
+  │  │                               │  └──────────────────────────────────────────────────┘    │   │
+  │  │                               │                                                          │   │
+  │  │                               │  ┌──────────────────────────────────────────────────┐    │   │
+  │  │                               │  │  DETAIL VIEW (card selected, overlays home)       │    │   │
+  │  │                               │  │                                                   │    │   │
+  │  │                               │  │  CardDetailView                                   │    │   │
+  │  │                               │  │  ◄── useTaskSessions (start/stop/chat/input)      │    │   │
+  │  │                               │  │  ◄── useBoardInteractions (drag, trash, review)   │    │   │
+  │  │                               │  │  ◄── useGitActions (commit/PR per task)           │    │   │
+  │  │                               │  │  ◄── useTerminalPanels (detail terminal)          │    │   │
+  │  │                               │  └──────────────────────────────────────────────────┘    │   │
+  │  │                               └──────────────────────────────────────────────────────────┘   │
+  │  │                                                                                          │   │
+  │  │  DIALOGS (rendered at root, conditionally open)                                          │   │
+  │  │  ┌─────────────────────────────────────────────────────────────────────────────────┐     │   │
+  │  │  │  RuntimeSettingsDialog  ◄── useRuntimeProjectConfig                             │     │   │
+  │  │  │  TaskCreateDialog       ◄── useTaskEditor + useTaskStartActions                 │     │   │
+  │  │  │  StartupOnboardingDialog◄── useStartupOnboarding                                │     │   │
+  │  │  │  ClearTrashDialog       ◄── useBoardInteractions (trashTaskCount)               │     │   │
+  │  │  │  DebugDialog            ◄── useDebugTools                                       │     │   │
+  │  │  │  AlertDialog (git init) ◄── useProjectNavigation (pendingGitInitializationPath) │     │   │
+  │  │  │  AlertDialog (git error)◄── useGitActions (gitActionError)                      │     │   │
+  │  │  └─────────────────────────────────────────────────────────────────────────────────┘     │   │
+  │  └──────────────────────────────────────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ 3. DATA FLOW ═════════════════════════════════════════════════════════════════════════════════════
+
+  WebSocket → board state → KanbanBoard
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  useProjectNavigation
+    └─ useRuntimeStateStream ──(WebSocket)──► streamedWorkspaceState
+                                                   │
+                                                   ▼
+  useWorkspaceSync(streamedWorkspaceState) ──► applyWorkspaceState()
+    ├─ setBoard(normalized)                         │
+    ├─ setSessions(merged)                          ▼
+    └─ setCanPersistWorkspaceState(true)       board (useState)
+                                                   │
+                                                   ├──► KanbanBoard data={board}
+                                                   ├──► CardDetailView selection={selectedCard}
+                                                   └──► useWorkspacePersistence(board) ──► TRPC save
+                                                        [→ workspace-sync-cycle]
+
+  Task start chain: Board drag → TRPC → runtime-api
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  KanbanBoard.onStartTask
+    → useTaskStartActions.handleStartTaskFromBoard(taskId)
+      → useBoardInteractions.handleStartTask(taskId)
+        → useTaskSessions.ensureTaskWorkspace (TRPC workspace.ensureWorktree)
+          → useTaskSessions.startTaskSession (TRPC runtime.startTaskSession)
+            → runtime-api fork: Cline path or terminal path
+                                                        [→ trpc-router-and-api-map]
+
+  Board interactions internal composition
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  useBoardInteractions
+    ├─► useLinkedBacklogTaskActions  (auto-start linked backlog tasks on finish)
+    └─► useProgrammaticCardMoves    (server-pushed column transitions)
+                                                        [→ state-hub-and-registry]
+
+  Project switching → WebSocket reconnect → board hydration
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  useProjectNavigation.handleSelectProject(projectId)
+    → onProjectSwitchStart() (resets board, selection, terminal, editor)
+    → setRequestedProjectId → new WebSocket → snapshot → useWorkspaceSync hydrates board
+                                                        [→ workspace-sync-cycle]
+
+
+═══ CROSS-REFERENCES ═══════════════════════════════════════════════════════════════════════════════════
+
+  [→ board-task-lifecycle]       Board state schema, column semantics, task CRUD lifecycle
+  [→ chat-and-terminal-stacks]   ClineAgentChatPanel and AgentTerminalPanel hook composition
+  [→ settings-and-onboarding]    RuntimeSettingsDialog and startup onboarding flow
+  [→ workspace-sync-cycle]       Hydration, delta, persistence, and conflict-detection paths
+  [→ trpc-router-and-api-map]    TRPC procedures called by useTaskSessions and useGitActions
+  [→ state-hub-and-registry]     Server-side WebSocket fan-out and workspace state registry
+
+```

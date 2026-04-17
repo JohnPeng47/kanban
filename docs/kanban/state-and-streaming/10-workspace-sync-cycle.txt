@@ -1,0 +1,177 @@
+```diagram
+WORKSPACE SYNC CYCLE
+
+═══ 1. HYDRATION PATH ═══════════════════════════════════════════════════════════════════════════════
+
+  Browser opens WebSocket to /api/runtime/ws?workspaceId=<id>. The state-hub builds a full snapshot
+  and sends it as the first message. useRuntimeStateStream receives it and dispatches into a reducer
+  that populates the initial store.
+
+  useRuntimeStateStream                                    RuntimeStateHub (server)
+  web-ui/src/runtime/use-runtime-state-stream.ts           [→ state-hub-and-registry]
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1. connect()
+     │  new WebSocket(getRuntimeStreamUrl(requestedWorkspaceId))
+     │
+     │                                         ──────► resolveWorkspaceForStream
+     │                                                  buildWorkspaceStateSnapshot
+     │                                                  buildProjectsPayload
+     │                                         ◄──────
+     │
+  2. socket.onmessage → payload.type === "snapshot"
+     │
+     │  dispatch({ type: "snapshot", payload })
+     │
+     ▼
+  runtimeStateStreamReducer handles "snapshot":
+     │
+     ├── currentProjectId   = payload.currentProjectId
+     ├── projects            = payload.projects
+     ├── workspaceMetadata   = payload.workspaceMetadata
+     ├── clineSessionContextVersion = payload.clineSessionContextVersion
+     │
+     └── workspaceState      = {
+           ...payload.workspaceState,
+           sessions: mergeTaskSessionSummaries(existing, incoming)
+         }
+
+  Snapshot shape (RuntimeWorkspaceStateResponse):
+  ┌─────────────────────────────────────────────────────────┐
+  │  repoPath    : string          filesystem path          │
+  │  statePath   : string          ~/.cline/kanban/...      │
+  │  git         : RuntimeGitRepositoryInfo                 │
+  │  board       : RuntimeBoardData      columns + tasks    │
+  │  sessions    : Record<taskId, RuntimeTaskSessionSummary>│
+  │  revision    : number          optimistic-lock counter  │
+  └─────────────────────────────────────────────────────────┘
+
+  useWorkspaceSync then normalizes the snapshot into app state:
+  [→ app-and-hook-wiring] for how useRuntimeStateStream and useWorkspaceSync compose in App
+
+
+═══ 2. DELTA PATH ═══════════════════════════════════════════════════════════════════════════════════
+
+  After the snapshot, the same WebSocket delivers incremental deltas. Each message type maps to a
+  reducer action. Only messages matching the activeWorkspaceId are dispatched (except global).
+
+  Delta type                        What it updates
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+  task_sessions_updated             workspaceState.sessions (upsert by taskId, newer wins)
+  workspace_state_updated           workspaceState (board + git replaced, sessions merged)
+  workspace_metadata_updated        workspaceMetadata (git poll, 1s interval)
+  task_chat_message                 latestTaskChatMessage + taskChatMessagesByTaskId
+  task_chat_cleared                 removes taskId from taskChatMessagesByTaskId
+  task_ready_for_review             latestTaskReadyForReview
+  projects_updated                  projects list + currentProjectId (reconnects if changed)
+  mcp_auth_updated (global)         latestMcpAuthStatuses
+  cline_session_context_updated     clineSessionContextVersion
+
+  Session merge logic (both snapshot and delta):
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │  mergeTaskSessionSummaries(current, incoming[])                         │
+  │    for each incoming summary:                                           │
+  │      if no existing entry OR existing.updatedAt <= summary.updatedAt    │
+  │        → replace                                                        │
+  │      else                                                               │
+  │        → keep existing (newer wins)                                     │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+═══ 3. PERSISTENCE ROUND-TRIP ══════════════════════════════════════════════════════════════════════
+
+  When the user edits board state (drag task, rename, create/delete), the board object reference
+  changes. useWorkspacePersistence detects this and debounces a save to the server.
+
+  Browser (useWorkspacePersistence)                  Server (workspace-api)
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  board reference changes
+     │
+     ├── guards: canPersist && isVisible && !refreshing && revision != null
+     ├── skip if board came from server (hydrationNonce changed)
+     ├── skip if board === lastPersistedBoard (reference equality)
+     │
+     ├── debounce 120ms
+     │
+     │   payload: { board, sessions, expectedRevision }
+     │
+     └── persistWorkspaceState({ workspaceId, payload })
+            │
+            │  TRPC mutation: workspace.saveState
+            │
+            ▼
+         workspace-api.saveState
+            │
+            ├── overlay live terminal summaries into sessions
+            ├── acquire file lock → revision check → write board.json + sessions.json + meta.json
+            ├── broadcastRuntimeWorkspaceStateUpdated
+            └── broadcastRuntimeProjectsUpdated
+                   │
+                   ▼
+         Response: { ...state, revision: N+1 }
+            │
+            ▼
+         onWorkspaceRevisionChange(N+1)
+
+  Queue behavior: if a persist is in-flight when board changes again, the change is queued.
+  On completion, the queued change triggers a new persist cycle.
+
+
+═══ 4. CONFLICT DETECTION ═══════════════════════════════════════════════════════════════════════════
+
+  Revision tracking prevents stale writes and ensures the browser always converges to the latest
+  server state.
+
+  Conflict flow:
+  ┌──────────────────────────────────────────────────────────────────────────────────┐
+  │                                                                                  │
+  │  Browser                               Server                                   │
+  │  ───────                               ──────                                   │
+  │  saveState(expectedRevision=N+1) ────► revision check: N+1 !== N+2              │
+  │                                  ◄──── TRPCError code=CONFLICT                  │
+  │                                         cause: { currentRevision: N+2 }         │
+  │                                                                                  │
+  │  catch block:                                                                    │
+  │    1. onWorkspaceRevisionChange(N+2) → update local revision                    │
+  │    2. onWorkspaceStateConflict?.() → optional UI notification                    │
+  │    3. refetchWorkspaceState() → fetchWorkspaceState(workspaceId)                │
+  │       → applyWorkspaceState(fresh) → board + sessions replaced                  │
+  │                                                                                  │
+  └──────────────────────────────────────────────────────────────────────────────────┘
+
+  Stale-snapshot guard in applyWorkspaceState:
+    if (isSameProject && currentRevision !== null && nextRevision < currentRevision) → skip
+
+  Visibility-based refresh:
+    When the browser tab becomes visible again, useWorkspaceSync fires refreshWorkspaceState()
+    which fetches the latest state via TRPC and applies it, catching up on changes missed
+    while backgrounded.
+
+
+═══ 5. WHAT LIVES WHERE ═════════════════════════════════════════════════════════════════════════════
+
+  Data category          Storage                              Lifetime
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+  Board state            ~/.cline/kanban/workspaces/<id>/     Survives server restart
+  (columns, tasks)        board.json                          [→ board-task-lifecycle]
+
+  Session summaries      Dual: disk + in-memory               Persisted state loaded at hydration;
+  (task state, agent)     sessions.json + live overlay         live state overlaid at runtime
+                         [→ state-hub-and-registry]
+
+  Workspace metadata     In-memory on server, polled 1s       Ephemeral, refreshed while connected
+
+  Revision counter       ~/.cline/kanban/workspaces/<id>/     Incremented on every save
+                          meta.json                           Optimistic locking
+
+  UI-only state          Browser memory only                  Lost on refresh / tab close
+
+
+═══ CROSS-REFERENCES ═════════════════════════════════════════════════════════════════════════════════
+
+  [→ state-hub-and-registry]  server-side state hub that produces the snapshot and deltas
+  [→ app-and-hook-wiring]     which hooks own the sync cycle and how they compose in App
+  [→ board-task-lifecycle]     what the board state contains and how tasks move through columns
+
+```

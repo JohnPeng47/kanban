@@ -1,0 +1,157 @@
+Cline Event and State Pipeline
+================================
+
+How SDK session events flow through the Kanban runtime, get translated
+into task-level state mutations, stored in the message repository, and
+fanned out to the state hub and browser clients.
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  1. EVENT FLOW PIPELINE (SDK host → task-level consumers)
+═══════════════════════════════════════════════════════════════════════
+
+  @clinebot/core session host
+       │
+       │  sessionHost.subscribe(listener)
+       ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  InMemoryClineSessionRuntime                                     │
+  │  cline-session-runtime.ts              [→ cline-architecture]    │
+  │                                                                  │
+  │  handleSessionEvent(event)                                       │
+  │    1. extractClineSessionId(event) → sessionId                   │
+  │    2. taskIdBySessionId.get(sessionId) → taskId                  │
+  │    3. onTaskEvent(taskId, event) ─────────────────────┐          │
+  │    4. if event.type === "ended" → clear binding       │          │
+  └───────────────────────────────────────────────────────┼──────────┘
+                                                          │
+                         ┌────────────────────────────────┘
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  InMemoryClineTaskSessionService                                 │
+  │  cline-task-session-service.ts                                   │
+  │                                                                  │
+  │  handleTaskEvent(taskId, event)                                  │
+  │    1. entry = messageRepository.getTaskEntry(taskId)              │
+  │    2. previousSummary = cloneSummary(entry.summary)              │
+  │    3. applyClineSessionEvent({                                   │
+  │         event, taskId, entry,                                    │
+  │         pendingTurnCancelTaskIds,                                │
+  │         emitSummary, emitMessage                                 │
+  │       })                                                         │
+  │    4. if transition to awaiting_review → captureReviewCheckpoint │
+  │    5. if insufficient balance error → abort session              │
+  └──────────────────────┬───────────────────────────────────────────┘
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  applyClineSessionEvent()                                        │
+  │  cline-event-adapter.ts                                          │
+  │                                                                  │
+  │  Pure translation: raw SDK event → entry mutations + emissions   │
+  └──────────────────────────────────────────────────────────────────┘
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  2. EVENT ADAPTER (applyClineSessionEvent dispatch)
+═══════════════════════════════════════════════════════════════════════
+
+  Parser helpers:  readAgentEvent, readChunkEvent, readHookEvent,
+                   readEndedEvent, readStatusEvent
+
+  ┌──────────────────────────┬────────────────────────────────────────┐
+  │ SDK EVENT                │ EFFECT                                 │
+  ├──────────────────────────┼────────────────────────────────────────┤
+  │ agent_event.error        │ retry or → awaiting_review ("error")   │
+  │ agent_event.content_start│ create/append assistant or reasoning   │
+  │   (text | reasoning)     │   chunk; state → running               │
+  │ agent_event.content_end  │ finalize active assistant/reasoning msg│
+  │   (text | reasoning)     │                                        │
+  │ agent_event.content_start│ startToolCallMessage(); may →          │
+  │   (tool)                 │   awaiting_review (ask_followup)       │
+  │ agent_event.content_end  │ finishToolCallMessage()                │
+  │   (tool)                 │                                        │
+  │ agent_event.notice       │ push system/status message             │
+  │ agent_event.done         │ finalize turn → idle / interrupted /   │
+  │                          │   awaiting_review depending on outcome │
+  │ chunk (stream: "agent")  │ appendAssistantChunk(); state → running│
+  │ hook                     │ update latestHookActivity              │
+  │ ended                    │ clearActiveTurnState(); final state    │
+  │ status                   │ sync state with SDK status             │
+  └──────────────────────────┴────────────────────────────────────────┘
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  3. STATE MODULE (cline-session-state.ts)
+═══════════════════════════════════════════════════════════════════════
+
+  ClineTaskSessionEntry — mutable in-memory unit for one task:
+
+    ┌──────────────────────────────────────────────────────────────┐
+    │  summary: RuntimeTaskSessionSummary                          │
+    │    taskId, state, mode, agentId, workspacePath, pid,         │
+    │    timestamps, reviewReason, exitCode, latestHookActivity,   │
+    │    latestTurnCheckpoint, previousTurnCheckpoint              │
+    │                                                              │
+    │  messages: ClineTaskMessage[]                                │
+    │    { id, role, content, images?, createdAt, meta? }          │
+    │    roles: user | assistant | system | tool | reasoning       │
+    │                                                              │
+    │  activeAssistantMessageId / activeReasoningMessageId         │
+    │  toolMessageIdByToolCallId / toolInputByToolCallId           │
+    └──────────────────────────────────────────────────────────────┘
+
+  Pure mutation functions: createMessage, updateSummary,
+  createAssistantMessage, appendAssistantChunk, clearActiveTurnState,
+  startToolCallMessage, finishToolCallMessage — all operate on entry.
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  4. MESSAGE REPOSITORY (cline-message-repository.ts)
+═══════════════════════════════════════════════════════════════════════
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  InMemoryClineMessageRepository                                  │
+  │                                                                  │
+  │  Store:  entries Map<taskId, Entry>                               │
+  │          hydratedMessagesByTaskId Map<taskId, ClineTaskMessage[]> │
+  │                                                                  │
+  │  Fanout:                                                         │
+  │    emitSummary(summary)  → summaryListeners                      │
+  │      [→ state-hub-and-registry]                                  │
+  │    emitMessage(taskId, message) → messageListeners               │
+  │      [→ chat-and-terminal-stacks]                                │
+  │                                                                  │
+  │  Hydration:                                                      │
+  │    hydrateTaskMessages(taskId, loadPersistedSession)             │
+  │      live entry.messages → cached hydrated → load persisted      │
+  │      ClineSdkPersistedMessage[] → ClineTaskMessage[]             │
+  └──────────────────────────────────────────────────────────────────┘
+
+  Hydration conversion:
+
+    ClineSdkPersistedMessage[]  (from sessionHost.readMessages)
+         │  hydratePersistedSessionMessages()
+         ▼
+    ClineTaskMessage[]  (Kanban-native format)
+      text/file/image blocks, thinking → reasoning, tool_use/result
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  5. CONTEXT OVERFLOW RECOVERY
+═══════════════════════════════════════════════════════════════════════
+
+  On send failure matching context overflow patterns (33 patterns),
+  compactPersistedMessagesForContextOverflow() discards the first half
+  of history, snaps to the next user-message boundary, prepends a
+  compaction notice, then restarts the session with shorter history.
+```

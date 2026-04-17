@@ -1,0 +1,121 @@
+```diagram
+KANBAN BOARD & TASK LIFECYCLE
+
+  [→ app-and-hook-wiring]    [→ workspace-sync-cycle]    [→ state-hub-and-registry]
+
+
+═══ CARD STATE DIAGRAM ═════════════════════════════════════════════════════════════
+
+  Cards live in one of four columns. Transitions are triggered by user drag,
+  programmatic move (agent exit, hook event), or auto-review automation.
+
+                              ┌──────────────────────────────────────────────┐
+                              │              COLUMN TRANSITIONS              │
+                              └──────────────────────────────────────────────┘
+
+   ┌───────────┐   user drag / handleStartTask    ┌───────────────┐
+   │  BACKLOG   │ ──────────────────────────────→  │  IN_PROGRESS  │
+   │            │   startBacklogTaskWithAnimation   │               │
+   │            │   kickoffTaskInProgress           │               │
+   └───────────┘                                   └───────┬───────┘
+        │                                                  │
+        │                                                  │ session.state
+        │                                                  │ === "awaiting_review"
+        │                                                  │ (hook event / agent exit)
+        │                                                  ▼
+        │                                          ┌───────────────┐
+        │                                          │    REVIEW     │
+        │                                          │               │
+        │                                          └───────┬───────┘
+        │                                                  │
+        │                                                  │ useReviewAutoActions
+        │                                                  │ (auto-commit/PR/move_to_trash)
+        │                                                  │ or user drag
+        │                                                  ▼
+        │                                          ┌───────────────┐
+        └────────────────────────────────────────→ │    TRASH      │
+             user drag / handleMoveToTrash         │               │
+             (from ANY non-trash column)           └───────────────┘
+                                                           │
+                                                           │ handleRestoreTaskFromTrash
+                                                           │ (drag trash → review)
+                                                           ▼
+                                                   resumeTaskFromTrash()
+                                                   → ensureWorkspace
+                                                   → startTaskSession(resumeFromTrash)
+
+  Session-driven automatic transitions (useEffect watches sessions):
+    ┌────────────────────────────────────────────────────────────────────┐
+    │  awaiting_review + in_progress  → move to REVIEW                 │
+    │  running + review               → move back to IN_PROGRESS       │
+    │  interrupted + any non-trash    → move to TRASH                  │
+    └────────────────────────────────────────────────────────────────────┘
+
+
+═══ HOOK RESPONSIBILITIES ══════════════════════════════════════════════════════════
+
+  ┌─ useBoardInteractions (~900 lines) ─────────────────────────────────────────┐
+  │  Central orchestrator. Wires drag-drop, task start, trash, and auto-review. │
+  │                                                                             │
+  │  Composes:                                                                  │
+  │    useProgrammaticCardMoves   animation-coordinated card moves              │
+  │    useLinkedBacklogTaskActions dependency chains + auto-start on trash       │
+  │    useReviewAutoActions       auto-commit / PR / move-to-trash              │
+  │                                                                             │
+  │  Key functions:                                                             │
+  │    kickoffTaskInProgress      ensureWorktree → startTaskSession             │
+  │                               [→ pty-launch-pipeline] [→ cline-architecture]│
+  │    handleDragEnd              route by destination column                   │
+  │    session-watcher useEffect  drives automatic column transitions           │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ useTaskSessions ───────────────────────────────────────────────────────────┐
+  │  Frontend TRPC facade for task runtime actions.                             │
+  │                                                                             │
+  │  Key functions:                                                             │
+  │    ensureTaskWorkspace   TRPC workspace.ensureWorktree                      │
+  │    startTaskSession      TRPC runtime.startTaskSession                      │
+  │    stopTaskSession       TRPC runtime.stopTaskSession                       │
+  │    sendTaskSessionInput  try local terminal controller, fallback to TRPC    │
+  │    cleanupTaskWorkspace  TRPC workspace.deleteWorktree (post-trash)         │
+  │                                                                             │
+  │  Lifecycle: ensureWorkspace → start → (running) → stop → cleanup            │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ useLinkedBacklogTaskActions ────────────────────────────────────────────────┐
+  │  Manages task dependency chains.                                            │
+  │  When task B is trashed, backlog tasks whose deps are now satisfied         │
+  │  auto-start via startBacklogTaskWithAnimation.                              │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ useProgrammaticCardMoves ──────────────────────────────────────────────────┐
+  │  Single-slot animation queue. tryProgrammaticCardMove returns               │
+  │  "started" | "blocked" | "unavailable". Ensures only one animated           │
+  │  card move is in-flight at a time.                                          │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+
+═══ REVIEW AUTO-ACTIONS ════════════════════════════════════════════════════════════
+
+  ┌─ useReviewAutoActions ──────────────────────────────────────────────────────┐
+  │  Watches review column for tasks with autoReviewEnabled.                    │
+  │  Evaluates on board change or workspace metadata change (500ms debounce).   │
+  │                                                                             │
+  │  Three modes:                                                               │
+  │    "move_to_trash"  → auto-trash immediately                               │
+  │    "commit"         → auto-commit → wait for clean → auto-trash            │
+  │    "pr"             → auto-create PR → wait for clean → auto-trash         │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  Review flow:
+
+    agent finishes → session "awaiting_review" → card moves to REVIEW
+      │
+      ├── autoReview OFF: user reviews manually
+      │
+      ├── mode "move_to_trash": 500ms → trash + cleanup
+      │
+      └── mode "commit" / "pr": 500ms → git action → wait clean → trash
+
+  [→ workspace-sync-cycle] for how changedFiles count updates after commit
+```

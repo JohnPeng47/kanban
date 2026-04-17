@@ -3,82 +3,82 @@ SCENEINPUT + DIAGRAMCONTENTAREA — EVENT FLOW, SELECTION, NAVIGATION, POPUPS
 
 ═══ SCENEINPUT EVENT FLOW ═══════════════════════════════════════════════════════════════════════════
 
-  SVG mouseover/move/out/pointerdown (DOM listeners)
+  [E01] SVG mouseover/move/out/pointerdown (DOM listeners)
        │
        ▼
-  ┌─ Tooltip system [TT] ────────────────────────────────────────────────────────┐
-  │  Desktop: mouseover → closest [data-tt] → show tooltip at cursor            │
-  │           mousemove → reposition                                             │
-  │           mouseout → hide                                                    │
-  │  Touch:   pointerdown → closest [data-tt] → show, tap elsewhere → hide      │
-  │  Content: "<span class=tt-file>path</span>" + optional hint + action hint    │
-  │  Fixed position div, opacity transition, z-index 100                         │
-  └──────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Tooltip system [CTT] ──────────────────────────────────────────────────────┐
+  │  [E02] Desktop: mouseover → closest [data-tt] → show tooltip at cursor     │
+  │           mousemove → reposition                                            │
+  │           mouseout → hide                                                   │
+  │  Touch:   pointerdown → closest [data-tt] → show, tap elsewhere → hide     │
+  │  Content: "<span class=tt-file>path</span>" + optional hint + action hint   │
+  │  Fixed position div, opacity transition, z-index 100                     TT │
+  └─────────────────────────────────────────────────────────────────────────────┘
 
-  Viewport events
+  [E03] Viewport events
        │
        ├─ onSceneClick ──────────────────────────────────────────────────────────────
        │       │
        │       ▼
-       │  ┌─ handleSceneClick [HC] ─────────────────────────────────────────────────┐
-       │  │  1. Hide tooltip                                                        │
-       │  │  2. hitTest(screenPoint) → hitId or null                                │
-       │  │                                                                         │
-       │  │  hitId == null:                                                          │
-       │  │    Clear all selection visuals, fire onSelectionChange([])               │
-       │  │                                                                         │
-       │  │  hitId has interactive data:                                             │
-       │  │    Shift+click → toggle in selection set                                │
-       │  │    Normal click → replace selection with single item                    │
-       │  │    CSS class "selected" toggled on SVG <g> elements                     │
-       │  │    Fire onNavigate(interactive, domEvent) ──→ DiagramContentArea        │
-       │  │                                                                         │
-       │  │  hitId without interactive: clear selection                              │
-       │  └─────────────────────────────────────────────────────────────────────────┘
+       │  ┌─ handleSceneClick [CHC] ───────────────────────────────────────────────┐
+       │  │  [E04] 1. Hide tooltip                                                 │
+       │  │  2. hitTest(screenPoint) → hitId or null                               │
+       │  │                                                                        │
+       │  │  hitId == null:                                                         │
+       │  │    Clear all selection visuals, fire onSelectionChange([])              │
+       │  │                                                                        │
+       │  │  hitId has interactive data:                                            │
+       │  │    Shift+click → toggle in selection set                               │
+       │  │    Normal click → replace selection with single item                   │
+       │  │    CSS class "selected" toggled on SVG <g> elements                    │
+       │  │    Fire onNavigate(interactive, domEvent) ──→ DiagramContentArea       │
+       │  │                                                                        │
+       │  │  hitId without interactive: clear selection                          HC │
+       │  └────────────────────────────────────────────────────────────────────────┘
        │
        ├─ onSelectionDrag ───────────────────────────────────────────────────────────
        │       │
        │       ▼
-       │  ┌─ handleSelectionDrag(sceneRect) [SD] ──────────────────────────────────┐
-       │  │  hitTestRect(sceneRect, "intersect") → candidate IDs                   │
-       │  │  Filter to elements with interactive data                               │
-       │  │  Live-update CSS "selected" class (add/remove as lasso moves)           │
-       │  │  Build dragPreviewPaths for overlay labels                              │
-       │  └────────────────────────────────────────────────────────────────────────┘
+       │  ┌─ handleSelectionDrag(sceneRect) [CSD] ───────────────────────────────┐
+       │  │  [E05] hitTestRect(sceneRect, "intersect") → candidate IDs           │
+       │  │  Filter to elements with interactive data                             │
+       │  │  Live-update CSS "selected" class (add/remove as lasso moves)         │
+       │  │  Build dragPreviewPaths for overlay labels                         SD │
+       │  └──────────────────────────────────────────────────────────────────────┘
        │
        ├─ onSelectionDragEnd ────────────────────────────────────────────────────────
        │       │
        │       ▼
-       │  ┌─ handleSelectionDragEnd(sceneRect) [SDE] ──────────────────────────────┐
-       │  │  Final hitTestRect → commit selection                                   │
-       │  │  Collect unique refs, copy to clipboard via navigator.clipboard          │
-       │  │  Show toast: "Copied N ref(s)" or warning                               │
-       │  │  Fire onSelectionChange(elements)                                       │
-       │  └────────────────────────────────────────────────────────────────────────┘
+       │  ┌─ handleSelectionDragEnd(sceneRect) [CSDE] ───────────────────────────┐
+       │  │  [E06] Final hitTestRect → commit selection                           │
+       │  │  Collect unique refs, copy to clipboard via navigator.clipboard        │
+       │  │  Show toast: "Copied N ref(s)" or warning                             │
+       │  │  Fire onSelectionChange(elements)                                 SDE │
+       │  └──────────────────────────────────────────────────────────────────────┘
        │
        └─ onContextMenu ──→ forwarded to DiagramContentArea
               ** see below
 
 
-═══ DIAGRAMSCENE NAVIGATION DISPATCH [ND] ═══════════════════════════════════════════════════════════
+═══ DIAGRAMSCENE NAVIGATION DISPATCH [CND] ═════════════════════════════════════════════════════════
 
-  onNavigate(interactive, domEvent)
+  [E07] onNavigate(interactive, domEvent)
        │
-       ├─ Alt+click? ────────────────→ fireCodeJump(interactive, domEvent) [FJ]
-       │                                │  TRPC: diagrams.navigate.mutate
+       ├─ Alt+click? ────────────────→ fireCodeJump(interactive, domEvent) [CFJ]
+       │                                │  [E08] TRPC: diagrams.navigate.mutate
        │                                │  { root, filePath, line, newTab: ctrl/meta }
        │                                │  → Code Viz Extension opens file in editor
        │                                └─ Toast on error
        │
-       ├─ Has modal? ────────────────→ openPopup(interactive) [OP]
-       │                                │  Resolve relative path against current diagram dir
+       ├─ Has modal? ────────────────→ openPopup(interactive) [COP]
+       │                                │  [E09] Resolve relative path against current diagram dir
        │                                │  TRPC: diagrams.getContent.query({ path })
        │                                │  Get anchor bounds from scene.getWorldBounds()
        │                                │  Push onto popupStack → renders PopupDiagramOverlay
        │                                └─ Toast on error
        │
-       ├─ Has link? ─────────────────→ executeJump(interactive) [EJ]
-       │                                │  Resolve relative path
+       ├─ Has link? ─────────────────→ executeJump(interactive) [CEJ]
+       │                                │  [E10] Resolve relative path
        │                                │  Same diagram? → viewport.centerOn(target, animate)
        │                                │  Different diagram? → onRequestJump(path, elementId)
        │                                └─ ** 02-viewer-layout.txt (jump protocol)
@@ -88,62 +88,62 @@ SCENEINPUT + DIAGRAMCONTENTAREA — EVENT FLOW, SELECTION, NAVIGATION, POPUPS
 
 ═══ OVERLAY BADGES ══════════════════════════════════════════════════════════════════════════════════
 
-  DiagramScene builds badges from scene elements:
+  [E11] DiagramScene builds badges from scene elements:
 
   ┌──────────────────────────────────────────────────────────────────────────┐
-  │  scene.getAllElements()                                                  │
-  │    │                                                                     │
-  │    ├── el.interactive.modal?  →  Badge "⬡" purple (#A371F7)             │
-  │    │     anchor: element top-right                                       │
-  │    │     onClick: openPopup(el.interactive)                              │
-  │    │                                                                     │
-  │    └── el.interactive.link?   →  Badge "→" gold (#D4A72C)              │
-  │          anchor: element top-right                                       │
-  │          onClick: executeJump(el.interactive)                         BG │
-  │                                                                          │
-  │  + userBadges (from context menu "Add Badge")                            │
-  │      anchor: scene space at right-click point                            │
-  │      onClick: remove self                                                │
-  └──────────────────────────────────────────────────────────────────────────┘
+  │  [E12] scene.getAllElements()                                           │
+  │    │                                                                    │
+  │    ├── el.interactive.modal?  →  Badge "⬡" purple (#A371F7)            │
+  │    │     anchor: element top-right                                      │
+  │    │     onClick: openPopup(el.interactive)                             │
+  │    │                                                                    │
+  │    └── el.interactive.link?   →  Badge "→" gold (#D4A72C)             │
+  │          anchor: element top-right                                      │
+  │          onClick: executeJump(el.interactive)                        BG │
+  │                                                                         │
+  │  [E13] + userBadges (from context menu "Add Badge")                     │
+  │      anchor: scene space at right-click point                           │
+  │      onClick: remove self                                               │
+  └─────────────────────────────────────────────────────────────────────────┘
 
 
 ═══ POPUP STACK & CONTEXT MENU ══════════════════════════════════════════════════════════════════════
 
-  ┌─ PopupDiagramOverlay [PO] ──────────────────────────────────────────────────────────────────┐
-  │                                                                                              │
-  │  absolute inset-0, z-index: 50 + i*2 (stacking)                                             │
-  │                                                                                              │
-  │  ┌─ backdrop ─────────────┐  ┌─ popup ───────────────────────────────────────┐               │
-  │  │ bg-surface-0/50        │  │  border, rounded-lg, shadow-2xl               │               │
-  │  │ backdrop-blur-[2px]    │  │  size: fit to diagram (min 200x150,           │               │
-  │  │ click → onClose        │  │         max 85% of container)                 │               │
-  │  └────────────────────────┘  │                                               │               │
-  │                              │  ┌─ Close button (X, top-right) ──┐           │               │
-  │                              │  └────────────────────────────────┘           │               │
-  │                              │                                               │               │
-  │                              │  ┌─ PopupScene ─────────────────────────────┐ │               │
-  │                              │  │  useDiagram(content) → Scene              │ │               │
-  │                              │  │  SceneInput (full interactive: pan,zoom,  │ │               │
-  │                              │  │    hit test, tooltips, navigation)        │ │               │
-  │                              │  │  onNavigate → parent's handleNavigate    │ │               │
-  │                              │  └──────────────────────────────────────────┘ │               │
-  │                              │                                           PP  │               │
-  │                              └───────────────────────────────────────────────┘               │
-  │  ESC → onClose                                                                               │
-  │  popupStack.slice(0, i) on close → removes this popup and all above it                       │
-  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+  ┌─ PopupDiagramOverlay [CPO] ────────────────────────────────────────────────────────────────┐
+  │                                                                                             │
+  │  [E14] absolute inset-0, z-index: 50 + i*2 (stacking)                                      │
+  │                                                                                             │
+  │  ┌─ backdrop ─────────────┐  ┌─ popup ───────────────────────────────────────┐              │
+  │  │ bg-surface-0/50        │  │  border, rounded-lg, shadow-2xl               │              │
+  │  │ backdrop-blur-[2px]    │  │  size: fit to diagram (min 200x150,           │              │
+  │  │ click → onClose        │  │         max 85% of container)                 │              │
+  │  └────────────────────────┘  │                                               │              │
+  │                              │  ┌─ Close button (X, top-right) ──┐           │              │
+  │                              │  └────────────────────────────────┘           │              │
+  │                              │                                               │              │
+  │                              │  ┌─ PopupScene ─────────────────────────────┐ │              │
+  │                              │  │  [E15] useDiagram(content) → Scene       │ │              │
+  │                              │  │  SceneInput (full interactive: pan,zoom,  │ │              │
+  │                              │  │    hit test, tooltips, navigation)        │ │              │
+  │                              │  │  onNavigate → parent's handleNavigate PP │ │              │
+  │                              │  └──────────────────────────────────────────┘ │              │
+  │                              │                                           PO  │              │
+  │                              └───────────────────────────────────────────────┘              │
+  │  [E16] ESC → onClose                                                                        │
+  │  popupStack.slice(0, i) on close → removes this popup and all above it                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────┘
 
-  ┌─ Context Menu [CM] ─────────────────────────────────────────────────────────────────────────┐
-  │  Fixed position at right-click screen coords                                                │
-  │  z-200, border-border-bright, bg-surface-2                                                  │
-  │  One action: "Add Badge" → creates scene-space badge at click point                         │
-  │  Dismissed on any outside pointerdown                                                       │
-  └─────────────────────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Context Menu [CCM] ───────────────────────────────────────────────────────────────────────┐
+  │  [E17] Fixed position at right-click screen coords                                         │
+  │  z-200, border-border-bright, bg-surface-2                                                 │
+  │  One action: "Add Badge" → creates scene-space badge at click point                        │
+  │  Dismissed on any outside pointerdown                                                   CM │
+  └────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
 ═══ useDiagram HOOK ═══════════════════════════════════════════════════════════════════════════════
 
-  useDiagram(html) [UD]
+  [E18] useDiagram(html) [CUD]
        │
        ├─ html changes → DOMParser.parseFromString(html, "text/html")
        ├─ Extract <svg> element
@@ -154,17 +154,76 @@ SCENEINPUT + DIAGRAMCONTENTAREA — EVENT FLOW, SELECTION, NAVIGATION, POPUPS
 ```
 
 ```code-refs
-TT  web-ui/src/diagram/input/scene-input.tsx:59-118       Tooltip event listeners (mouse + touch)
-HC  web-ui/src/diagram/input/scene-input.tsx:245-312      handleSceneClick — hit test + selection + navigate
-SD  web-ui/src/diagram/input/scene-input.tsx:149-173      handleSelectionDrag — live lasso preview
-SDE web-ui/src/diagram/input/scene-input.tsx:186-243      handleSelectionDragEnd — commit + clipboard
-ND  web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161  handleNavigate dispatch
-FJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73    fireCodeJump — TRPC navigate
-OP  web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107   openPopup — fetch + push stack
-EJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135  executeJump — same/cross diagram
-BG  web-ui/src/components/diagram-panels/diagram-content-area.tsx:164-191  Badge generation from elements
-PO  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145  PopupDiagramOverlay component
-PP  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155 PopupScene wrapper
-CM  web-ui/src/components/diagram-panels/diagram-content-area.tsx:251-266  Context menu rendering
-UD  web-ui/src/diagram/use-diagram.ts:8-52                                 useDiagram hook
+CTT  web-ui/src/diagram/input/scene-input.tsx:59-118       Tooltip event listeners (mouse + touch)
+CHC  web-ui/src/diagram/input/scene-input.tsx:245-312      handleSceneClick — hit test + selection + navigate
+CSD  web-ui/src/diagram/input/scene-input.tsx:149-173      handleSelectionDrag — live lasso preview
+CSDE web-ui/src/diagram/input/scene-input.tsx:186-243      handleSelectionDragEnd — commit + clipboard
+CND  web-ui/src/components/diagram-panels/diagram-content-area.tsx:137-161  handleNavigate dispatch
+CFJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:54-73    fireCodeJump — TRPC navigate
+COP  web-ui/src/components/diagram-panels/diagram-content-area.tsx:75-107   openPopup — fetch + push stack
+CEJ  web-ui/src/components/diagram-panels/diagram-content-area.tsx:109-135  executeJump — same/cross diagram
+CBG  web-ui/src/components/diagram-panels/diagram-content-area.tsx:164-191  Badge generation from elements
+CPO  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:63-145  PopupDiagramOverlay component
+CPP  web-ui/src/components/diagram-panels/popup-diagram-overlay.tsx:147-155 PopupScene wrapper
+CCM  web-ui/src/components/diagram-panels/diagram-content-area.tsx:251-266  Context menu rendering
+CUD  web-ui/src/diagram/use-diagram.ts:8-52                                 useDiagram hook
+```
+
+```entities
+name                          id_type    id     parent   description
+Tooltip system                code-ref   CTT    —        Tooltip event listeners (mouse + touch)
+handleSceneClick              code-ref   CHC    —        Hit test + selection + navigate dispatch
+handleSelectionDrag           code-ref   CSD    —        Live lasso preview during drag
+handleSelectionDragEnd        code-ref   CSDE   —        Commit selection + clipboard copy
+navigation dispatch           code-ref   CND    —        handleNavigate branching logic
+fireCodeJump                  code-ref   CFJ    —        TRPC navigate to open file in editor
+openPopup                     code-ref   COP    —        Fetch content + push popup stack
+executeJump                   code-ref   CEJ    —        Same/cross diagram jump
+badge generation              code-ref   CBG    —        Build badges from scene elements
+PopupDiagramOverlay           code-ref   CPO    —        Popup overlay component
+PopupScene                    code-ref   CPP    —        Popup scene wrapper
+Context Menu                  code-ref   CCM    —        Context menu rendering
+useDiagram                    code-ref   CUD    —        Hook: parse HTML → SvgScene
+DOM listeners                 text       E01    —        SVG mouseover/move/out/pointerdown entry point
+tooltip desktop/touch         text       E02    E01      Desktop and touch tooltip behavior
+viewport events               text       E03    —        Viewport event dispatch root
+handleSceneClick body         text       E04    E03      Click handler: hit test, selection, navigate
+handleSelectionDrag body      text       E05    E03      Lasso drag: hitTestRect + live preview
+handleSelectionDragEnd body   text       E06    E03      Drag end: commit selection + clipboard
+onNavigate dispatch           text       E07    —        Navigation dispatch entry
+fireCodeJump body             text       E08    E07      TRPC diagrams.navigate.mutate call
+openPopup body                text       E09    E07      Resolve path, fetch content, push popup
+executeJump body              text       E10    E07      Resolve path, centerOn or cross-diagram jump
+badge intro                   text       E11    —        DiagramScene badge construction intro
+getAllElements badges          text       E12    E11      Modal and link badge creation from elements
+userBadges                    text       E13    E11      User-created badges from context menu
+PopupDiagramOverlay layout    text       E14    —        Popup overlay layout and stacking
+PopupScene content            text       E15    E14      useDiagram + SceneInput inside popup
+popup close behavior          text       E16    E14      ESC and stack slice close behavior
+context menu body             text       E17    —        Fixed-position context menu with Add Badge
+useDiagram hook               text       E18    —        Hook: parse HTML, create SvgScene, cleanup
+```
+
+```arrows
+from   to     description
+E01    E02    DOM events feed tooltip system
+E03    E04    onSceneClick → handleSceneClick
+E03    E05    onSelectionDrag → handleSelectionDrag
+E03    E06    onSelectionDragEnd → handleSelectionDragEnd
+E04    E07    fire onNavigate → navigation dispatch
+E07    E08    Alt+click → fireCodeJump
+E07    E09    Has modal → openPopup
+E07    E10    Has link → executeJump
+E09    E14    openPopup pushes onto popupStack → PopupDiagramOverlay
+E12    E09    Modal badge onClick → openPopup
+E12    E10    Link badge onClick → executeJump
+E15    E07    PopupScene onNavigate → parent handleNavigate
+E03    E17    onContextMenu → context menu
+```
+
+```notes
+Code-ref IDs use a "C" prefix (e.g. CTT, CHC) and entity IDs use an "E" prefix
+(e.g. E01, E07) to disambiguate the two namespaces. Every text paragraph in the
+diagram is labeled with its entity ID in [EXX] brackets. Box entities show their
+ID at the box corner. Cross-diagram jump targets: ** filename.txt#EXX.
 ```

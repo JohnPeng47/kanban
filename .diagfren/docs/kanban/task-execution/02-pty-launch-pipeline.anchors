@@ -1,0 +1,24 @@
+# anchor-text	code-ref	label
+startTaskSession	src/trpc/runtime-api.ts:153-283	runtime-api.startTaskSession — TRPC entry point, Cline/PTY fork
+resolveAgentCommand	src/terminal/agent-registry.ts:82-99	resolveAgentCommand — resolve selected agent to binary+args
+terminalManager.startTaskSession	src/trpc/runtime-api.ts:241-255	PTY path: delegate to TerminalSessionManager
+prepareAgentLaunch	src/terminal/agent-session-adapters.ts:1339-1348	prepareAgentLaunch — dispatch to per-agent adapter
+ensureEntry	src/terminal/session-manager.ts:962-980	ensureEntry — get or create SessionEntry for taskId
+TerminalStateMirror	src/terminal/terminal-state-mirror.ts:19-78	TerminalStateMirror — headless xterm for restore snapshots
+buildTerminalEnvironment	src/terminal/session-manager.ts:183-193	buildTerminalEnvironment — merge process.env + adapter env + terminal vars
+PtySession.spawn	src/terminal/pty-session.ts:86-104	PtySession.spawn — node-pty process creation
+Protocol Filter	src/terminal/terminal-protocol-filter.ts:54-174	filterTerminalProtocolOutput — intercept OSC/CSI escape sequences
+Terminal State	src/terminal/terminal-state-mirror.ts:19-78	TerminalStateMirror — headless xterm mirror
+getSnapshot	src/terminal/terminal-state-mirror.ts:58-65	getSnapshot — serialize terminal state for browser restore
+Transition Detect	src/terminal/session-manager.ts:357-443	Output transition detection in onData callback
+Session Listeners	src/terminal/session-manager.ts:357-443	Fan out filtered output to registered listeners
+WebSocket Bridge	src/terminal/ws-server.ts:127-587	createTerminalWebSocketBridge — dual WS servers for io+control
+detectOutputTransition	src/terminal/session-manager.ts:357-443	detectOutputTransition — adapter-specific output regex
+SessionTransitionEvent	src/terminal/session-state-machine.ts:3-7	SessionTransitionEvent — hook/agent/exit events
+reduceSessionTransition	src/terminal/session-state-machine.ts:26-78	reduceSessionTransition — pure state machine for session transitions
+updateSummary	src/terminal/session-manager.ts:1034-1039	updateSummary + emitSummary — broadcast summary snapshot
+[→ agent-adapter-catalog]	docs/kanban/task-execution/04-agent-adapter-catalog.txt:1	Cross-link: Agent adapter catalog with full per-agent details
+[→ pty-session-internals]	docs/kanban/task-execution/03-pty-session-internals.txt:1	Cross-link: PTY session internals (node-pty, trust, protocol)
+[→ state-hub-and-registry]	docs/kanban/state-and-streaming/09-state-hub-and-registry.txt:1	Cross-link: State hub and registry for summary broadcasts
+[→ trpc-router-and-api-map]	docs/kanban/trpc-contract/11-trpc-router-and-api-map.txt:1	Cross-link: TRPC router and API map
+[→ cline-architecture]	docs/kanban/cline-integration/05-cline-architecture.txt:1	Cross-link: Cline SDK architecture (non-PTY path)

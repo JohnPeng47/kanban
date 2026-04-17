@@ -1,0 +1,16 @@
+# anchor-text	code-ref	label
+useRuntimeStateStream	web-ui/src/runtime/use-runtime-state-stream.ts:298-516	useRuntimeStateStream hook — WebSocket connection, reconnect, reducer dispatch
+getRuntimeStreamUrl	web-ui/src/runtime/use-runtime-state-stream.ts:40-47	getRuntimeStreamUrl — builds ws:// URL with workspaceId query param
+runtimeStateStreamReducer	web-ui/src/runtime/use-runtime-state-stream.ts:149-296	runtimeStateStreamReducer — handles snapshot and all delta action types
+mergeTaskSessionSummaries	web-ui/src/runtime/use-runtime-state-stream.ts:23-38	mergeTaskSessionSummaries — newer-wins merge for session summaries
+RuntimeWorkspaceStateResponse	src/core/api-contract.ts:233-241	RuntimeWorkspaceStateResponse schema — repoPath, git, board, sessions, revision
+useWorkspaceSync	web-ui/src/hooks/use-workspace-sync.ts:53-206	useWorkspaceSync hook — applies snapshot/delta workspace state into board + sessions
+applyWorkspaceState	web-ui/src/hooks/use-workspace-sync.ts:87-130	applyWorkspaceState — normalizes incoming workspace state, sets board/sessions/revision
+refreshWorkspaceState	web-ui/src/hooks/use-workspace-sync.ts:132-163	refreshWorkspaceState — fetches latest state via TRPC and applies it
+useWorkspacePersistence	web-ui/src/runtime/use-workspace-persistence.ts:30-168	useWorkspacePersistence hook — debounced save of board state to server
+WorkspaceStateConflictError	src/state/workspace-state.ts:541-549	WorkspaceStateConflictError — server-side conflict when expectedRevision mismatches
+saveWorkspaceState	src/state/workspace-state.ts:648-686	saveWorkspaceState — file-locked write with revision check
+fetchWorkspaceState	web-ui/src/runtime/workspace-state-query.ts:15-18	fetchWorkspaceState — TRPC query wrapper for workspace.getState
+[→ state-hub-and-registry]	docs/kanban/state-and-streaming/09-state-hub-and-registry.txt:1	server-side state hub that produces the snapshot and deltas
+[→ app-and-hook-wiring]	docs/kanban/frontend/12-app-and-hook-wiring.txt:1	which hooks own the sync cycle and how they compose in App
+[→ board-task-lifecycle]	docs/kanban/frontend/13-board-task-lifecycle.txt:1	what the board state contains and how tasks move through columns

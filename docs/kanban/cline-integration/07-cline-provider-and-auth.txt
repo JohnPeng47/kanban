@@ -1,0 +1,164 @@
+Cline Provider Service and Authentication
+==========================================
+
+How Kanban manages LLM provider selection, OAuth authentication,
+credential refresh, custom provider CRUD, and launch config resolution.
+All provider secrets stay inside the SDK boundary -- Kanban application
+code never touches raw API keys or OAuth tokens directly.
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  1. PROVIDER SERVICE API
+═══════════════════════════════════════════════════════════════════════
+
+  createClineProviderService() returns the provider facade:
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  cline-provider-service.ts           PROVIDER FACADE             │
+  │                                                                  │
+  │  Queries          getProviderSettingsSummary / Catalog / Models   │
+  │  Launch           resolveLaunchConfig → ResolvedClineLaunchConfig │
+  │  OAuth + Account  runOauthLogin · accountProfile · kanbanAccess   │
+  │  Custom CRUD      add / update / deleteCustomProvider             │
+  │  Persistence      saveProviderSettings (model, key, url, etc.)   │
+  │                                                                  │
+  │  [→ trpc-router-and-api-map]  (exposed via TRPC procedures)      │
+  └──────────────────────────────────────────────────────────────────┘
+
+  Managed OAuth providers (ManagedClineOauthProviderId):
+    "cline"  |  "oca"  |  "openai-codex"
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  2. SDK PROVIDER BOUNDARY
+═══════════════════════════════════════════════════════════════════════
+
+  sdk-provider-boundary.ts is the SOLE @clinebot/* import site for
+  provider and model operations. All SDK types are re-aliased so
+  Kanban code never couples to SDK internals.
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  sdk-provider-boundary.ts            SDK TRANSLATION             │
+  │                                                                  │
+  │  Settings     ProviderSettingsManager (get / save / lastUsed)    │
+  │  Catalog      listSdkProviderCatalog · listSdkProviderModels     │
+  │  OAuth        loginManagedOauthProvider → ManagedOauthCredentials │
+  │  Refresh      getValid{Cline,Oca,OpenAICodex}Credentials         │
+  │  Custom       addSdkCustomProvider · update · delete             │
+  │  Account      fetchSdkClineAccountProfile · remoteConfig · org   │
+  │  MCP          createSdkInMemoryMcpManager · createSdkMcpTools    │
+  └──────────────────────────────────────────────────────────────────┘
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  3. OAUTH FLOW (sequence)
+═══════════════════════════════════════════════════════════════════════
+
+  Browser                  Server                    SDK
+  Settings Dialog          (TRPC)                    (@clinebot/core)
+  ─────────────            ──────                    ────────────────
+       │                      │                           │
+       │  cline.runOauthLogin │                           │
+       │  { providerId }      │                           │
+       │─────────────────────▶│                           │
+       │                      │  loginManagedOauthProvider │
+       │                      │──────────────────────────▶│
+       │                      │                           │
+       │                      │   onAuth({ url })         │
+       │                      │◀──────────────────────────│
+       │                      │                           │
+       │    openInBrowser(url) │                           │
+       │◀─ ─ ─ ─ ─ ─ ─ ─ ─ ─ │                           │
+       │                      │                           │
+       │  User completes OAuth in browser                 │
+       │  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ▶│
+       │                      │                           │
+       │                      │   ManagedOauthCredentials │
+       │                      │◀──────────────────────────│
+       │                      │                           │
+       │                      │  saveSdkProviderSettings  │
+       │                      │  { auth tokens,           │
+       │                      │   tokenSource: "oauth" }  │
+       │                      │──────────────────────────▶│
+       │                      │                           │
+       │  { ok, settings }    │                           │
+       │◀─────────────────────│                           │
+
+  Token prefix: Cline → "workos:" + token, OCA/Codex → raw token
+
+  [→ settings-and-onboarding]  (browser settings dialog triggers this)
+  [→ trpc-router-and-api-map]  (TRPC cline.runOauthLogin procedure)
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  4. LAUNCH CONFIG RESOLUTION
+═══════════════════════════════════════════════════════════════════════
+
+  Called by cline-task-session-service at task start.
+
+  ┌──────────────────┐
+  │  SDK Provider     │
+  │  Settings Store   │
+  └────────┬─────────┘
+           │  getSelectedProviderSettings (lastUsed)
+           ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │  resolveLaunchConfig()                                       │
+  │                                                              │
+  │  1. Read selected settings from SDK store                    │
+  │  2. If managed OAuth provider → refresh credentials          │
+  │  3. Resolve API key: OAuth token > settings > env var        │
+  │  4. Resolve model (fallback to provider default)             │
+  └──────────────────────────┬───────────────────────────────────┘
+                             ▼
+           ┌─────────────────────────────────────┐
+           │  ResolvedClineLaunchConfig           │
+           │  { providerId, modelId, apiKey,      │
+           │    baseUrl, reasoningEffort }         │
+           └──────────────────┬──────────────────┘
+                              ▼
+           ┌──────────────────────────────────────┐
+           │  cline-session-runtime               │
+           │  startTaskSession(launchConfig, ...)  │
+           │  [→ cline-architecture]               │
+           └──────────────────────────────────────┘
+```
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  5. SECRETS BOUNDARY RULE
+═══════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────┐  ┌────────────────────────────┐
+  │  KANBAN CONFIG                  │  │  SDK PROVIDER STORE        │
+  │  (runtime-config.ts +           │  │  (ProviderSettingsManager) │
+  │   workspace-registry)           │  │                            │
+  │                                 │  │  API keys + OAuth tokens   │
+  │  Agent selection                │  │  Provider + model selection │
+  │  Workspace scope                │  │  Custom provider registry  │
+  │  UI preferences                 │  │  Cloud fields (aws, gcp)   │
+  │                                 │  │                            │
+  │  ✗ NO Cline secrets             │  │  ✗ NO workspace/agent data │
+  └─────────────────────────────────┘  └────────────────────────────┘
+           │                                      │
+           └──────────┐          ┌────────────────┘
+                      ▼          ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  HARD BOUNDARY  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
+  │                                                                  │
+  │  cline-provider-service.ts bridges both worlds:                  │
+  │    reads SDK store → produces ResolvedClineLaunchConfig          │
+  │    Kanban code never reaches into SDK store directly             │
+  │                                                                  │
+  │  sdk-provider-boundary.ts is the SOLE @clinebot/* import site   │
+  │  for provider operations                                        │
+  └──────────────────────────────────────────────────────────────────┘
+```

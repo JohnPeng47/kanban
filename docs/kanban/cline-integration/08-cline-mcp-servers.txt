@@ -1,0 +1,132 @@
+Cline MCP Server Integration
+==============================
+
+How Kanban loads MCP server definitions, bundles tools for Cline sessions,
+handles OAuth for remote servers, and exposes MCP management in settings.
+
+
+```diagram
+═══════════════════════════════════════════════════════════════════════
+  1. CONFIG → BUNDLE → SESSION FLOW
+═══════════════════════════════════════════════════════════════════════
+
+  MCP server definitions live in a single JSON file on disk.
+  Default path: ~/.cline/data/settings/cline_mcp_settings.json
+  Override via env: CLINE_MCP_SETTINGS_PATH
+
+  Config shape (three transport variants):
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  RuntimeClineMcpServer = discriminatedUnion("type", [           │
+  │    { type: "stdio", name, disabled, command, args?, cwd?, env? }│
+  │    { type: "sse", name, disabled, url, headers? }               │
+  │    { type: "streamableHttp", name, disabled, url, headers? }    │
+  │  ])                                                              │
+  └──────────────────────────────────────────────────────────────────┘
+
+  End-to-end flow from config to running session:
+
+  cline_mcp_settings.json
+        │
+        │  ClineMcpSettingsService.loadSettings()
+        │    read → Zod validate → resolve transport type → normalize
+        │
+        ▼
+  ClineMcpRuntimeService.createToolBundle()           PER-TASK
+        │
+        │  createSdkInMemoryMcpManager({ clientFactory })
+        │    │
+        │    │  For each non-disabled server:
+        │    │    register → connect transport → listTools()
+        │    │    ├── stdio  → StdioClientTransport
+        │    │    ├── sse    → SSEClientTransport
+        │    │    └── streamableHttp → StreamableHTTPClientTransport
+        │    │
+        │    │  On failure: push warning, continue other servers
+        │    ▼
+        │  ClineMcpToolBundle { tools[], warnings[], dispose() }
+        │
+        ▼
+  startTaskSession(request)                      [→ cline-architecture]
+        │
+        │  1. createToolBundle() — failure is non-fatal (warnings only)
+        │  2. Store bundle in mcpToolBundleByTaskId Map
+        │  3. sessionHost.start({ config: { extraTools: bundle.tools } })
+        │
+        │  Session end → releaseTaskMcpToolBundle(taskId)
+        │    called from: stop, abort, clearAll, handleSessionEvent(ended)
+        ▼
+  Bundle disposed — all MCP client connections closed
+
+
+═══════════════════════════════════════════════════════════════════════
+  2. MCP OAUTH FLOW
+═══════════════════════════════════════════════════════════════════════
+
+  URL-based servers (sse / streamableHttp) may require OAuth.
+  stdio servers never use OAuth.
+
+  OAuth state persisted at:
+    ~/.cline/data/settings/cline_mcp_oauth_settings.json
+
+  User clicks "Connect OAuth" in settings UI
+        │                                         [→ settings-and-onboarding]
+        ▼
+  startOauthCallbackListener(timeoutMs)
+        │  → redirectUrl = /kanban-mcp/mcp-oauth-callback?requestId=<uuid>
+        ▼
+  createOauthProviderContext(settingsPath, serverName, redirectUrl)
+        ▼
+  createTransport(server, oauthProvider) → SSE or StreamableHTTP
+        ▼
+  client.connect(transport)
+        │
+        ├── Success → already authorized, return immediately
+        │
+        └── UnauthorizedError
+              │
+              ▼
+        browser opens auth URL
+              │
+              ▼
+        awaitAuthorizationCode()
+              │  blocks until OAuth redirect arrives at Kanban HTTP server
+              ▼
+        transport.finishAuth(authorizationCode)
+              │  → exchanges code for tokens, persists them
+              ▼
+        broadcastAuthStatuses()                [→ cline-provider-and-auth]
+              │  → pushed to frontend via state stream
+              ▼
+        Verify: new transport + client → listTools()
+              ▼
+        Return { serverName, authorized: true }
+
+
+═══════════════════════════════════════════════════════════════════════
+  3. SETTINGS UI INTEGRATION
+═══════════════════════════════════════════════════════════════════════
+
+  useRuntimeSettingsClineMcpController manages the frontend.
+                                            [→ settings-and-onboarding]
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  Settings dialog open                                           │
+  │    → fetch MCP settings + auth statuses                         │
+  │                                                                 │
+  │  User edits servers → local state (unsaved)                     │
+  │    → saveMcpSettings() writes to disk via TRPC                  │
+  │    → next startTaskSession() reads fresh config                 │
+  │                                                                 │
+  │  OAuth from UI                                                  │
+  │    → auto-save if unsaved → authorizeServer() → reload statuses │
+  │                                                                 │
+  │  Live auth status updates (via liveAuthStatuses prop)           │
+  │    → real-time updates in settings dialog                       │
+  │    → auto-clears authenticating state on completion/error       │
+  │                                                                 │
+  │  Linear MCP preset                                              │
+  │    → one-click setup: upsert config + save + run OAuth          │
+  │    → pre-configured: streamableHttp to mcp.linear.app/mcp      │
+  └──────────────────────────────────────────────────────────────────┘
+```

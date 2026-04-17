@@ -36,8 +36,7 @@ Covers: runtime-api.ts, session-manager.ts, agent-session-adapters.ts,
 
   prepareAgentLaunch(input)
     │
-    ├─ Encode attached images into prompt text
-    │
+    ├─ Encode attached images into prompt text 
     └─ ADAPTERS[agentId].prepare(input)
          → Returns { binary, args, env, cleanup, deferredStartupInput,
                      detectOutputTransition }

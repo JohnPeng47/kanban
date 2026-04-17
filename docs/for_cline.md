@@ -22,7 +22,7 @@ So there are two projects in this folder:
 - the original SVG diagram application is built into kanban; simply build the kanban binary from this folder, run it here, then find go to: kanban?view=diagram&path=ascii3%2F04-overlayer-and-scene.html
 - the extension lives in extensions/diagfren
 
-I actually found the ascii diagram experience with extension pretty useful. There are a set docs generated for kanban in docs/kanban. Going through these with the extension enabled is useful .. I think. 
+I actually found the ascii diagram experience with extension pretty useful. There are a set docs generated for kanban in docs/kanban. Jumping around the links on the diagrams feel pretty good, and it fits well into the IDE flow, benefitting from built-in features such as alt + back/forward to traverse the historical positions buffer, or string search (since diagram is all ascii). 
 
 I would also like to still use this in my application for a sales role at Cline. For a long time I had wanted to pursue a career as a software engineer but .. I just don't think that my personality is cut out for it. The obssessive-compulsive attention for detail is just too low-level to get my dopamine system fired up. My preferred problem shape operates in higher (not nessecarily less complex) levels of abstraction, with fuzzier boundaries than the well-delineated systems that software deals with. I think I prefer to deal with people rather than bits 
 

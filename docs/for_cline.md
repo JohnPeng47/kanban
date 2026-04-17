@@ -37,6 +37,6 @@ Determined to salvage something from failed experiment, I decided to pivot sligh
 -> Demo: build kanban normally and start it in this folder. Then navigate to <host>/kanban/?view=diagram&path=ascii3%2F04-overlayer-and-scene.html to see it
 
 # Job Application
-Looking for any roles, technical/non-technical, at Cline. I have a very generalist skillset, highly motivated if not deficient of experience 
+Looking for any roles, technical/non-technical, at Cline. I have a very generalist skillset, highly motivated if not deficient of experience. Certain that I can contribute to the growth and development of your organization, if you are willing to accomodate a certain level of idyosyncracy and inexeperience
 
 John
